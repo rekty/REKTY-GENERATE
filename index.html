@@ -272,7 +272,7 @@ input[type=range]{cursor:pointer}
             <div class="field"><label class="text-[11px] text-neutral-500">Scheduler</label>
               <select id="sched" class="inp text-xs"><option>normal</option><option>simple</option><option>karras</option><option>exponential</option><option>sgm_uniform</option><option>ddim_uniform</option><option>beta</option><option>linear_quadratic</option></select></div>
           </div>
-<div id="adv-fields" class="hidden space-y-3 mt-3 border-t bd pt-3">
+<div class="space-y-3 mt-3">
             <div>
               <label class="text-xs flex justify-between"><span>Sampling Steps</span><span id="sv" class="text-neutral-500">10</span></label>
               <input id="steps" type="range" min="1" max="50" value="10" class="slider mt-1"/>
@@ -282,14 +282,26 @@ input[type=range]{cursor:pointer}
               <input id="cfg" type="range" min="1" max="10" step="0.5" value="1" class="slider mt-1"/>
             </div>
             <div>
-              <label class="text-xs flex justify-between"><span>CLIP Skip</span><span id="csv" class="text-neutral-500">2</span></label>
-              <input id="clipskip" type="range" min="1" max="12" value="2" class="slider mt-1"/>
-            </div>
-            <div>
               <label class="text-xs flex justify-between"><span>Seed</span><button id="dice" class="text-neutral-500 hover:text-white"><i data-icon="dice-five" class="w-4 h-4"></i></button></label>
               <input id="seed" class="inp text-xs mt-1" value="1010933347943462"/>
             </div>
           </div>
+          <div id="adv-fields" class="hidden space-y-3 mt-4 border-t bd pt-3">
+            <div>
+              <label class="text-xs flex justify-between"><span>Clip Skip</span><span id="csv" class="text-neutral-500">2</span></label>
+              <input id="clipskip" type="range" min="1" max="12" value="2" class="slider mt-1"/>
+            </div>
+            <div>
+              <label class="text-xs flex justify-between"><span>ENSD</span><span id="ensd" class="text-neutral-500">31337</span></label>
+              <input id="etansd" type="range" min="0" max="31337" value="31337" class="slider mt-1"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upscale (separate, di bawah) -->
+        <div class="mt-4">
+          <label class="text-xs flex justify-between items-center"><span>Upscale</span><span class="text-neutral-500">2x</span></label>
+          <input id="upscale" type="range" min="1" max="4" step="0.5" value="2" class="slider mt-1"/>
         </div>
       </div>
 
@@ -624,6 +636,7 @@ function setArActive(ar){
 $('steps').addEventListener('input',function(e){$('sv').textContent=e.target.value});
 $('cfg').addEventListener('input',function(e){$('cfv').textContent=e.target.value});
 $('clipskip').addEventListener('input',function(e){$('csv').textContent=e.target.value});
+$('etansd').addEventListener('input',function(e){$('ensd').textContent=e.target.value});
 $('adv-toggle').addEventListener('click',function(){$('adv-fields').classList.toggle('hidden')});
 $('dice').addEventListener('click',function(){$('seed').value=String(Math.floor(Math.random()*9999999999999999))});
 $('negcheck').addEventListener('change',function(e){$('negwrap').classList.toggle('hidden',!e.target.checked)});
@@ -762,7 +775,7 @@ function buildPayload(){
       cfgScale:parseFloat($('cfg').value),
       seed:$('seed').value,
       clipSkip:parseInt($('clipskip').value),
-      etaNoiseSeedDelta:31337,
+      etaNoiseSeedDelta:parseInt($('etansd').value),
       v1Clip:false,
       enablePix2pix:false,
       guidance:3.5,
