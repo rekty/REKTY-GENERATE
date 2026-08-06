@@ -272,29 +272,23 @@ input[type=range]{cursor:pointer}
             <div class="field"><label class="text-[11px] text-neutral-500">Scheduler</label>
               <select id="sched" class="inp text-xs"><option>normal</option><option>simple</option><option>karras</option><option>exponential</option><option>sgm_uniform</option><option>ddim_uniform</option><option>beta</option><option>linear_quadratic</option></select></div>
           </div>
-          <div id="adv-fields" class="hidden space-y-3 mt-3 border-t bd pt-3">
+<div id="adv-fields" class="hidden space-y-3 mt-3 border-t bd pt-3">
             <div>
               <label class="text-xs flex justify-between"><span>Sampling Steps</span><span id="sv" class="text-neutral-500">10</span></label>
               <input id="steps" type="range" min="1" max="50" value="10" class="slider mt-1"/>
             </div>
-<div>
+            <div>
               <label class="text-xs flex justify-between"><span>CFG Scale</span><span id="cfv" class="text-neutral-500">1</span></label>
               <input id="cfg" type="range" min="1" max="10" step="0.5" value="1" class="slider mt-1"/>
+            </div>
+            <div>
+              <label class="text-xs flex justify-between"><span>CLIP Skip</span><span id="csv" class="text-neutral-500">2</span></label>
+              <input id="clipskip" type="range" min="1" max="12" value="2" class="slider mt-1"/>
             </div>
             <div>
               <label class="text-xs flex justify-between"><span>Seed</span><button id="dice" class="text-neutral-500 hover:text-white"><i data-icon="dice-five" class="w-4 h-4"></i></button></label>
               <input id="seed" class="inp text-xs mt-1" value="1010933347943462"/>
             </div>
-          </div>
-          <div id="clip-menu" class="hidden space-y-3 mt-4 border-t bd pt-3">
-            <div>
-              <label class="text-xs flex justify-between"><span>CLIP Skip</span><span id="csv" class="text-neutral-500">2</span></label>
-              <input id="clipskip" type="range" min="1" max="12" value="2" class="slider mt-1"/>
-            </div>
-          </div>
-          <div class="flex items-center justify-between mt-3">
-            <span class="text-xs text-neutral-400">CLIP Skip</span>
-            <button id="clip-toggle" class="text-xs text-neutral-500 hover:text-white flex items-center gap-1"><i data-icon="caret-down" class="w-3.5 h-3.5"></i>Buka</button>
           </div>
         </div>
       </div>
@@ -631,7 +625,6 @@ $('steps').addEventListener('input',function(e){$('sv').textContent=e.target.val
 $('cfg').addEventListener('input',function(e){$('cfv').textContent=e.target.value});
 $('clipskip').addEventListener('input',function(e){$('csv').textContent=e.target.value});
 $('adv-toggle').addEventListener('click',function(){$('adv-fields').classList.toggle('hidden')});
-$('clip-toggle').addEventListener('click',function(){$('clip-menu').classList.toggle('hidden')});
 $('dice').addEventListener('click',function(){$('seed').value=String(Math.floor(Math.random()*9999999999999999))});
 $('negcheck').addEventListener('change',function(e){$('negwrap').classList.toggle('hidden',!e.target.checked)});
 $('prompt').addEventListener('input',renderTriggers);
