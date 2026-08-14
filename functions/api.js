@@ -23,6 +23,8 @@ const TAMS_BASE = 'https://ap-east-1.tensorart.cloud';
 const REPLICATE_BASE = 'https://api.replicate.com';
 const FAL_QUEUE = 'https://queue.fal.run';
 const FAL_MODEL = 'fal-ai/fast-sdxl';
+const POLLINATIONS_IMG = 'https://image.pollinations.ai/prompt/'; // legacy gratis (tanpa key)
+const GEN_POLLINATIONS = 'https://gen.pollinations.ai/image/';   // API baru (wajib key sk_*)
 const MAX_BODY = 4_000_000; // batas JSON payload yang diterima (chars)
 
 // Pemetaan sampler UI -> scheduler Replicate (SDXL).
@@ -87,11 +89,12 @@ function toSeed(seed) {
   return 0; // random
 }
 
-const PROVIDERS = ['tams', 'replicate', 'fal'];
+const PROVIDERS = ['tams', 'replicate', 'fal', 'pollinations'];
 const PROVIDER_ENV = {
   tams: 'TENSORART_API_KEY',
   replicate: 'REPLICATE_API_TOKEN',
   fal: 'FAL_API_KEY',
+  pollinations: 'POLLINATIONS_API_KEY', // opsional — gratis tanpa key, sk_* untuk API baru
 };
 
 function pickApiKey(env, request, body, provider) {
@@ -521,14 +524,25 @@ async function falGetJob(jobId, apiKey, model) {
 /* ----------------------- penyimpanan gambar (KV) ----------------------- */
 
 /**
- * Simpan gambar hasil generate ke Cloudflare KV (binding IMAGES, namespace
- * `rekty-generator-REKTY_IMAGES`) dan kembalikan URL permanen `/img/<nama>`.
- *
- * Dipakai KV, bukan R2, karena R2 butuh metode pembayaran (kartu) saat
- * aktivasi, sedangkan KV termasuk free plan Workers tanpa billing.
- * Batasan KV: nilai maks 25 MiB/objek — gambar lebih besar dari 20 MiB
- * dilewati (fallback ke URL asli provider, aman).
+ * Simpan bytes gambar ke Cloudflare KV (binding IMAGES) dan kembalikan URL
+ * permanen `/img/<nama>`, atau null kalau gagal/terlalu besar (batas KV 25
+ * MiB — gambar > 20 MiB dilewati). KV dipakai karena gratis tanpa billing
+ * (R2 mewajibkan kartu saat aktivasi).
  */
+async function storeImageBuf(buf, ct, env) {
+  if (!env || !env.IMAGES || !buf || !buf.byteLength) return null;
+  if (buf.byteLength > 20 * 1024 * 1024) return null;
+  const ext = (ct.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').slice(0, 4) || 'png';
+  const name = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)) + '.' + ext;
+  try {
+    await env.IMAGES.put(name, buf);
+    return '/img/' + name;
+  } catch {
+    return null;
+  }
+}
+
+/** Unduh gambar dari URL provider lalu arsip ke KV; fallback ke URL asli. */
 async function archiveImages(urls, env) {
   if (!env || !env.IMAGES || !Array.isArray(urls) || !urls.length) return urls;
   const out = [];
@@ -538,17 +552,64 @@ async function archiveImages(urls, env) {
       const res = await fetchWithTimeout(u, {}, 60000);
       if (!res.ok) { out.push(u); continue; }
       const buf = await res.arrayBuffer();
-      if (buf.byteLength > 20 * 1024 * 1024) { out.push(u); continue; } // > 20 MiB: lewati
       const ct = String(res.headers.get('content-type') || 'image/png').split(';')[0] || 'image/png';
-      const ext = (ct.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').slice(0, 4) || 'png';
-      const name = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)) + '.' + ext;
-      await env.IMAGES.put(name, buf);
-      out.push('/img/' + name);
+      out.push((await storeImageBuf(buf, ct, env)) || u);
     } catch {
       out.push(u); // gagal arsip — tetap tampilkan URL asli provider
     }
   }
   return out;
+}
+
+/* --------------------------- Pollinations --------------------------- */
+
+/**
+ * Generate sinkron via Pollinations:
+ *   - dengan API key (sk_*): https://gen.pollinations.ai/image/<prompt> (Bearer)
+ *   - tanpa key: legacy gratis https://image.pollinations.ai/prompt/<prompt>
+ * Hasil langsung diarsip ke KV (URL permanen /img/<nama>), hasil task disimpan
+ * di KV juga supaya polling /api/task bisa membaca status SUCCESS.
+ */
+async function pollinationsCreateJob(body, env, apiKey) {
+  const params = body.params || body;
+  const width = clampInt(params.width, 256, 1920, 1024);
+  const height = clampInt(params.height, 256, 1920, 1024);
+  const seed = toSeed(params.seed);
+  const model = String(params.model || '').trim();
+  const prompt = String(params.prompt || '').slice(0, 1500);
+  const url = new URL((apiKey ? GEN_POLLINATIONS : POLLINATIONS_IMG) + encodeURIComponent(prompt));
+  url.searchParams.set('width', String(width));
+  url.searchParams.set('height', String(height));
+  if (model) url.searchParams.set('model', model);
+  if (seed > 0) url.searchParams.set('seed', String(seed));
+  if (apiKey) url.searchParams.set('nologo', 'true');
+
+  const res = await fetchWithTimeout(url.toString(), apiKey ? { headers: { Authorization: 'Bearer ' + apiKey } } : {}, 120000);
+  if (!res.ok) {
+    throw new Error('Pollinations gagal (HTTP ' + res.status + '): ' + (await res.text()).slice(0, 300));
+  }
+  const buf = await res.arrayBuffer();
+  const ct = String(res.headers.get('content-type') || 'image/jpeg').split(';')[0] || 'image/jpeg';
+
+  // Arsip ke KV (permanen); kalau KV tidak aktif, pakai URL Pollinations langsung.
+  const stored = await storeImageBuf(buf, ct, env);
+  const img = stored || url.toString();
+
+  const taskId = 'pollinations:' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2));
+  if (env && env.IMAGES) {
+    await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images: [img] })).catch(() => {});
+  }
+  return { taskId, images: [img] };
+}
+
+/** Baca hasil task Pollinations dari KV. */
+async function pollinationsGetTask(jobId, env) {
+  if (!env || !env.IMAGES) {
+    return { status: 'SUCCESS', progress: 100, images: [] };
+  }
+  const raw = await env.IMAGES.get('task:pollinations:' + jobId, { type: 'text' });
+  if (!raw) return { status: 'FAILED', error: 'Task tidak ditemukan' };
+  return safeJson(raw) || { status: 'FAILED', error: 'Data task rusak' };
 }
 
 /* ---------------------------- handlers ------------------------------ */
@@ -572,9 +633,20 @@ export async function onRequest(context) {
           tams: !!(env && env.TENSORART_API_KEY),
           replicate: !!(env && env.REPLICATE_API_TOKEN),
           fal: !!(env && env.FAL_API_KEY),
+          pollinations: true, // gratis, tanpa key
         },
         tams: TAMS_BASE,
       });
+    }
+
+    // ---- daftar model Pollinations (publik, tanpa auth) ----
+    if (method === 'GET' && url.pathname === '/api/pollinations-models') {
+      const res = await fetchWithTimeout(GEN_POLLINATIONS + 'models', {}, 30000);
+      const txt = await res.text();
+      if (!res.ok) return json({ error: 'Gagal ambil daftar model Pollinations' }, 502);
+      const list = safeJson(txt);
+      if (!Array.isArray(list)) return json({ error: 'Response daftar model tidak valid' }, 502);
+      return json({ ok: true, models: list });
     }
 
     // ---- buat job generate ----
@@ -590,7 +662,8 @@ export async function onRequest(context) {
         return json({ error: 'Provider tidak dikenal: ' + provider }, 400);
       }
       const apiKey = pickApiKey(env, request, body, provider);
-      if (!apiKey) {
+      // Pollinations gratis tanpa API key — semua provider lain wajib key.
+      if (!apiKey && provider !== 'pollinations') {
         return json({
           error: 'API key ' + provider + ' belum diatur. Isi di Pengaturan -> API Key, atau set env ' + (PROVIDER_ENV[provider] || 'TENSORART_API_KEY') + ' saat deploy.',
         }, 401);
@@ -599,6 +672,7 @@ export async function onRequest(context) {
       let r;
       if (provider === 'replicate') r = await replicateCreateJob(body, apiKey);
       else if (provider === 'fal') r = await falCreateJob(body, apiKey);
+      else if (provider === 'pollinations') r = await pollinationsCreateJob(body, env, apiKey);
       else r = await tamsCreateJob(body, apiKey);
       return json({ ok: true, provider, ...r });
     }
@@ -608,11 +682,13 @@ export async function onRequest(context) {
       const rawId = url.searchParams.get('id') || '';
       if (!rawId) return json({ error: 'Parameter id wajib diisi' }, 400);
 
-      // Task id menyandikan provider: 'replicate:<id>', 'fal:<model>:<id>', atau id TAMS polos.
+      // Task id menyandikan provider: 'replicate:<id>', 'fal:<model>:<id>',
+      // 'pollinations:<id>', atau id TAMS polos.
       let provider = 'tams';
       let jobId = rawId;
       let falModel = FAL_MODEL;
       if (rawId.startsWith('replicate:')) { provider = 'replicate'; jobId = rawId.slice(11); }
+      else if (rawId.startsWith('pollinations:')) { provider = 'pollinations'; jobId = rawId.slice(13); }
       else if (rawId.startsWith('fal:')) {
         provider = 'fal';
         const rest = rawId.slice(4);
@@ -622,13 +698,14 @@ export async function onRequest(context) {
       }
 
       const apiKey = pickApiKey(env, request, {}, provider);
-      if (!apiKey) {
+      if (!apiKey && provider !== 'pollinations') {
         return json({ error: 'API key ' + provider + ' belum diatur' }, 401);
       }
 
       let r;
       if (provider === 'replicate') r = await replicateGetJob(jobId, apiKey);
       else if (provider === 'fal') r = await falGetJob(jobId, apiKey, falModel);
+      else if (provider === 'pollinations') r = await pollinationsGetTask(jobId, env);
       else r = await tamsGetJob(jobId, apiKey);
 
       // Arsipkan gambar hasil ke R2 supaya URL-nya permanen (tidak kedaluwarsa).

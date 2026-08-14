@@ -183,9 +183,19 @@ globalThis.fetch = async (url, opts) => {
     throw new Error('fal tak tertangani: ' + u);
   }
 
-  // --- gambar hasil generate (dipakai saat arsip R2 aktif) ---
+  // --- gambar hasil generate (dipakai saat arsip KV aktif) ---
   if (method === 'GET' && u.startsWith('https://img.')) {
     return new Response(new Uint8Array([137, 80, 78, 71, 1, 2, 3]), { headers: { 'content-type': 'image/png' } });
+  }
+
+  // --- Pollinations (sinkron, balas bytes gambar) ---
+  if (u.startsWith('https://image.pollinations.ai/prompt/') || u.startsWith('https://gen.pollinations.ai/image/')) {
+    assert.strictEqual(method, 'GET', 'pollinations pakai GET');
+    if (u.startsWith('https://gen.pollinations.ai/')) {
+      const auth = opts && opts.headers && opts.headers.Authorization;
+      assert.strictEqual(auth, 'Bearer test-key', 'gen API pakai Bearer key');
+    }
+    return new Response(new Uint8Array([255, 216, 255, 224, 1, 2, 3]), { headers: { 'content-type': 'image/jpeg' } });
   }
 
   throw new Error('fetch tak tertangani: ' + method + ' ' + u);
@@ -405,6 +415,30 @@ console.log('Cloudflare KV (arsip gambar):');
   ok('GET /img tanpa binding -> 404');
 }
 
+console.log('Pollinations (gratis, tanpa API key):');
+{
+  const p = webPayload('pollinations', 'flux');
+  const g = await run('/api/generate', p, { IMAGES });
+  assert.strictEqual(g.status, 200);
+  assert.ok(String(g.data.taskId).startsWith('pollinations:'), 'taskId pollinations');
+  assert.ok(Array.isArray(g.data.images) && g.data.images.length === 1, 'images langsung di response');
+  assert.ok(g.data.images[0].startsWith('/img/'), 'gambar diarsip ke /img/');
+  ok('generate -> taskId pollinations:... + gambar /img/ (tanpa key)');
+
+  const t = await run('/api/task?id=' + encodeURIComponent(g.data.taskId), null, { IMAGES });
+  assert.strictEqual(t.data.status, 'SUCCESS');
+  assert.deepStrictEqual(t.data.images, g.data.images);
+  ok('task pollinations -> SUCCESS + gambar sama');
+
+  // tanpa API key & tanpa KV -> tetap jalan, gambar pakai URL langsung
+  const p2 = webPayload('pollinations', 'flux');
+  p2.apiKey = '';
+  const g2 = await run('/api/generate', p2, {});
+  assert.strictEqual(g2.status, 200);
+  assert.ok(String(g2.data.images[0]).startsWith('https://image.pollinations.ai/'), 'tanpa KV pakai URL langsung');
+  ok('generate tanpa key & tanpa KV -> URL pollinations langsung');
+}
+
 console.log('Validasi (API key + provider salah):');
 {
   const bad = await run('/api/generate', { provider: 'nope', params: {}, apiKey: 'k' });
@@ -416,8 +450,8 @@ console.log('Validasi (API key + provider salah):');
   ok('tanpa api key -> 401');
 
   const h = await run('/api/health', null, { REPLICATE_API_TOKEN: 'x' });
-  assert.deepStrictEqual(h.data.hasKeys, { tams: false, replicate: true, fal: false });
-  ok('/api/health -> hasKeys per provider');
+  assert.deepStrictEqual(h.data.hasKeys, { tams: false, replicate: true, fal: false, pollinations: true });
+  ok('/api/health -> hasKeys per provider (+ pollinations selalu true)');
 }
 
 console.log('\nSemua tes lolos (' + passed + '). Panggilan keluar tercatat ' + calls.length + ' (semua ke host tiruan).');

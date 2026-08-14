@@ -92,7 +92,17 @@ npx wrangler pages deploy . --project-name rekty-generator --branch main
 npx wrangler pages secret put TENSORART_API_KEY --project-name rekty-generator    # token TAMS
 npx wrangler pages secret put REPLICATE_API_TOKEN --project-name rekty-generator  # token Replicate
 npx wrangler pages secret put FAL_API_KEY --project-name rekty-generator          # key fal.ai
+npx wrangler pages secret put POLLINATIONS_API_KEY --project-name rekty-generator # opsional (sk_*) — tanpa key pun gratis
 ```
+
+**Provider Pollinations (gratis):** provider ke-4, **bisa dipakai tanpa API
+key** (endpoint legacy `image.pollinations.ai`, model otomatis). Kalau punya
+key `sk_*` dari **enter.pollinations.ai/keys**: simpan sebagai secret
+`POLLINATIONS_API_KEY` (atau tempel di panel API web) → backend memakai API
+baru `gen.pollinations.ai` (Bearer) dengan 57+ model (Z-Image, Krea, FLUX,
+Recraft, dst.) dan daftar model diambil live dari `/api/pollinations-models`
+(dropdown Model di UI terisi otomatis). Key **tidak pernah** di-hardcode di
+repo — hanya sebagai secret Cloudflare terenkripsi.
 > Pakai `wrangler@3` (mis. `npx wrangler@3.90.0`) — wrangler 4 sempat gagal
 > upload (500) di akun baru. Setelah mengubah `index.html` / `functions/api.js`,
 > jalankan ulang `node scripts/build_worker.mjs` sebelum deploy.
