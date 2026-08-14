@@ -108,6 +108,36 @@ hubungkan repo GitHub → Build settings kosong, output dir `/` → Deploy.
 Kalau jalur ini yang dipakai, backend memakai `functions/api.js` (Pages
 Functions) secara otomatis.
 
+### 3a. Penyimpanan gambar permanen (Cloudflare KV — tanpa kartu kredit)
+
+Secara default hasil generate hanya berupa **URL sementara dari provider**
+(signed URL TAMS bisa kedaluwarsa → riwayat di browser jadi rusak). Dengan
+KV, setiap gambar hasil **otomatis diarsip** dan disajikan lewat URL
+permanen `/img/<nama>` (cache immutable).
+
+> Kenapa KV, bukan R2? Aktivasi R2 **mewajibkan metode pembayaran** (kartu)
+> walau tagihannya $0/bulan. KV termasuk free plan Workers **tanpa billing**
+> sama sekali (1 GB storage, 100rb read/hari — lebih dari cukup untuk pemakaian
+> pribadi).
+
+**Setup (sudah selesai di repo ini):**
+```bash
+npx wrangler@3.90.0 kv namespace create REKTY_IMAGES   # sekali; catat id-nya
+# lalu taruh id-nya di wrangler.toml ([[kv_namespaces]] binding = "IMAGES")
+node scripts/build_worker.mjs
+npx wrangler@3.90.0 pages deploy . --project-name rekty-generator --branch main
+curl https://rekty-generator.pages.dev/api/health        # harus ada "storage": "kv"
+```
+
+**Catatan teknis:** namespace KV baru (`supports_url_encoding`) punya bug
+runtime di Pages Advanced Mode — `get(key, {type:'stream'})` mengembalikan
+stream **kosong** (len 0). Solusi yang dipakai di kode: `{type:'arrayBuffer'}`
+(terbukti bekerja) + content-type ditebak dari ekstensi file.
+
+Perilaku saat KV tidak aktif: `storage: null` di health, gambar tetap
+dikembalikan dengan URL asli provider (fallback aman, tidak error). Gambar
+> 20 MiB juga dilewati (batas KV 25 MiB).
+
 ---
 
 ## 4. Deploy ke Firebase (Hosting + Cloud Functions)
