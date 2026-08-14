@@ -323,9 +323,16 @@ input[type=range]{cursor:pointer}
             <option value="pollinations">Pollinations (GRATIS, tanpa key)</option>
           </select>
         </div>
-        <div class="field">
+        <div class="field" id="apikey-field">
           <label class="text-[11px] text-neutral-500" id="apikey-label">API Key TAMS (tams.tensor.art)</label>
           <input id="apikey" type="password" class="inp" placeholder="Bearer token..." autocomplete="off"/>
+        </div>
+        <!-- BYOP Pollinations: login OAuth (bukan kolom API key) -->
+        <div class="field hidden" id="byop-row">
+          <label class="text-[11px] text-neutral-500">Login Pollinations</label>
+          <button id="byop-login" class="btn btn-ghost w-full h-8 border bd text-xs justify-center">Login dengan Pollinations (BYOP)</button>
+          <div id="byop-status" class="hidden text-[10px] text-neutral-500 mt-1"></div>
+          <button id="byop-logout" class="hidden btn btn-ghost w-full h-8 border bd text-xs justify-center mt-1">Logout</button>
         </div>
         <div id="api-hint" class="text-[10px] text-neutral-600"></div>
         <div class="field">
@@ -966,7 +973,7 @@ function buildPayload(){
  * atau mode demo (picsum) kalau backend/API key belum aktif.
  * ========================================================== */
 var SETTINGS_KEY='rekty.settings', RESULTS_KEY='rekty.results';
-var settings={ mode:'auto', provider:'tams', apiKey:'' };
+var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'' };
 var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
@@ -979,6 +986,7 @@ function loadSettings(){
     var s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
     if(s&&typeof s==='object'){
       settings.mode=s.mode||'auto'; settings.provider=s.provider||'tams'; settings.apiKey=s.apiKey||'';
+      settings.pollSession=s.pollSession||'';
     }
   }catch(e){}
 }
@@ -992,6 +1000,10 @@ function updateProviderUI(){
   $('apiprovider').value=settings.provider;
   $('apikey-label').textContent=info.label;
   $('api-hint').textContent=info.hint;
+  var isPoll=settings.provider==='pollinations';
+  $('apikey-field').classList.toggle('hidden',isPoll);
+  $('byop-row').classList.toggle('hidden',!isPoll);
+  if(isPoll) refreshOAuthStatus();
   updateApiStatus();
   // Ganti daftar model sesuai provider aktif.
   var lib=MODEL_LIBS[settings.provider]||MODEL_LIBS.tams;
@@ -1022,8 +1034,8 @@ function refreshPollinationsModels(){
 function updateApiStatus(){
   var el=$('api-status'); if(!el) return;
   if(settings.provider==='pollinations'){
-    el.textContent='Pollinations · gratis';
-    el.style.color='#27D4CD';
+    el.textContent=settings.pollSession?'Pollinations · BYOP':'Pollinations · gratis';
+    el.style.color=settings.pollSession?'#27D4CD':'#9a9aa2';
     return;
   }
   var name=settings.provider==='tams'?'TAMS':(settings.provider==='replicate'?'Replicate':'fal.ai');
@@ -1039,6 +1051,17 @@ $('api-save').addEventListener('click',function(){
 });
 $('api-test').addEventListener('click',async function(){
   var b=$('api-test'); b.disabled=true; b.textContent='Tes...';
+  if(settings.provider==='pollinations'){
+    try{
+      var r=await fetch('/api/health');
+      var d=await r.json().catch(function(){return null;});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      toast('Backend OK · BYOP '+(d&&d.byop?'siap (App Key terpasang)':'belum dikonfigurasi (App Key)')+' · '+(settings.pollSession?'sesi aktif':'belum login'));
+      refreshOAuthStatus();
+    }catch(e){ toast('Backend tidak aktif — deploy dengan Functions atau pakai mode demo'); }
+    b.disabled=false; b.textContent='Tes';
+    return;
+  }
   try{
     var r=await fetch('/api/health',{headers:{'x-api-key':$('apikey').value.trim()||settings.apiKey}});
     var d=await r.json().catch(function(){return null});
@@ -1049,6 +1072,89 @@ $('api-test').addEventListener('click',async function(){
   }catch(e){ toast('Backend tidak aktif — deploy dengan Functions atau pakai mode demo'); }
   b.disabled=false; b.textContent='Tes';
 });
+
+/* --- BYOP OAuth (Bring Your Own Pollen) ---
+ * Login via enter.pollinations.ai (PKCE code flow) → backend tukar kode →
+ * token sk_ scoped user disimpan di KV backend; browser cuma pegang session.
+ */
+var _oauthVerifierKey='rekty.oauth.verifier', _oauthStateKey='rekty.oauth.state';
+function _b64url(buf){
+  var s=btoa(String.fromCharCode.apply(null,new Uint8Array(buf)));
+  return s.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function _randB64(len){ var a=new Uint8Array(len); crypto.getRandomValues(a); return _b64url(a); }
+async function _sha256B64url(text){
+  var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text));
+  return _b64url(buf);
+}
+function startPollOAuth(){
+  var verifier=_randB64(48);
+  localStorage.setItem(_oauthVerifierKey,verifier);
+  var state=_randB64(16);
+  localStorage.setItem(_oauthStateKey,state);
+  fetch('/api/oauth/config').then(function(r){return r.json();}).then(async function(cfg){
+    if(!cfg||!cfg.clientId) throw new Error('backend belum punya App Key Pollinations');
+    var challenge=await _sha256B64url(verifier);
+    var p=new URLSearchParams({
+      response_type:'code', client_id:cfg.clientId, redirect_uri:cfg.redirectUri,
+      scope:'usage', state:state,
+      code_challenge:challenge, code_challenge_method:'S256'
+    });
+    window.location.href=cfg.authorizeBase+'?'+p.toString();
+  }).catch(function(e){ toast('Gagal mulai login: '+(e&&e.message||e)); });
+}
+function refreshOAuthStatus(){
+  var el=$('byop-status'), btn=$('byop-login'), out=$('byop-logout');
+  if(!settings.pollSession){ if(el)el.classList.add('hidden'); if(out)out.classList.add('hidden'); return; }
+  fetch('/api/oauth/status?session='+encodeURIComponent(settings.pollSession)).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.connected){
+      var balTxt='';
+      if(d.balance&&typeof d.balance==='object'){
+        var bv=d.balance.pollenBalance!=null?d.balance.pollenBalance:(d.balance.balance!=null?d.balance.balance:null);
+        if(bv!=null) balTxt=' · saldo '+bv+' pollen';
+      }
+      el.textContent='Terhubung ✓'+(d.expiresIn?(' · sisa '+Math.ceil(d.expiresIn/86400)+' hari'):'')+balTxt;
+      el.style.color='#27D4CD'; el.classList.remove('hidden');
+      btn.textContent='Login ulang (ganti akun)'; out.classList.remove('hidden');
+    }else{
+      el.textContent='Sesi berakhir — login ulang'; el.style.color='#e5a50a';
+      el.classList.remove('hidden'); out.classList.add('hidden');
+      settings.pollSession=''; saveSettings(); updateApiStatus();
+    }
+  }).catch(function(){});
+}
+function pollLogout(){
+  fetch('/api/oauth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:settings.pollSession})}).catch(function(){});
+  settings.pollSession=''; saveSettings(); updateApiStatus(); refreshOAuthStatus();
+  toast('Sesi Pollinations dicabut');
+}
+async function handleOAuthCallback(){
+  if(location.pathname!=='/callback') return;
+  var q=new URLSearchParams(location.search);
+  var h=new URLSearchParams(location.hash.slice(1));
+  var err=q.get('error')||h.get('error');
+  if(err){ toast('Login dibatalkan: '+err); history.replaceState(null,'','/'); return; }
+  var code=q.get('code');
+  var state=q.get('state');
+  var savedState=localStorage.getItem(_oauthStateKey);
+  var verifier=localStorage.getItem(_oauthVerifierKey);
+  localStorage.removeItem(_oauthStateKey); localStorage.removeItem(_oauthVerifierKey);
+  if(!code||!state||state!==savedState||!verifier){
+    toast('Callback OAuth tidak valid'); history.replaceState(null,'','/'); return;
+  }
+  var cfg=await fetch('/api/oauth/config').then(function(r){return r.json();}).catch(function(){return null;});
+  try{
+    var r=await fetch('/api/oauth/token',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({code:code,code_verifier:verifier,redirect_uri:(cfg&&cfg.redirectUri)||''})});
+    var d=await r.json().catch(function(){return null;});
+    if(!r.ok||!d.session) throw new Error((d&&d.error)||('HTTP '+r.status));
+    settings.pollSession=d.session; saveSettings(); updateProviderUI();
+    toast('Login Pollinations berhasil!');
+  }catch(e){ toast('Gagal tukar kode: '+(e&&e.message||e)); }
+  history.replaceState(null,'','/');
+}
+$('byop-login').addEventListener('click',startPollOAuth);
+$('byop-logout').addEventListener('click',pollLogout);
 
 /* --- toast --- */
 var _toastTimer=null;
@@ -1074,14 +1180,20 @@ $('prog-cancel').addEventListener('click',function(){ _pollStop=true; toast('Mem
 /* --- API client --- */
 function buildApiKey(){ return settings.apiKey||$('apikey').value.trim(); }
 
+function _apiHeaders(extra){
+  var h={'x-api-key':buildApiKey()};
+  if(settings.provider==='pollinations'&&settings.pollSession) h['x-session']=settings.pollSession;
+  if(extra) for(var k in extra) h[k]=extra[k];
+  return h;
+}
 async function apiGenerate(payload){
-  var res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':buildApiKey()},body:JSON.stringify(payload)});
+  var res=await fetch('/api/generate',{method:'POST',headers:_apiHeaders({'Content-Type':'application/json'}),body:JSON.stringify(payload)});
   var d=await res.json().catch(function(){return null});
   if(!res.ok) throw new Error((d&&d.error)||('HTTP '+res.status));
   return d||{};
 }
 async function apiTask(taskId){
-  var res=await fetch('/api/task?id='+encodeURIComponent(taskId),{headers:{'x-api-key':buildApiKey()}});
+  var res=await fetch('/api/task?id='+encodeURIComponent(taskId),{headers:_apiHeaders({})});
   var d=await res.json().catch(function(){return null});
   if(!res.ok) throw new Error((d&&d.error)||('HTTP '+res.status));
   return d||{};
@@ -1204,6 +1316,7 @@ renderLora();
 setModel(MODELS[0]);
 updWH();
 loadSettings(); applySettingsUI();
+handleOAuthCallback();
 try{
   var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
   if(Array.isArray(saved)) state.results=saved;
