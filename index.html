@@ -941,6 +941,7 @@ document.querySelectorAll('.gfil').forEach(function(f){
     Array.prototype.forEach.call(document.querySelectorAll('#grid > div'),function(row){
       row.style.display=(t==='all'||t==='image')?'':'none';
     });
+    renderDetail(); // re-sinkron posisi panel Detail setelah filter
   });
 });
 
@@ -997,6 +998,8 @@ function makeGalleryRow(r,i){
   img.src=r.src;
   img.className='w-full h-full max-h-[75vh] object-contain cursor-zoom-in';
   img.addEventListener('click',function(){ openLightbox(r); });
+  // setelah gambar dimuat, tinggi kartu berubah -> re-sinkron posisi panel Detail
+  if(!img.complete){ var rs=function(){ renderDetail(); }; img.addEventListener('load',rs); img.addEventListener('error',rs); }
   imgWrap.appendChild(img);
   if(r.demo){
     var bd=document.createElement('span');
@@ -1099,11 +1102,20 @@ function renderDetail(){
   if(copyBtn) copyBtn.addEventListener('click',function(){ copyText(r.taskId); });
   var closeBtn=el.querySelector('button[title="Tutup detail"]');
   if(closeBtn) closeBtn.addEventListener('click',function(){ $('rightPan').classList.add('hidden'); });
-  // Tinggi panel Detail kanan mengikuti tinggi kartu galeri yang aktif (sejajar penuh)
+  // Panel Detail kanan mengikuti kartu galeri aktif: tinggi + posisi vertikal sejajar
+  // (satu scroll container -> offset statis, tetap sejajar saat di-scroll)
   var grid=$('grid');
+  var mw=$('mainwrap');
+  var rp=$('rightPan');
   var card=grid&&grid.children[_viewIdx]?grid.children[_viewIdx]:null;
-  if(card) el.style.minHeight=card.offsetHeight+'px';
-  else el.style.minHeight='';
+  if(card&&card.offsetHeight>0&&mw&&rp&&rp.offsetParent!==null){
+    el.style.minHeight=card.offsetHeight+'px';
+    var cardTop=card.getBoundingClientRect().top-mw.getBoundingClientRect().top+mw.scrollTop;
+    // detTop diukur dari bawah header tabs (bebas margin-top) agar tidak ada feedback loop
+    var hdr=rp.querySelector('#rptitle')?rp.querySelector('#rptitle').parentElement:null;
+    var detTop=(hdr?hdr.getBoundingClientRect().bottom:rp.getBoundingClientRect().top)-mw.getBoundingClientRect().top+mw.scrollTop;
+    el.style.marginTop=Math.max(0,cardTop-detTop)+'px';
+  } else { el.style.minHeight=''; el.style.marginTop=''; }
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 

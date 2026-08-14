@@ -1,0 +1,10 @@
+Panel Detail kanan sejajar vertikal dengan kartu galeri aktif (satu kartu tersambung)
+
+- renderDetail: margin-top panel Detail dihitung agar tepi atasnya tepat
+  sejajar dengan tepi atas kartu galeri aktif; karena satu scroll container,
+  keduanya tetap sejajar saat di-scroll (bukan hanya tinggi yang sama)
+- detTop diukur dari bawah header tabs (bebas margin-top) agar tidak ada
+  feedback loop saat addResult beruntun
+- re-sinkron otomatis: saat gambar selesai dimuat, saat filter galeri
+  berubah, dan saat resize jendela
+- guard: sinkron hanya aktif saat panel kanan terlihat (desktop)
