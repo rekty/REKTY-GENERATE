@@ -992,10 +992,10 @@ function makeGalleryRow(r,i){
   var row=document.createElement('div');
   row.className='flex gap-4 border bd rounded-2xl bg-[#161b22] p-3';
   var imgWrap=document.createElement('div');
-  imgWrap.className='shrink-0 w-[42%] sm:w-[34%] flex items-start justify-center bg-black/30 rounded-xl overflow-hidden';
+  imgWrap.className='shrink-0 w-[42%] sm:w-[34%] self-stretch flex items-center justify-center bg-black/30 rounded-xl overflow-hidden';
   var img=document.createElement('img');
   img.src=r.src;
-  img.className='w-full h-auto max-h-[70vh] object-contain cursor-zoom-in';
+  img.className='w-full h-full max-h-[75vh] object-contain cursor-zoom-in';
   img.addEventListener('click',function(){ openLightbox(r); });
   imgWrap.appendChild(img);
   if(r.demo){
@@ -1005,7 +1005,7 @@ function makeGalleryRow(r,i){
   }
   row.appendChild(imgWrap);
   var meta=document.createElement('div');
-  meta.className='flex-1 min-w-0 text-xs space-y-1.5 text-neutral-400';
+  meta.className='flex-1 min-w-0 self-stretch text-xs space-y-1.5 text-neutral-400';
   var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
   var expires=r.ts?new Date(r.ts+7*24*3600*1000).toLocaleString('id-ID'):'';
   var h='';
@@ -1099,6 +1099,11 @@ function renderDetail(){
   if(copyBtn) copyBtn.addEventListener('click',function(){ copyText(r.taskId); });
   var closeBtn=el.querySelector('button[title="Tutup detail"]');
   if(closeBtn) closeBtn.addEventListener('click',function(){ $('rightPan').classList.add('hidden'); });
+  // Tinggi panel Detail kanan mengikuti tinggi kartu galeri yang aktif (sejajar penuh)
+  var grid=$('grid');
+  var card=grid&&grid.children[_viewIdx]?grid.children[_viewIdx]:null;
+  if(card) el.style.minHeight=card.offsetHeight+'px';
+  else el.style.minHeight='';
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -1539,6 +1544,7 @@ function renderCanvas(){
 
 /* --- riwayat di mobile --- */
 $('btn-history').addEventListener('click',function(){ $('rightPan').classList.toggle('mobile-open'); });
+window.addEventListener('resize',function(){ if($('rdetail').innerHTML) renderDetail(); });
 $('overlay').addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); });
 
 renderLora();
