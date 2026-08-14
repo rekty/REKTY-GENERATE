@@ -53,7 +53,7 @@ Functions, atau Cloudflare Pages + Pages Function. Intinya:
 ```
 index.html              # UI + logika (single file, no build)
 functions/api.js        # backend Cloudflare Pages Function (proxy 3 provider)
-functions-firebase/     # backend Firebase Cloud Functions (versi sama)
+firebase-backend/        # backend Firebase Cloud Functions (versi sama)
 firebase.json           # config Firebase hosting + rewrite /api/**
 scripts/dev_server.py   # server lokal + mock provider
 scripts/test_backend.mjs# tes integrasi backend

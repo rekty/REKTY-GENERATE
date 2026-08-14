@@ -2,7 +2,7 @@
  * REKTY GENERATOR — backend untuk Firebase Cloud Functions (v2).
  *
  * Logika identik dengan functions/api.js (Cloudflare Pages Function).
- * Deploy: cd functions-firebase && npm install, lalu dari root:
+ * Deploy: cd firebase-backend && npm install, lalu dari root:
  *   firebase deploy --only functions
  *
  * API key TAMS: set secret/param `TENSORART_API_KEY`

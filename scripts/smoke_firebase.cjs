@@ -1,16 +1,16 @@
 /**
- * Smoke test `functions-firebase/index.js` TANPA emulator / deploy.
+ * Smoke test `firebase-backend/index.js` TANPA emulator / deploy.
  *
  * Memanggil handler onRequest (firebase-functions v2) langsung dengan
  * req/res tiruan + fetch palsu (seperti scripts/test_backend.mjs).
  *
- * Prasyarat: `cd functions-firebase && npm install`
+ * Prasyarat: `cd firebase-backend && npm install`
  * Jalankan dari root repo: node scripts/smoke_firebase.cjs
  */
 const path = require('node:path');
 const { createRequire } = require('node:module');
 
-const fnDir = path.join(__dirname, '..', 'functions-firebase');
+const fnDir = path.join(__dirname, '..', 'firebase-backend');
 const fireReq = createRequire(path.join(fnDir, 'package.json'));
 const { api } = fireReq(path.join(fnDir, 'index.js'));
 

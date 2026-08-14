@@ -63,7 +63,7 @@ results[], page ('text'|'img'|'edit'|'video'|'prime'), aspect ('portrait'|'lands
 
 ## Full Web Version (backend + deploy)
 
-- Backend siap: `functions/api.js` (Cloudflare Pages Function) + `functions-firebase/` (Firebase Cloud Functions) — proxy ke Tensor.Art Model Service (TAMS)
+- Backend siap: `functions/api.js` (Cloudflare Pages Function) + `firebase-backend/` (Firebase Cloud Functions) — proxy ke Tensor.Art Model Service (TAMS)
 - Provider: TAMS (default) / Replicate / fal.ai — pilih di panel API, env `TENSORART_API_KEY` / `REPLICATE_API_TOKEN` / `FAL_API_KEY`; task id ber-prefix `replicate:`/`fal:<model>:` untuk polling
 - Dropdown Model mengikuti provider: `MODEL_LIBS` (TAMS 12, Replicate 8, fal 7 — termasuk Krea 2 Turbo); payload membawa `params.model` (owner/name atau fal-ai/...) yang dipakai backend untuk mapping input per model (FLUX pakai aspect_ratio, schnell selalu 4 steps, dst.)
 - Dropdown LoRA mengikuti provider: `LORA_LIBS` (TAMS 14, Replicate 4 asli, fal 3). LoRA Replicate/fal mengalihkan target task ke model LoRA (id berisi `/`); model butuh-URL menampilkan input `.safetensors` di kartu (hint: HuggingFace resolve, Kaggle tidak bisa) dan dikirim sebagai `lora_url`/`lora_scale`/`lora_trigger_phrase` (FLUX), atau input asli `loras` (fal fast-sdxl / `fal-ai/krea-2/turbo/lora` untuk LoRA Krea 2 — tanpa negative/steps/guidance), atau `zylim0702/sdxl-lora-customize-model` (SDXL+URL di Replicate). Validasi "butuh URL" → HTTP 400
