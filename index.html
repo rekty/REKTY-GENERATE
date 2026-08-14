@@ -16,6 +16,9 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 ::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
 ::-webkit-scrollbar-thumb:hover{background:#3d444d}
 ::-webkit-scrollbar-track{background:transparent}
+.gfil{border:1px solid #30363d;border-radius:8px;padding:4px 10px;font-size:11px;color:#9ca3af;background:#1c2128;cursor:pointer;transition:.12s}
+.gfil:hover{color:#fff;border-color:#3d444d}
+.gfil.sel{background:#fff;color:#0d1117;border-color:#fff;font-weight:600}
 .bd{border-color:#30363d}
 .inp{border:1px solid #30363d;border-radius:8px;background:#1c2128;color:#e8e8e8;padding:8px 11px;outline:none;font-size:13px;width:100%}
 .inp:focus{border-color:#6F5DFF}
@@ -409,7 +412,16 @@ input[type=range]{cursor:pointer}
         <p class="text-sm">Hasil generate akan tampil di sini</p>
         <p class="text-xs text-neutral-700 mt-1">Isi prompt lalu tekan Generate</p>
       </div>
-      <div id="grid" class="flex flex-col items-center gap-3"></div>
+      <div id="gfilter" class="hidden flex items-center gap-1 mb-3 text-xs">
+        <button class="gfil sel" data-f="all">All</button>
+        <button class="gfil" data-f="video">Video</button>
+        <button class="gfil" data-f="image">Image</button>
+        <button class="gfil" data-f="audio">Audio</button>
+        <span class="flex-1"></span>
+        <span class="text-neutral-600 p-1" title="List"><i data-icon="list" class="w-4 h-4"></i></span>
+        <span class="text-neutral-600 p-1" title="Grid"><i data-icon="squares-four" class="w-4 h-4"></i></span>
+      </div>
+      <div id="grid" class="space-y-3"></div>
     </div>
   </main>
 
@@ -918,6 +930,17 @@ document.querySelectorAll('.rtab').forEach(function(t){
     $('rhistory').classList.toggle('hidden',p!=='history');
   });
 });
+/* Filter galeri (All/Video/Image/Audio) — seperti Tensor.Art */
+document.querySelectorAll('.gfil').forEach(function(f){
+  f.addEventListener('click',function(){
+    document.querySelectorAll('.gfil').forEach(function(x){x.classList.remove('sel')});
+    f.classList.add('sel');
+    var t=f.dataset.f; // all | video | image | audio
+    Array.prototype.forEach.call(document.querySelectorAll('#grid > div'),function(row){
+      row.style.display=(t==='all'||t==='image')?'':'none';
+    });
+  });
+});
 
 /* ===== mobile drawer ===== */
 $('mmenu').addEventListener('click',function(){ openLeft(); });
@@ -960,28 +983,58 @@ function extractImages(data){
 function persistResults(){
   try{ localStorage.setItem(RESULTS_KEY,JSON.stringify(state.results.slice(0,60))); }catch(e){}
 }
-/* Tampilan tengah: 1 gambar sesuai aspect ratio (seperti Tensor.Art),
-   object-contain + centered + nav prev/next lewat riwayat. */
+/* Tampilan tengah: galeri semua hasil menumpuk ke bawah (seperti Tensor.Art),
+   tiap baris = gambar + detail di kanannya. Scroll ke bawah muncul semua. */
 var _viewIdx=0; // index ke state.results (0 = terbaru)
-function renderGrid(){
-  var grid=$('grid'); grid.innerHTML='';
-  if(!state.results.length){ $('empty').style.display=''; return; }
-  $('empty').style.display='none';
-  if(_viewIdx>=state.results.length) _viewIdx=state.results.length-1;
-  var r=state.results[_viewIdx];
-  var wrap=document.createElement('div');
-  wrap.className='relative flex flex-col items-center w-full';
+function makeGalleryRow(r,i){
+  var row=document.createElement('div');
+  row.className='flex gap-4 border bd rounded-2xl bg-[#161b22] p-3';
+  var imgWrap=document.createElement('div');
+  imgWrap.className='shrink-0 w-[42%] sm:w-[34%] flex items-start justify-center bg-black/30 rounded-xl overflow-hidden';
   var img=document.createElement('img');
   img.src=r.src;
-  img.className='max-w-full max-h-[calc(100vh-250px)] w-auto object-contain rounded-xl border bd bg-black/40 cursor-zoom-in';
+  img.className='w-full h-auto max-h-[70vh] object-contain cursor-zoom-in';
   img.addEventListener('click',function(){ openLightbox(r); });
-  wrap.appendChild(img);
+  imgWrap.appendChild(img);
   if(r.demo){
     var bd=document.createElement('span');
     bd.className='absolute top-2 left-2 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300';
-    bd.textContent='DEMO'; wrap.appendChild(bd);
+    bd.textContent='DEMO'; imgWrap.appendChild(bd);
   }
-  grid.appendChild(wrap);
+  row.appendChild(imgWrap);
+  var meta=document.createElement('div');
+  meta.className='flex-1 min-w-0 text-xs space-y-1.5 text-neutral-400';
+  var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
+  var expires=r.ts?new Date(r.ts+7*24*3600*1000).toLocaleString('id-ID'):'';
+  var h='';
+  h+='<div class="flex items-center gap-1.5"><i data-icon="sparkle" class="w-3 h-3 text-violet-400"></i><span class="bg-violet-500/10 text-violet-300 px-1.5 py-px rounded text-[10px]">'+lbl+'</span>';
+  h+='<span class="text-[11px] text-neutral-500 truncate">'+(r.model||'')+'</span></div>';
+  h+='<div class="bg-black/40 rounded-lg p-2 text-[11px] text-neutral-300 leading-snug cursor-pointer hover:text-white" title="Lihat detail">'+(r.prompt||'').slice(0,160)+'</div>';
+  h+='<div class="space-y-1 text-[10px]">';
+  h+='<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300 truncate max-w-[65%]" title="'+esc(r.taskId)+'">'+esc(r.taskId||'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+(r.credits||'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>Created</span><span class="text-neutral-300">'+fmtDateTime(r.ts)+'</span></div>';
+  h+='<div class="flex justify-between"><span>Expires</span><span class="text-neutral-300">'+expires+'</span></div>';
+  h+='<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>';
+  h+='<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300">'+r.seed+'</span></div>';
+  h+='<div class="flex justify-between"><span>Steps</span><span class="text-neutral-300">'+(r.steps!=null&&r.steps!==''?r.steps:'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>CFG</span><span class="text-neutral-300">'+(r.cfg!=null&&r.cfg!==''?r.cfg:'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>Sampler</span><span class="text-neutral-300">'+(r.sampler||'-')+'</span></div>';
+  h+='</div>';
+  meta.innerHTML=h;
+  meta.querySelector('div[title="Lihat detail"]').addEventListener('click',function(){ _viewIdx=i; renderGrid(); renderDetail(); });
+  row.appendChild(meta);
+  return row;
+}
+function renderGrid(){
+  var grid=$('grid'); grid.innerHTML='';
+  var fil=$('gfilter');
+  if(!state.results.length){ $('empty').style.display=''; if(fil) fil.classList.add('hidden'); return; }
+  $('empty').style.display='none';
+  if(fil) fil.classList.remove('hidden');
+  if(_viewIdx>=state.results.length) _viewIdx=state.results.length-1;
+  var arr=state.results.slice(); // terbaru duluan (index 0)
+  arr.forEach(function(r,i){ grid.appendChild(makeGalleryRow(r,i)); });
 }
 function addResult(r){
   state.results.unshift(r);
