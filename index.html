@@ -407,20 +407,19 @@ input[type=range]{cursor:pointer}
   <!-- RIGHT PANEL -->
   <aside id="rightPan" class="w-[21rem] shrink-0 border-l bd bg-[#161b22] hidden lg:flex flex-col">
     <div class="flex items-center justify-between px-3 py-2 border-b bd">
-      <span class="text-sm font-semibold">Generation History</span>
+      <span class="text-sm font-semibold" id="rptitle">Text to Image</span>
       <div class="flex gap-1">
-        <button class="rtab sel" data-f="all">All</button>
-        <button class="rtab" data-f="image">Image</button>
-        <button class="rtab" data-f="video">Video</button>
-        <button class="rtab" data-f="audio">Audio</button>
+        <button class="rtab sel" data-p="detail">Detail</button>
+        <button class="rtab" data-p="history">Riwayat</button>
       </div>
     </div>
-    <div class="flex items-center px-3 py-1.5 border-b bd text-neutral-500">
-      <button class="h-7 w-7 flex items-center justify-center text-neutral-500 hover:text-white" title="Kelola"><i data-icon="sliders-horizontal" class="w-4 h-4"></i></button>
-      <span class="mx-auto text-xs" id="rcount">0 hasil</span>
-      <button class="h-7 w-7 flex items-center justify-center text-neutral-500 hover:text-white" title="Reload"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></button>
+    <!-- Detail hasil aktif (seperti Tensor.Art: Input + Details + params) -->
+    <div id="rdetail" class="flex-1 overflow-y-auto hidebar p-3 space-y-3"></div>
+    <!-- Riwayat generate (kartu) -->
+    <div id="rhistory" class="hidden flex-1 overflow-y-auto hidebar p-2 space-y-3">
+      <p id="rcount" class="text-xs text-neutral-500 px-1 pt-1">0 hasil</p>
+      <div id="rlist" class="space-y-3"></div>
     </div>
-    <div id="rlist" class="flex-1 overflow-y-auto hidebar p-2 space-y-3"></div>
   </aside>
 </div>
 
@@ -905,6 +904,9 @@ document.querySelectorAll('.rtab').forEach(function(t){
   t.addEventListener('click',function(){
     document.querySelectorAll('.rtab').forEach(function(x){x.classList.remove('sel')});
     t.classList.add('sel');
+    var p=t.dataset.p; // detail | history
+    $('rdetail').classList.toggle('hidden',p!=='detail');
+    $('rhistory').classList.toggle('hidden',p!=='history');
   });
 });
 
@@ -975,10 +977,10 @@ function renderGrid(){
     nav.className='flex items-center gap-3 text-xs text-neutral-400 mt-2';
     var prv=document.createElement('button');
     prv.className='w-7 h-7 rounded-lg border bd hover:text-white hover:border-[#6F5DFF] flex items-center justify-center'; prv.innerHTML='‹';
-    prv.addEventListener('click',function(){ _viewIdx=(_viewIdx+1)%state.results.length; renderGrid(); });
+    prv.addEventListener('click',function(){ _viewIdx=(_viewIdx+1)%state.results.length; renderGrid(); renderDetail(); });
     var nxt=document.createElement('button');
     nxt.className='w-7 h-7 rounded-lg border bd hover:text-white hover:border-[#6F5DFF] flex items-center justify-center'; nxt.innerHTML='›';
-    nxt.addEventListener('click',function(){ _viewIdx=(_viewIdx-1+state.results.length)%state.results.length; renderGrid(); });
+    nxt.addEventListener('click',function(){ _viewIdx=(_viewIdx-1+state.results.length)%state.results.length; renderGrid(); renderDetail(); });
     var cnt=document.createElement('span'); cnt.textContent=(_viewIdx+1)+' / '+state.results.length;
     nav.appendChild(prv); nav.appendChild(cnt); nav.appendChild(nxt);
     wrap.appendChild(nav);
@@ -991,11 +993,65 @@ function addResult(r){
   _viewIdx=0; // tampilkan hasil terbaru
   persistResults();
   renderGrid();
+  renderDetail();
   renderRight();
 }
 
-/* ===== right history ===== */
+/* ===== panel kanan: Detail hasil aktif (seperti Tensor.Art) ===== */
 function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('id-ID'); }catch(e){ return ''; } }
+function fmtDateTime(ts){ try{ return new Date(ts).toLocaleString('id-ID'); }catch(e){ return ''; } }
+function copyText(v){
+  if(!v) return;
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(v).then(function(){ toast('Tersalin ✓'); }); }
+  else toast('Task ID: '+v);
+}
+function renderDetail(){
+  var el=$('rdetail'); if(!el) return;
+  if(!state.results.length){ el.innerHTML='<p class="text-xs text-neutral-500 p-4 text-center">Belum ada hasil.</p>'; return; }
+  if(_viewIdx>=state.results.length) _viewIdx=state.results.length-1;
+  var r=state.results[_viewIdx];
+  var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
+  var expires=r.ts?new Date(r.ts+7*24*3600*1000).toLocaleString('id-ID'):'';
+  var h='';
+  // model badge
+  h+='<div class="flex items-center gap-2.5 border bd rounded-xl p-2.5 bg-[#1c2128]">'
+    +'<img src="'+(r.src||'')+'" class="w-10 h-10 rounded-lg object-cover border bd"/>'
+    +'<div class="min-w-0"><div class="text-xs font-medium truncate">'+(r.model||'Model')+'</div>'
+    +'<div class="text-[10px] text-neutral-500">'+lbl+'</div></div>'
+    +'<button class="ml-auto w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-white" title="Tutup detail"><i data-icon="x" class="w-4 h-4"></i></button>'
+    +'</div>';
+  // input prompt
+  h+='<div><div class="text-[11px] text-neutral-500 mb-1">Input</div>'
+    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-28 overflow-y-auto hidebar">'+(r.prompt||'-')+'</div></div>';
+  // details
+  h+='<div><div class="text-[11px] text-neutral-500 mb-1">Details</div>'
+    +'<div class="space-y-1.5 text-[11px] text-neutral-400">'
+    +'<div class="flex justify-between gap-2"><span>Task ID</span><span class="text-neutral-300 flex items-center gap-1 min-w-0"><span class="truncate" title="'+esc(r.taskId)+'">'+(r.taskId||'-')+'</span>'
+    +(r.taskId?'<button class="text-neutral-500 hover:text-white shrink-0" title="Salin"><i data-icon="copy" class="w-3.5 h-3.5"></i></button>':'')+'</span></div>'
+    +(r.credits?'<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+r.credits+'</span></div>':'')
+    +'<div class="flex justify-between"><span>Created date</span><span class="text-neutral-300">'+fmtDateTime(r.ts)+'</span></div>'
+    +'<div class="flex justify-between"><span>Expires date</span><span class="text-neutral-300">'+expires+'</span></div>'
+    +'</div></div>';
+  // negative prompt
+  h+='<div><div class="text-[11px] text-neutral-500 mb-1">Negative prompt</div>'
+    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-20 overflow-y-auto hidebar">'+(r.neg||'-')+'</div></div>';
+  // params
+  h+='<div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] text-neutral-400 border-t bd pt-2.5">'
+    +'<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
+    +'<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300 truncate">'+r.seed+'</span></div>'
+    +'<div class="flex justify-between"><span>Steps</span><span class="text-neutral-300">'+(r.steps!=null?r.steps:'-')+'</span></div>'
+    +'<div class="flex justify-between"><span>CFG scale</span><span class="text-neutral-300">'+(r.cfg!=null?r.cfg:'-')+'</span></div>'
+    +'<div class="flex justify-between"><span>Sampler</span><span class="text-neutral-300">'+(r.sampler||'-')+'</span></div>'
+    +'</div>';
+  el.innerHTML=h;
+  var copyBtn=el.querySelector('button[title="Salin"]');
+  if(copyBtn) copyBtn.addEventListener('click',function(){ copyText(r.taskId); });
+  var closeBtn=el.querySelector('button[title="Tutup detail"]');
+  if(closeBtn) closeBtn.addEventListener('click',function(){ $('rightPan').classList.add('hidden'); });
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ===== right history ===== */
 function renderRight(){
   var list=$('rlist'); list.innerHTML='';
   if(!state.results.length){ list.innerHTML='<p class="text-xs text-neutral-500 p-4 text-center">Belum ada hasil.</p>'; $('rcount').textContent='0 hasil'; return; }
@@ -1012,17 +1068,17 @@ function renderRight(){
       +'<div class="bg-black/40 rounded p-1.5 text-[11px] text-neutral-300 leading-snug cursor-pointer hover:text-white" title="Lihat detail">'+(r.prompt||'').slice(0,90)+'</div>'
       +'<div class="flex items-center gap-1 text-[10px] text-neutral-500"><i data-icon="layers" class="w-3 h-3"></i>'+LORA.filter(function(l){return l.w>0}).length+' LoRA</div>'
       +'<div class="space-y-1 text-[10px] text-neutral-500">'
-      +(r.taskId?'<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+r.taskId+'">'+r.taskId+'</span></div>':'')
+      +(r.taskId?'<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+esc(r.taskId)+'">'+esc(r.taskId)+'</span></div>':'')
       +(r.credits?'<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+r.credits+'</span></div>':'')
       +'<div class="flex justify-between"><span>Created</span><span class="text-neutral-300">'+fmtDate(r.ts)+'</span></div>'
-      +(r.neg?'<div class="flex justify-between"><span>Negative</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+r.neg+'">'+r.neg+'</span></div>':'')
+      +(r.neg?'<div class="flex justify-between"><span>Negative</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+esc(r.neg)+'">'+esc(r.neg)+'</span></div>':'')
       +'<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
       +'<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300">'+r.seed+'</span></div>'
       +'</div></div>';
-    d.querySelector('img').addEventListener('click',function(){ _viewIdx=i; renderGrid(); openLightbox(r); });
-    d.querySelector('.bg-black\\/40').addEventListener('click',function(){ _viewIdx=i; renderGrid(); openLightbox(r); });
+    d.querySelector('img').addEventListener('click',function(){ _viewIdx=i; renderGrid(); renderDetail(); openLightbox(r); });
+    d.querySelector('.bg-black\\/40').addEventListener('click',function(){ _viewIdx=i; renderGrid(); renderDetail(); openLightbox(r); });
     d.querySelector('button').addEventListener('click',function(){
-      state.results.splice(i,1); persistResults(); renderGrid(); renderRight();
+      state.results.splice(i,1); persistResults(); renderGrid(); renderDetail(); renderRight();
     });
     list.appendChild(d);
   });
@@ -1337,6 +1393,9 @@ function mkResult(src,par,taskId,credits){
     model:state.model?state.model.name:'',
     size:par.params.width+'x'+par.params.height, seed:par.params.seed,
     taskId:taskId||'', credits:credits!=null?credits:'',
+    steps:par.params.steps!=null?par.params.steps:'',
+    cfg:par.params.cfgScale!=null?par.params.cfgScale:'',
+    sampler:par.params.ksamplerName||par.params.sampler||'',
     ts:Date.now(), demo:false, page:state.page
   };
 }
@@ -1347,7 +1406,10 @@ function demoResults(par){
       var src=S+Math.floor(Math.random()*1e9)+'/512';
       addResult({src:src, prompt:par.params.prompt, neg:par.params.negativePrompt,
         model:state.model?state.model.name:'', size:par.params.width+'x'+par.params.height,
-        seed:par.params.seed, taskId:'', credits:'', ts:Date.now(), demo:true, page:state.page});
+        seed:par.params.seed, taskId:'', credits:'', ts:Date.now(), demo:true, page:state.page,
+        steps:par.params.steps!=null?par.params.steps:'',
+        cfg:par.params.cfgScale!=null?par.params.cfgScale:'',
+        sampler:par.params.ksamplerName||par.params.sampler||''});
     }
     hideProgress();
   },700);
@@ -1440,6 +1502,7 @@ try{
 }catch(e){}
 renderCanvas();
 renderGrid();
+renderDetail();
 renderRight();
 </script>
 </body>
