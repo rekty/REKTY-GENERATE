@@ -61,12 +61,28 @@ Tensor.Art clone web interface (frontend). Bahasa UI: Indonesia.
 
 results[], page ('text'|'img'|'edit'|'video'|'prime'), aspect ('portrait'|'landscape'|'square'|'custom'), ncol (1|2). LORA array sumber data LoRA + trigger.
 
+## Full Web Version (backend + deploy)
+
+- Backend siap: `functions/api.js` (Cloudflare Pages Function) + `functions-firebase/` (Firebase Cloud Functions) — proxy ke Tensor.Art Model Service (TAMS)
+- Provider: TAMS (default) / Replicate / fal.ai — pilih di panel API, env `TENSORART_API_KEY` / `REPLICATE_API_TOKEN` / `FAL_API_KEY`; task id ber-prefix `replicate:`/`fal:<model>:` untuk polling
+- Dropdown Model mengikuti provider: `MODEL_LIBS` (TAMS 12, Replicate 8, fal 7 — termasuk Krea 2 Turbo); payload membawa `params.model` (owner/name atau fal-ai/...) yang dipakai backend untuk mapping input per model (FLUX pakai aspect_ratio, schnell selalu 4 steps, dst.)
+- Dropdown LoRA mengikuti provider: `LORA_LIBS` (TAMS 14, Replicate 4 asli, fal 3). LoRA Replicate/fal mengalihkan target task ke model LoRA (id berisi `/`); model butuh-URL menampilkan input `.safetensors` di kartu (hint: HuggingFace resolve, Kaggle tidak bisa) dan dikirim sebagai `lora_url`/`lora_scale`/`lora_trigger_phrase` (FLUX), atau input asli `loras` (fal fast-sdxl / `fal-ai/krea-2/turbo/lora` untuk LoRA Krea 2 — tanpa negative/steps/guidance), atau `zylim0702/sdxl-lora-customize-model` (SDXL+URL di Replicate). Validasi "butuh URL" → HTTP 400
+- LoRA milik pengguna (mis. dari ComfyUI `models/loras`): cek base dari header safetensors (`ss_base_model_version` — krea2/zimage), upload `.safetensors` ke HuggingFace, pakai provider fal (Krea 2 Turbo + Krea 2 LoRA) — lihat DEPLOY.md
+- Tes backend (fetch tiruan, tanpa API asli): `node scripts/test_backend.mjs`
+- Generate asli: POST /api/generate -> taskId -> poll /api/task (progress) -> gambar
+- Mode API: Auto / Real / Demo (picsum) — panel kiri bawah "API", key tersimpan di localStorage
+- Riwayat hasil tersimpan di localStorage (max 60), metadata asli (task id, kredit, ukuran, seed), lightbox + hapus
+- Img2Img: upload gambar + denoising strength (taskType IMG2IMG)
+- Edit / Video / Prime: placeholder "segera hadir"
+- Riwayat tampil di mobile via tombol "Riwayat"
+- Panduan lengkap: DEPLOY.md
+
 ## Next Steps
 
-- Backend integration: ganti setTimeout di handler btn-go dengan `sendRequest(par)`, real image, live progress
-- Img2Img: isi tab Img2Img (drag-drop upload, denoising strength)
-- Edit tab: inpainting/outpainting
-- Mobile: right panel belum tampil di layar kecil
+- Edit tab: inpainting/outpainting (TAMS IMAGE_TO_INPAINT stage)
+- Video tab: TAMS videoDiffusion (WAN / Hunyuan / LTX)
+- Live progress per task card (bukan cuma overlay)
+- Krea 2 base non-LoRA di Replicate/fal: mapping `krea-2/turbo` (image_size enum, tanpa negative) sudah siap di backend
 
 ## Commands
 

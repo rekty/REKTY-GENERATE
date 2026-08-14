@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Rekty AI</title>
+<title>Rekty AI — Text to Image</title>
 <script>window.__ta_style__=true</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/@phosphor-icons/web/phosphor-icon.js"></script>
@@ -53,6 +53,7 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 .l-num{display:flex;align-items:center;gap:2px;flex-shrink:0}
 .lora-input{width:30px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#181818;color:#e8e8e8;font-size:12px;text-align:center;outline:none;padding:4px 0}
 .lora-input:focus{border-color:#6F5DFF}
+.lora-url-inp{font-size:11px;padding:6px 9px;margin-top:2px}
 .lora-btn{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#9a9aa2;background:transparent;border:none;transition:.12s}
 .lora-btn:hover{background:rgba(255,255,255,.1);color:#fff}
 .lora-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
@@ -71,6 +72,8 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 .rcard{border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:#222}
 .chip{border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#2a2a2a;transition:.12s}
 .chip:hover{color:#fff}.chip.on{border-color:#6F5DFF;color:#fff;background:#222}
+#toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
+@media (max-width:1023px){#rightPan.mobile-open{position:fixed;top:56px;right:0;bottom:0;left:auto;z-index:40;display:flex;width:min(21rem,92vw);box-shadow:-8px 0 30px rgba(0,0,0,.5)}}
 textarea{caret-color:#6F5DFF}
 input[type=checkbox]{width:14px;height:14px;cursor:pointer}
 input[type=range]{cursor:pointer}
@@ -152,7 +155,7 @@ input[type=range]{cursor:pointer}
 
       <!-- Model -->
       <div id="model-card" class="relative border bd rounded-xl bg-[#2a2a2a] hover:border-[rgba(255,255,255,.24)] cursor-pointer p-3">
-        <span class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#333] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
+        <span id="model-badge" class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#333] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
         <div class="flex items-center gap-3 mt-2">
           <img id="model-thumb" src="https://picsum.photos/seed/zimage/64" class="w-16 h-16 rounded-lg object-cover shrink-0 border bd" alt="model"/>
           <div class="flex-1 min-w-0">
@@ -305,6 +308,39 @@ input[type=range]{cursor:pointer}
         </div>
       </div>
 
+      <!-- API Settings -->
+      <div class="border bd rounded-xl bg-[#2a2a2a] p-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold">API</span>
+          <span id="api-status" class="text-[10px] text-neutral-500"></span>
+        </div>
+        <div class="field">
+          <label class="text-[11px] text-neutral-500">Provider</label>
+          <select id="apiprovider" class="inp text-xs">
+            <option value="tams">Tensor.Art (TAMS)</option>
+            <option value="replicate">Replicate (SDXL)</option>
+            <option value="fal">fal.ai (fast-sdxl)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="text-[11px] text-neutral-500" id="apikey-label">API Key TAMS (tams.tensor.art)</label>
+          <input id="apikey" type="password" class="inp" placeholder="Bearer token..." autocomplete="off"/>
+        </div>
+        <div id="api-hint" class="text-[10px] text-neutral-600"></div>
+        <div class="field">
+          <label class="text-[11px] text-neutral-500">Mode</label>
+          <select id="apimode" class="inp text-xs">
+            <option value="auto">Auto (backend &rarr; demo)</option>
+            <option value="real">Real API (wajib backend)</option>
+            <option value="demo">Demo (simulasi saja)</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button id="api-save" class="btn btn-ghost flex-1 h-8 border bd text-xs">Simpan</button>
+          <button id="api-test" class="btn btn-ghost flex-1 h-8 border bd text-xs">Tes</button>
+        </div>
+      </div>
+
       <!-- Bottom -->
       <div class="pt-1 border-t bd space-y-2">
         <button class="btn btn-ghost w-full h-9 justify-between"><span>Paste Generation Data</span><i data-icon="clipboard" class="w-4 h-4"></i></button>
@@ -317,6 +353,31 @@ input[type=range]{cursor:pointer}
   <!-- CENTER: image grid only -->
   <main id="canvas" class="flex-1 overflow-y-auto hidebar bg-[#181818]">
     <div class="p-4 max-w-3xl mx-auto">
+      <!-- Img2Img upload -->
+      <div id="img2img-card" class="hidden mb-4 border bd rounded-xl bg-[#222] p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-semibold">Img2Img — gambar awal</span>
+          <span id="i2i-clear" class="text-xs text-neutral-500 hover:text-white cursor-pointer">Hapus</span>
+        </div>
+        <div id="i2i-drop" class="border-2 border-dashed bd rounded-xl p-6 text-center cursor-pointer text-neutral-500 hover:border-[#6F5DFF] text-xs">
+          Klik atau seret gambar ke sini
+        </div>
+        <input id="i2i-file" type="file" accept="image/*" class="hidden"/>
+        <div id="i2i-preview" class="hidden mt-3">
+          <img id="i2i-img" class="w-40 h-40 object-cover rounded-lg border bd" alt=""/>
+        </div>
+        <div class="mt-3">
+          <label class="text-xs flex justify-between"><span>Denoising Strength</span><span id="i2i-dsv" class="text-neutral-500">0.50</span></label>
+          <input id="i2i-ds" type="range" min="0" max="1" step="0.05" value="0.5" class="slider mt-1"/>
+        </div>
+      </div>
+
+      <!-- Tab placeholder (Edit/Video/Prime) -->
+      <div id="tab-placeholder" class="hidden flex-col items-center justify-center h-[50vh] text-neutral-600">
+        <i data-icon="hourglass-medium" class="w-12 h-12 mb-3"></i>
+        <p class="text-sm" id="tab-placeholder-text">Tab ini segera hadir</p>
+      </div>
+
       <div id="empty" class="flex flex-col items-center justify-center h-[60vh] text-neutral-600">
         <i data-icon="image-square" class="w-14 h-14 mb-3"></i>
         <p class="text-sm">Hasil generate akan tampil di sini</p>
@@ -345,6 +406,38 @@ input[type=range]{cursor:pointer}
     <div id="rlist" class="flex-1 overflow-y-auto hidebar p-2 space-y-3"></div>
   </aside>
 </div>
+
+<!-- Mobile history toggle -->
+<button id="btn-history" class="lg:hidden fixed bottom-4 right-4 z-30 btn btn-blue h-11 px-4"><i data-icon="clock-counter-clockwise" class="w-4 h-4"></i> Riwayat</button>
+
+<!-- ============ PROGRESS OVERLAY ============ -->
+<div id="progoverlay" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4" style="top:56px">
+  <div class="w-full max-w-sm bg-[#222] border bd rounded-2xl p-5 space-y-3">
+    <div class="flex items-center justify-between">
+      <span id="prog-title" class="text-sm font-semibold">Generating...</span>
+      <button id="prog-cancel" class="text-neutral-500 hover:text-white text-lg leading-none" title="Batal">✕</button>
+    </div>
+    <div class="relative h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+      <div id="prog-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);transition:width .4s"></div>
+    </div>
+    <div class="flex items-center justify-between text-xs text-neutral-500">
+      <span id="prog-status">Mengirim task...</span>
+      <span id="prog-pct">0%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LIGHTBOX ============ -->
+<div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
+  <div class="relative max-w-3xl w-full bg-[#222] border bd rounded-2xl overflow-hidden">
+    <button id="lb-close" class="absolute top-2 right-2 z-10 w-9 h-9 flex items-center justify-center text-white hover:bg-white/10 rounded-lg text-xl">✕</button>
+    <img id="lb-img" class="w-full max-h-[60vh] object-contain bg-black" alt=""/>
+    <div id="lb-meta" class="p-4 space-y-1.5 text-xs text-neutral-400 overflow-y-auto max-h-[30vh]"></div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#2a2a2a] border bd rounded-xl px-4 py-2.5 text-sm shadow-lg max-w-[85vw]"></div>
 
 <!-- ============ SELECTOR MODAL ============ -->
 <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
@@ -376,38 +469,75 @@ const $ = id => document.getElementById(id);
 const S = 'https://picsum.photos/seed/';
 const state = { results:[], page:'text', aspect:'portrait', ncol:2, model:null };
 
-const LORA_LIB = [
-  { name:'Z-Image LoRA | Detail', tags:['detailed','sharp'], thumb:'afro', badge:'Z-IMAGE', views:'12K', ver:'V1', base:'Z Image' },
-  { name:'Z-Image Turbo', tags:['turbo','fast'], thumb:'retro', badge:'Z-IMAGE-TURBO', views:'8K', ver:'V1', base:'Z Image' },
-  { name:'Z-Image HDR', tags:['hdr','vivid'], thumb:'hdr', badge:'Z-IMAGE', views:'15K', ver:'V1', base:'Z Image' },
-  { name:'Z-Image Portrait', tags:['portrait','bokeh'], thumb:'ptrt', badge:'Z-IMAGE', views:'22K', ver:'V1', base:'Z Image' },
-  { name:'Z-Image Artistic', tags:['artistic','paint'], thumb:'art', badge:'Z-IMAGE', views:'18K', ver:'V1', base:'Z Image' },
-  { name:'Flux Realism LoRA', tags:['realistic','photo'], thumb:'fluxl', badge:'FLUX', views:'45K', ver:'V1', base:'FLUX.1' },
-  { name:'Flux Cinematic LoRA', tags:['cinematic','moody'], thumb:'fluxc', badge:'FLUX', views:'33K', ver:'V1', base:'FLUX.1' },
-  { name:'SDXL Fine Detail', tags:['detailed','sharp'], thumb:'detail', badge:'SDXL', views:'500K', ver:'V1', base:'SDXL' },
-  { name:'SDXL Anime Style', tags:['anime','cel'], thumb:'animesl', badge:'SDXL', views:'280K', ver:'V1', base:'SDXL' },
-  { name:'Pony Equestrian Art', tags:['pony','fantasy'], thumb:'ponyl', badge:'PONY', views:'150K', ver:'V1', base:'Pony' },
-  { name:'Nippon-Core Retro - v0.1', tags:['japretr7comm','retro magazine'], thumb:'bilibin', badge:'STYLE', views:'96K', ver:'V.1', base:'SDXL' },
-  { name:'Ivan Bilibin - v0.7', tags:['ivanbilibin5z','illustration','art deco'], thumb:'detail', badge:'ILLUSTRATION', views:'154K', ver:'V.1', base:'SDXL' },
-  { name:'Detail Tweaker - v1.0', tags:['detailed'], thumb:'grain', badge:'UTILITY', views:'1.2M', ver:'V.1', base:'SDXL' },
-  { name:'Film Grain - v0.5', tags:['film grain','analog'], thumb:'grain', badge:'UTILITY', views:'67K', ver:'V.1', base:'SDXL' },
-];
+/* ===== LoRA — daftar asli per provider ===== */
+var LORA_LIBS = {
+  tams: [
+    { name:'Z-Image LoRA | Detail', tags:['detailed','sharp'], thumb:'afro', badge:'Z-IMAGE', views:'12K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image Turbo', tags:['turbo','fast'], thumb:'retro', badge:'Z-IMAGE-TURBO', views:'8K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image HDR', tags:['hdr','vivid'], thumb:'hdr', badge:'Z-IMAGE', views:'15K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image Portrait', tags:['portrait','bokeh'], thumb:'ptrt', badge:'Z-IMAGE', views:'22K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image Artistic', tags:['artistic','paint'], thumb:'art', badge:'Z-IMAGE', views:'18K', ver:'V1', base:'Z Image' },
+    { name:'Flux Realism LoRA', tags:['realistic','photo'], thumb:'fluxl', badge:'FLUX', views:'45K', ver:'V1', base:'FLUX.1' },
+    { name:'Flux Cinematic LoRA', tags:['cinematic','moody'], thumb:'fluxc', badge:'FLUX', views:'33K', ver:'V1', base:'FLUX.1' },
+    { name:'SDXL Fine Detail', tags:['detailed','sharp'], thumb:'detail', badge:'SDXL', views:'500K', ver:'V1', base:'SDXL' },
+    { name:'SDXL Anime Style', tags:['anime','cel'], thumb:'animesl', badge:'SDXL', views:'280K', ver:'V1', base:'SDXL' },
+    { name:'Pony Equestrian Art', tags:['pony','fantasy'], thumb:'ponyl', badge:'PONY', views:'150K', ver:'V1', base:'Pony' },
+    { name:'Nippon-Core Retro - v0.1', tags:['japretr7comm','retro magazine'], thumb:'bilibin', badge:'STYLE', views:'96K', ver:'V.1', base:'SDXL' },
+    { name:'Ivan Bilibin - v0.7', tags:['ivanbilibin5z','illustration','art deco'], thumb:'detail', badge:'ILLUSTRATION', views:'154K', ver:'V.1', base:'SDXL' },
+    { name:'Detail Tweaker - v1.0', tags:['detailed'], thumb:'grain', badge:'UTILITY', views:'1.2M', ver:'V.1', base:'SDXL' },
+    { name:'Film Grain - v0.5', tags:['film grain','analog'], thumb:'grain', badge:'UTILITY', views:'67K', ver:'V.1', base:'SDXL' },
+  ],
+  replicate: [
+    { name:'FLUX.1 [schnell] LoRA', base:'FLUX', model:'black-forest-labs/flux-schnell-lora', tags:['flux-lora'], thumb:'fluxl', badge:'FLUX-LORA', views:'120K', ver:'V1', needUrl:true },
+    { name:'FLUX.1 [dev] LoRA', base:'FLUX', model:'black-forest-labs/flux-dev-lora', tags:['flux-lora'], thumb:'fluxdl', badge:'FLUX-LORA', views:'90K', ver:'V1', needUrl:true },
+    { name:'SDXL + LoRA URL (custom)', base:'SDXL', model:'zylim0702/sdxl-lora-customize-model', tags:['lora'], thumb:'sdxll', badge:'SDXL-LORA', views:'310K', ver:'V1', needUrl:true },
+    { name:'IKEA Instructions (SDXL, bawaan)', base:'SDXL', model:'ostris/ikea-instructions-lora-sdxl', tags:['ikea instructions'], thumb:'ikea', badge:'STYLE', views:'210K', ver:'V1' },
+  ],
+  fal: [
+    { name:'FLUX LoRA', base:'FLUX', model:'fal-ai/flux-lora', tags:['flux-lora'], thumb:'fluxl', badge:'FLUX-LORA', views:'150K', ver:'V1', needUrl:true },
+    { name:'SDXL + LoRA URL (fast-sdxl)', base:'SDXL', model:'fal-ai/fast-sdxl', tags:['lora'], thumb:'sdxll', badge:'SDXL-LORA', views:'120K', ver:'V1', needUrl:true },
+    { name:'Krea 2 LoRA (turbo)', base:'Krea 2', model:'fal-ai/krea-2/turbo/lora', tags:['krea2'], thumb:'krea', badge:'KREA2-LORA', views:'66K', ver:'V1', needUrl:true },
+  ],
+};
+var LORA_LIB = LORA_LIBS.tams; // daftar aktif mengikuti provider
 const LORA = [];
-/* ===== Model modal ===== */
-var MODELS = [
-  { name:'Z Image - base-bf16', base:'Basic Model', arch:'Z Image', thumb:'zimage', badge:'Z', views:'44K', ver:'V.1', modelId:'1027906253260603805', modelFileId:'1027906254334366245' },
-  { name:'FLUX.1 [dev]', base:'Basic Model', arch:'FLUX.1', thumb:'flux', badge:'FLUX', views:'154K', ver:'V.1', modelId:'1027906282644525056', modelFileId:'1027906282644525057' },
-  { name:'Stable Diffusion XL', base:'Basic Model', arch:'SDXL', thumb:'sdxl', badge:'SDXL 1.0', views:'892K', ver:'V.1', modelId:'1027906309032136704', modelFileId:'1027906309032136705' },
-  { name:'Stable Diffusion 3.5 Medium', base:'Basic Model', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'312K', ver:'V.1', modelId:'1027906317452808192', modelFileId:'1027906317452808193' },
-  { name:'Pony Diffusion V6', base:'Basic Model', arch:'Pony', thumb:'pony', badge:'PONY', views:'2.1M', ver:'V6', modelId:'1027906326874271744', modelFileId:'1027906326874271745' },
-  { name:'Illustrious XL', base:'Basic Model', arch:'Illustrious', thumb:'illust', badge:'ILLUSTRIOUS', views:'67K', ver:'V.1', modelId:'1027906335782414336', modelFileId:'1027906335782414337' },
-  { name:'Anima', base:'Basic Model', arch:'Anima', thumb:'anima', badge:'ANIMA', views:'52K', ver:'V.1', modelId:'1027906344716771840', modelFileId:'1027906344716771841' },
-  { name:'DreamShaper', base:'Basic Model', arch:'SDXL', thumb:'dream', badge:'DS', views:'812K', ver:'V.5', modelId:'1027906353499429888', modelFileId:'1027906353499429889' },
-  { name:'Realistic Vision', base:'Basic Model', arch:'SDXL', thumb:'real', badge:'RV', views:'645K', ver:'V.6.0', modelId:'1027906362412531712', modelFileId:'1027906362412531713' },
-  { name:'Counterfeit', base:'Basic Model', arch:'SDXL', thumb:'counter', badge:'COUNTERFEIT', views:'420K', ver:'V.5', modelId:'1027906371334727680', modelFileId:'1027906371334727681' },
-  { name:'Lyriel', base:'Basic Model', arch:'SDXL', thumb:'lyriel', badge:'LYRIEL', views:'320K', ver:'V.1.6', modelId:'1027906379996013568', modelFileId:'1027906379996013569' },
-  { name:'Juggernaut', base:'Basic Model', arch:'SDXL', thumb:'jug', badge:'JUGG', views:'210K', ver:'V.9', modelId:'1027906388421099520', modelFileId:'1027906388421099521' },
-];
+/* ===== Model modal — daftar model asli per provider ===== */
+var MODEL_LIBS = {
+  tams: [
+    { name:'Z Image - base-bf16', base:'Basic Model', arch:'Z Image', thumb:'zimage', badge:'Z', views:'44K', ver:'V.1', modelId:'1027906253260603805', modelFileId:'1027906254334366245' },
+    { name:'FLUX.1 [dev]', base:'Basic Model', arch:'FLUX.1', thumb:'flux', badge:'FLUX', views:'154K', ver:'V.1', modelId:'1027906282644525056', modelFileId:'1027906282644525057' },
+    { name:'Stable Diffusion XL', base:'Basic Model', arch:'SDXL', thumb:'sdxl', badge:'SDXL 1.0', views:'892K', ver:'V.1', modelId:'1027906309032136704', modelFileId:'1027906309032136705' },
+    { name:'Stable Diffusion 3.5 Medium', base:'Basic Model', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'312K', ver:'V.1', modelId:'1027906317452808192', modelFileId:'1027906317452808193' },
+    { name:'Pony Diffusion V6', base:'Basic Model', arch:'Pony', thumb:'pony', badge:'PONY', views:'2.1M', ver:'V6', modelId:'1027906326874271744', modelFileId:'1027906326874271745' },
+    { name:'Illustrious XL', base:'Basic Model', arch:'Illustrious', thumb:'illust', badge:'ILLUSTRIOUS', views:'67K', ver:'V.1', modelId:'1027906335782414336', modelFileId:'1027906335782414337' },
+    { name:'Anima', base:'Basic Model', arch:'Anima', thumb:'anima', badge:'ANIMA', views:'52K', ver:'V.1', modelId:'1027906344716771840', modelFileId:'1027906344716771841' },
+    { name:'DreamShaper', base:'Basic Model', arch:'SDXL', thumb:'dream', badge:'DS', views:'812K', ver:'V.5', modelId:'1027906353499429888', modelFileId:'1027906353499429889' },
+    { name:'Realistic Vision', base:'Basic Model', arch:'SDXL', thumb:'real', badge:'RV', views:'645K', ver:'V.6.0', modelId:'1027906362412531712', modelFileId:'1027906362412531713' },
+    { name:'Counterfeit', base:'Basic Model', arch:'SDXL', thumb:'counter', badge:'COUNTERFEIT', views:'420K', ver:'V.5', modelId:'1027906371334727680', modelFileId:'1027906371334727681' },
+    { name:'Lyriel', base:'Basic Model', arch:'SDXL', thumb:'lyriel', badge:'LYRIEL', views:'320K', ver:'V.1.6', modelId:'1027906379996013568', modelFileId:'1027906379996013569' },
+    { name:'Juggernaut', base:'Basic Model', arch:'SDXL', thumb:'jug', badge:'JUGG', views:'210K', ver:'V.9', modelId:'1027906388421099520', modelFileId:'1027906388421099521' },
+  ],
+  replicate: [
+    { name:'FLUX.1 [schnell]', base:'Replicate', arch:'FLUX', thumb:'flux', badge:'FLUX', views:'4M', ver:'V1', model:'black-forest-labs/flux-schnell' },
+    { name:'FLUX.1 [dev]', base:'Replicate', arch:'FLUX', thumb:'fluxd', badge:'FLUX', views:'2.1M', ver:'V1', model:'black-forest-labs/flux-dev' },
+    { name:'SDXL 1.0', base:'Replicate', arch:'SDXL', thumb:'sdxl', badge:'SDXL 1.0', views:'1.2M', ver:'V1', model:'stability-ai/sdxl' },
+    { name:'Stable Diffusion 3.5 Large', base:'Replicate', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'1.5M', ver:'V1', model:'stability-ai/stable-diffusion-3.5-large' },
+    { name:'SDXL Lightning 4-Step', base:'Replicate', arch:'SDXL', thumb:'lightning', badge:'LIGHTNING', views:'1.8M', ver:'V1', model:'bytedance/sdxl-lightning-4step' },
+    { name:'RealVisXL V4.0', base:'Replicate', arch:'SDXL', thumb:'real', badge:'REALISTIC', views:'900K', ver:'V4.0', model:'lucataco/realvisxl-v4.0' },
+    { name:'Juggernaut XL V9', base:'Replicate', arch:'SDXL', thumb:'jug', badge:'JUGG', views:'750K', ver:'V9', model:'digiplay/Juggernaut_XL_v9' },
+    { name:'SDXL Emoji', base:'Replicate', arch:'SDXL', thumb:'emoji', badge:'EMOJI', views:'600K', ver:'V1', model:'fofr/sdxl-emoji' },
+  ],
+  fal: [
+    { name:'FLUX.1 [schnell]', base:'fal.ai', arch:'FLUX', thumb:'flux', badge:'FLUX', views:'5M', ver:'V1', model:'fal-ai/flux/schnell' },
+    { name:'FLUX.1 [dev]', base:'fal.ai', arch:'FLUX', thumb:'fluxd', badge:'FLUX', views:'3M', ver:'V1', model:'fal-ai/flux/dev' },
+    { name:'Fast SDXL', base:'fal.ai', arch:'SDXL', thumb:'fastsdxl', badge:'FAL', views:'2.5M', ver:'V1', model:'fal-ai/fast-sdxl' },
+    { name:'SDXL', base:'fal.ai', arch:'SDXL', thumb:'sdxl', badge:'SDXL 1.0', views:'1.1M', ver:'V1', model:'fal-ai/sdxl' },
+    { name:'Stable Diffusion 3.5 Large', base:'fal.ai', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'900K', ver:'V1', model:'fal-ai/stable-diffusion-v35-large' },
+    { name:'Playground v2.5', base:'fal.ai', arch:'SDXL', thumb:'play', badge:'PLAY', views:'700K', ver:'V2.5', model:'fal-ai/playground/v2.5' },
+    { name:'Krea 2 Turbo', base:'fal.ai', arch:'Krea 2', thumb:'krea', badge:'KREA2', views:'1.1M', ver:'V2', model:'fal-ai/krea-2/turbo' },
+  ],
+};
+var MODELS = MODEL_LIBS.tams; // daftar aktif mengikuti provider
 var MCAT = ['Try Now','ALL','OFFICIAL MODEL','MEME','EXCLUSIVE','BEAUTY','3D','2.5D','MALE','ANIME','REALISTIC','STYLE','GAME','DESIGN','SCENERY','BUILDINGS','MECHA'];
 var _curList=[], _curOnSel=function(){};
 function renderCards(list, onSel){
@@ -472,6 +602,7 @@ function setModel(m){
   state.model=m;
   $('model-name').textContent=m.name;
   $('model-thumb').src='https://picsum.photos/seed/'+m.thumb+'/64';
+  var b=$('model-badge'); if(b) b.textContent=(m.base||'Model')+' - '+(m.arch||'');
 }
 function openModelSelector(){
   $('modal-title').textContent='Pilih Model';
@@ -487,7 +618,7 @@ function openLoraModal(){
     return (!LORA.some(function(x){return x.name===l.name})) && (!arch || !l.base || l.base===arch);
   }); };
   var onSel=function(l){
-    LORA.push({ name:l.name, w:0.8, tags:l.tags, thumb:l.thumb, base:l.base });
+    LORA.push({ name:l.name, w:0.8, tags:l.tags, thumb:l.thumb, base:l.base, loraModel:l.model||'', needUrl:l.needUrl, loraUrl:'' });
     renderLora(); closeModal();
   };
   renderMCat(function(){ renderCards(avail(), onSel); });
@@ -536,7 +667,7 @@ function renderLora(){
   LORA.forEach(function(l,ri){
     var d=document.createElement('div');
     d.className='lora-card';
-    d.innerHTML='<div class="lora-card">'
+    d.innerHTML=''
       +'<span class="lora-label">LoRA - '+(l.base||'Z Image')+'</span>'
       +'<div class="lora-top">'
       +'<img src="'+S+l.thumb+'/40" class="lora-thumb" alt=""/>'
@@ -553,9 +684,11 @@ function renderLora(){
       +'<input type="text" value="'+l.w.toFixed(1)+'" class="lora-input" data-ri="'+ri+'" inputmode="decimal"/>'
       +'<button class="lora-btn" data-inc="'+ri+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>'
       +'</div>'
-      +'</div>'
+      +(l.needUrl?'<div class="mt-2"><input type="text" class="inp lora-url-inp" value="'+(l.loraUrl||'')+'" data-url="'+ri+'" placeholder="https://huggingface.co/user/repo/resolve/main/lora.safetensors"/><div class="mt-1 text-[10px] leading-snug text-neutral-500">URL publik langsung (.safetensors) — contoh HuggingFace resolve. Kaggle tidak bisa (butuh login).</div></div>':'')
       +'</div>';
     var sl=d.querySelector('.l-slider [data-ri="'+ri+'"]');
+    var uInp=d.querySelector('[data-url="'+ri+'"]');
+    if(uInp){ uInp.addEventListener('input',function(e){ LORA[ri].loraUrl=e.target.value.trim(); }); }
     sl.addEventListener('input',function(e){
       var v=parseFloat(e.target.value); if(isNaN(v))return;
       LORA[ri].w=v;
@@ -663,6 +796,7 @@ document.querySelectorAll('.tab').forEach(function(t){
   t.addEventListener('click',function(){
     document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('sel')});
     t.classList.add('sel'); state.page=t.dataset.tab;
+    renderCanvas();
   });
 });
 document.querySelectorAll('.rtab').forEach(function(t){
@@ -685,29 +819,8 @@ $('ncol').addEventListener('click',function(){
   $('ncollbl').textContent=state.ncol;
 });
 
-/* ===== generate (real API) ===== */
-$('btn-go').addEventListener('click',async function(){
-  var p=$('prompt').value.trim();
-  if(!p){ openLeft(); $('prompt').focus(); return; }
-  var par=buildPayload();
-  setBusy(true);
-  $('empty').style.display='none';
-  try{
-    var data=await sendRequest(par);
-    var imgs=extractImages(data);
-    if(!imgs.length) throw new Error('Response tanpa gambar');
-    imgs.forEach(function(src){ addResult({src:src,prompt:p,params:par}); });
-  }catch(e){
-    // fallback simu kalau backend mati, biar dev tetap jalan
-    setTimeout(function(){
-      for(var i=0;i<state.ncol;i++){
-        var src=S+Math.floor(Math.random()*1e9)+'/512';
-        addResult({src:src,prompt:p,params:par});
-      }
-    },400);
-  }
-  setBusy(false);
-});
+/* ===== generate (real API / demo fallback) ===== */
+$('btn-go').addEventListener('click',doGenerate);
 function setBusy(b){
   $('btn-go').disabled=b; $('btn-go').style.opacity=b?'0.5':'1';
   $('btn-go').innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
@@ -719,40 +832,83 @@ function extractImages(data){
   var imgs=data.images||data.data&&data.data.images||data.result&&data.result.images||data.urls||[];
   return imgs.map(function(i){ return typeof i==='string'?i:(i.url||i.src||i.image||i.path); }).filter(Boolean);
 }
-function addResult(r){
+/* ===== hasil + riwayat (persist localStorage) ===== */
+function persistResults(){
+  try{ localStorage.setItem(RESULTS_KEY,JSON.stringify(state.results.slice(0,60))); }catch(e){}
+}
+function makeGridCard(r){
   var g=document.createElement('div');
   g.className='relative rounded-xl overflow-hidden border bd aspect-[4/5] bg-[#2a2a2a] cursor-pointer hover:border-[rgba(255,255,255,.24)]';
   g.innerHTML='<img src="'+r.src+'" class="w-full h-full object-cover"/>'
-    +'<div class="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition flex gap-1"></div>';
-  $('grid').appendChild(g);
+    +(r.demo?'<span class="absolute top-1.5 left-1.5 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300">DEMO</span>':'');
+  g.addEventListener('click',function(){ openLightbox(r); });
+  return g;
+}
+function renderGrid(){
+  var grid=$('grid'); grid.innerHTML='';
+  var arr=state.results.slice().reverse(); // hasil terbaru tampil duluan
+  arr.forEach(function(r){ grid.appendChild(makeGridCard(r)); });
+  $('empty').style.display = state.results.length>0 ? 'none' : '';
+}
+function addResult(r){
   state.results.unshift(r);
+  if(state.results.length>60) state.results.length=60;
+  persistResults();
+  renderGrid();
   renderRight();
 }
 
 /* ===== right history ===== */
+function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('id-ID'); }catch(e){ return ''; } }
 function renderRight(){
   var list=$('rlist'); list.innerHTML='';
-  if(!state.results.length){list.innerHTML='<p class="text-xs text-neutral-500 p-4 text-center">Belum ada hasil.</p>';return;}
+  if(!state.results.length){ list.innerHTML='<p class="text-xs text-neutral-500 p-4 text-center">Belum ada hasil.</p>'; $('rcount').textContent='0 hasil'; return; }
   $('rcount').textContent=state.results.length+' hasil';
-  state.results.forEach(function(r){
+  state.results.forEach(function(r,i){
     var d=document.createElement('div'); d.className='rcard';
-    d.innerHTML='<img src="'+r.src+'" class="w-full aspect-[4/3] object-cover"/>'
+    var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
+    d.innerHTML='<div class="relative">'
+      +'<img src="'+r.src+'" class="w-full aspect-[4/3] object-cover cursor-pointer"/>'
+      +'<button class="absolute top-1.5 right-1.5 w-6 h-6 rounded-md bg-black/50 hover:bg-red-500/80 text-white flex items-center justify-center text-xs" title="Hapus">✕</button>'
+      +'</div>'
       +'<div class="p-2.5 space-y-1.5 text-xs">'
-      +'<div class="flex items-center gap-1.5"><i data-icon="sparkle" class="w-3 h-3 text-violet-400"></i><span class="bg-violet-500/10 text-violet-300 px-1.5 py-px rounded text-[10px]">Text to Image</span></div>'
-      +'<div class="bg-black/40 rounded p-1.5 text-[11px] text-neutral-300 leading-snug">'+(r.prompt||'').slice(0,90)+'</div>'
+      +'<div class="flex items-center gap-1.5"><i data-icon="sparkle" class="w-3 h-3 text-violet-400"></i><span class="bg-violet-500/10 text-violet-300 px-1.5 py-px rounded text-[10px]">'+lbl+'</span></div>'
+      +'<div class="bg-black/40 rounded p-1.5 text-[11px] text-neutral-300 leading-snug cursor-pointer hover:text-white" title="Lihat detail">'+(r.prompt||'').slice(0,90)+'</div>'
       +'<div class="flex items-center gap-1 text-[10px] text-neutral-500"><i data-icon="layers" class="w-3 h-3"></i>'+LORA.filter(function(l){return l.w>0}).length+' LoRA</div>'
       +'<div class="space-y-1 text-[10px] text-neutral-500">'
-      +'<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300">'+Math.floor(Math.random()*99999999)+'</span></div>'
-      +'<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">1.22</span></div>'
-      +'<div class="flex justify-between"><span>Created</span><span class="text-neutral-300">'+new Date().toLocaleDateString('id-ID')+'</span></div>'
-      +'<div class="flex justify-between"><span>Expires</span><span class="text-neutral-300">'+new Date(Date.now()+7*864e5).toLocaleDateString('id-ID')+'</span></div>'
-      +'<div class="flex justify-between"><span>Negative Prompt</span></div>'
-      +'<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+$('width').value+'x'+$('height').value+'</span></div>'
-      +'<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300">'+$('seed').value+'</span></div>'
+      +(r.taskId?'<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+r.taskId+'">'+r.taskId+'</span></div>':'')
+      +(r.credits?'<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+r.credits+'</span></div>':'')
+      +'<div class="flex justify-between"><span>Created</span><span class="text-neutral-300">'+fmtDate(r.ts)+'</span></div>'
+      +(r.neg?'<div class="flex justify-between"><span>Negative</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+r.neg+'">'+r.neg+'</span></div>':'')
+      +'<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
+      +'<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300">'+r.seed+'</span></div>'
       +'</div></div>';
+    d.querySelector('img').addEventListener('click',function(){ openLightbox(r); });
+    d.querySelector('.bg-black\\/40').addEventListener('click',function(){ openLightbox(r); });
+    d.querySelector('button').addEventListener('click',function(){
+      state.results.splice(i,1); persistResults(); renderRight();
+    });
     list.appendChild(d);
   });
 }
+
+/* ===== lightbox ===== */
+function openLightbox(r){
+  $('lb-img').src=r.src;
+  var h='';
+  h+='<div class="flex justify-between"><span>Model</span><span class="text-neutral-200">'+(r.model||'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>Prompt</span><span class="text-neutral-200">'+(r.prompt||'-')+'</span></div>';
+  if(r.neg) h+='<div class="flex justify-between"><span>Negative</span><span class="text-neutral-200">'+r.neg+'</span></div>';
+  h+='<div class="flex justify-between"><span>Size</span><span class="text-neutral-200">'+(r.size||'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>Seed</span><span class="text-neutral-200">'+(r.seed||'-')+'</span></div>';
+  if(r.taskId) h+='<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-200">'+r.taskId+'</span></div>';
+  if(r.credits) h+='<div class="flex justify-between"><span>Credits</span><span class="text-neutral-200">'+r.credits+'</span></div>';
+  h+='<div class="mt-2"><a href="'+r.src+'" target="_blank" rel="noopener" class="text-[#6F5DFF] hover:underline text-xs">Buka gambar asli &nearr;</a></div>';
+  $('lb-meta').innerHTML=h;
+  $('lightbox').classList.remove('hidden'); $('lightbox').classList.add('flex');
+}
+$('lb-close').addEventListener('click',function(){ $('lightbox').classList.add('hidden'); $('lightbox').classList.remove('flex'); });
+$('lightbox').addEventListener('click',function(e){ if(e.target===$('lightbox')){ $('lightbox').classList.add('hidden'); $('lightbox').classList.remove('flex'); } });
 
 /* ===== payload (struktur nyata Tensor.Art) ===== */
 function buildPayload(){
@@ -761,8 +917,9 @@ function buildPayload(){
   return {
     params:{
       baseModel:{ modelId:m.modelId, modelFileId:m.modelFileId },
+      model:settings.provider==='tams'?'':(m&&m.model?m.model:''),
       sdxl:{ refiner:false },
-      models:LORA.filter(function(l){return l.w>0}).map(function(l){return { name:l.name, weight:l.w, triggerWords:l.tags } }),
+      models:LORA.filter(function(l){return l.w>0}).map(function(l){return { name:l.name, weight:l.w, triggerWords:l.tags, loraModel:l.loraModel||'', loraUrl:l.loraUrl||'' } }),
       embeddingModels:[],
       sdVae:$('vae').value==='automatic'?'Automatic':$('vae').value,
       prompt:$('prompt').value,
@@ -771,33 +928,255 @@ function buildPayload(){
       width:parseInt($('width').value),
       imageCount:state.ncol,
       steps:parseInt($('steps').value),
-      images:[],
+      images:i2iDataUrl?[i2iDataUrl]:[],
+      denoisingStrength:parseFloat($('i2i-ds').value)||0.5,
       cfgScale:parseFloat($('cfg').value),
-      seed:$('seed').value,
+      seed:($('seed').value||'').trim()||String(Math.floor(Math.random()*9999999999)),
       clipSkip:parseInt($('clipskip').value),
       etaNoiseSeedDelta:parseInt($('etansd').value),
       v1Clip:false,
-      enablePix2pix:false,
+      enablePix2pix:state.page==='img'&&!!i2iDataUrl,
       guidance:3.5,
       useFirstLastFrame:false,
       ksamplerName:$('sampler').value,
       schedule:$('sched').value
     },
+    provider:settings.provider||'tams',
     credits:1.22,
-    taskType:'TXT2IMG',
+    taskType:state.page==='img'&&i2iDataUrl?'IMG2IMG':'TXT2IMG',
     isRemix:false,
     captchaType:'CLOUDFLARE_TURNSTILE'
   };
 }
-async function sendRequest(payload){
-  var res=await fetch('http://localhost:8000/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  return res.json();
+/* ============ REKTY GENERATOR — versi web full ============
+ * Generate asli via backend (/api -> Tensor.Art Model Service)
+ * atau mode demo (picsum) kalau backend/API key belum aktif.
+ * ========================================================== */
+var SETTINGS_KEY='rekty.settings', RESULTS_KEY='rekty.results';
+var settings={ mode:'auto', provider:'tams', apiKey:'' };
+var PROVIDER_INFO={
+  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
+  replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
+  fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' }
+};
+
+function loadSettings(){
+  try{
+    var s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+    if(s&&typeof s==='object'){
+      settings.mode=s.mode||'auto'; settings.provider=s.provider||'tams'; settings.apiKey=s.apiKey||'';
+    }
+  }catch(e){}
 }
+function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings)); }catch(e){} }
+function applySettingsUI(){
+  $('apimode').value=settings.mode; $('apikey').value=settings.apiKey;
+  updateProviderUI();
+}
+function updateProviderUI(){
+  var info=PROVIDER_INFO[settings.provider]||PROVIDER_INFO.tams;
+  $('apiprovider').value=settings.provider;
+  $('apikey-label').textContent=info.label;
+  $('api-hint').textContent=info.hint;
+  updateApiStatus();
+  // Ganti daftar model sesuai provider aktif.
+  var lib=MODEL_LIBS[settings.provider]||MODEL_LIBS.tams;
+  if(MODELS!==lib){
+    MODELS=lib;
+    if(MODELS.length) setModel(MODELS[0]);
+  }
+  // Ganti daftar LoRA sesuai provider (LoRA lama dibersihkan).
+  LORA_LIB=LORA_LIBS[settings.provider]||LORA_LIBS.tams;
+  LORA.length=0;
+  renderLora();
+}
+function updateApiStatus(){
+  var el=$('api-status'); if(!el) return;
+  var name=settings.provider==='tams'?'TAMS':(settings.provider==='replicate'?'Replicate':'fal.ai');
+  el.textContent=name+(settings.apiKey?' · key':' · tanpa key');
+  el.style.color=settings.apiKey?'#27D4CD':'#9a9aa2';
+}
+$('apiprovider').addEventListener('change',function(){
+  settings.provider=$('apiprovider').value; saveSettings(); updateProviderUI();
+});
+$('api-save').addEventListener('click',function(){
+  settings.mode=$('apimode').value; settings.apiKey=$('apikey').value.trim();
+  saveSettings(); updateProviderUI(); toast('Pengaturan API disimpan');
+});
+$('api-test').addEventListener('click',async function(){
+  var b=$('api-test'); b.disabled=true; b.textContent='Tes...';
+  try{
+    var r=await fetch('/api/health',{headers:{'x-api-key':$('apikey').value.trim()||settings.apiKey}});
+    var d=await r.json().catch(function(){return null});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var parts=[];
+    if(d&&d.hasKeys){ ['tams','replicate','fal'].forEach(function(p){ if(d.hasKeys[p]) parts.push(p); }); }
+    toast('Backend OK. Key di env: '+(parts.length?parts.join(', '):'tidak ada')+'. Key di browser: '+(settings.apiKey?'ada':'tidak'));
+  }catch(e){ toast('Backend tidak aktif — deploy dengan Functions atau pakai mode demo'); }
+  b.disabled=false; b.textContent='Tes';
+});
+
+/* --- toast --- */
+var _toastTimer=null;
+function toast(msg){
+  var t=$('toast'); if(!t) return;
+  t.textContent=msg; t.classList.remove('hidden');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(function(){ t.classList.add('hidden'); },3500);
+}
+
+/* --- progress overlay --- */
+var _pollStop=false;
+function showProgress(title,status,pct){
+  $('prog-title').textContent=title;
+  $('prog-status').textContent=status||'';
+  $('prog-bar').style.width=Math.max(0,Math.min(100,pct||0))+'%';
+  $('prog-pct').textContent=Math.round(pct||0)+'%';
+  $('progoverlay').classList.remove('hidden'); $('progoverlay').classList.add('flex');
+}
+function hideProgress(){ $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); }
+$('prog-cancel').addEventListener('click',function(){ _pollStop=true; toast('Membatalkan...'); });
+
+/* --- API client --- */
+function buildApiKey(){ return settings.apiKey||$('apikey').value.trim(); }
+
+async function apiGenerate(payload){
+  var res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':buildApiKey()},body:JSON.stringify(payload)});
+  var d=await res.json().catch(function(){return null});
+  if(!res.ok) throw new Error((d&&d.error)||('HTTP '+res.status));
+  return d||{};
+}
+async function apiTask(taskId){
+  var res=await fetch('/api/task?id='+encodeURIComponent(taskId),{headers:{'x-api-key':buildApiKey()}});
+  var d=await res.json().catch(function(){return null});
+  if(!res.ok) throw new Error((d&&d.error)||('HTTP '+res.status));
+  return d||{};
+}
+
+async function pollTask(taskId,onProg){
+  var start=Date.now(), maxMs=6*60*1000;
+  while(Date.now()-start<maxMs){
+    if(_pollStop) throw new Error('dibatalkan pengguna');
+    var d=await apiTask(taskId);
+    if(d.status==='SUCCESS') return d.images||[];
+    if(d.status==='FAILED') throw new Error(d.error||'Task gagal');
+    if(d.status==='CANCELED') throw new Error('Task dibatalkan');
+    var st=(d.status==='WAITING')?('Antre '+(d.queue||'')):(d.status==='RUNNING'?'Generating...':'Menunggu...');
+    onProg(st,d.progress||0);
+    await new Promise(function(r){ setTimeout(r, d.status==='WAITING'?4000:2000); });
+  }
+  throw new Error('Timeout menunggu hasil generate');
+}
+
+/* --- hasil --- */
+function mkResult(src,par,taskId,credits){
+  return {
+    src:src, prompt:par.params.prompt, neg:par.params.negativePrompt,
+    model:state.model?state.model.name:'',
+    size:par.params.width+'x'+par.params.height, seed:par.params.seed,
+    taskId:taskId||'', credits:credits!=null?credits:'',
+    ts:Date.now(), demo:false, page:state.page
+  };
+}
+function demoResults(par){
+  showProgress('Mode demo','Menyiapkan gambar simulasi...',15);
+  setTimeout(function(){
+    for(var i=0;i<state.ncol;i++){
+      var src=S+Math.floor(Math.random()*1e9)+'/512';
+      addResult({src:src, prompt:par.params.prompt, neg:par.params.negativePrompt,
+        model:state.model?state.model.name:'', size:par.params.width+'x'+par.params.height,
+        seed:par.params.seed, taskId:'', credits:'', ts:Date.now(), demo:true, page:state.page});
+    }
+    hideProgress();
+  },700);
+}
+
+async function doGenerate(){
+  if(state.busy) return;
+  var p=$('prompt').value.trim();
+  if(!p){ openLeft(); $('prompt').focus(); toast('Isi prompt dulu'); return; }
+  var par=buildPayload();
+  state.busy=true; setBusy(true); _pollStop=false;
+  try{
+    if(settings.mode==='demo'||!buildApiKey()){
+      await new Promise(function(r){ setTimeout(r,300); });
+      demoResults(par);
+      if(!buildApiKey()) toast('Belum ada API key — hasil simulasi. Isi API Key TAMS di panel kiri untuk generate asli.');
+      else toast('Mode demo aktif — hasil simulasi.');
+    }else{
+      showProgress('Mengirim ke TAMS...','Menyiapkan task...',5);
+      var r=await apiGenerate(par);
+      var taskId=r.taskId||r.jobId;
+      if(taskId){
+        var imgs=await pollTask(taskId,function(st,pct){ showProgress('Generating...',st,pct); });
+        imgs.forEach(function(src){ addResult(mkResult(src,par,taskId,r.credits)); });
+      }else{
+        var imgs2=extractImages(r);
+        if(!imgs2.length) throw new Error('Response tanpa gambar');
+        imgs2.forEach(function(src){ addResult(mkResult(src,par,'',r.credits)); });
+      }
+    }
+  }catch(e){
+    if(settings.mode==='auto'){
+      toast('Backend/API belum aktif ('+e.message+') — pakai simulasi demo');
+      demoResults(par);
+    }else{
+      toast('Gagal: '+e.message);
+    }
+  }finally{
+    hideProgress(); state.busy=false; setBusy(false);
+  }
+}
+
+/* --- Img2Img --- */
+var i2iDataUrl=null;
+$('i2i-drop').addEventListener('click',function(){ $('i2i-file').click(); });
+$('i2i-file').addEventListener('change',function(e){ handleI2iFile(e.target.files&&e.target.files[0]); });
+$('i2i-drop').addEventListener('dragover',function(e){ e.preventDefault(); });
+$('i2i-drop').addEventListener('drop',function(e){ e.preventDefault(); handleI2iFile(e.dataTransfer.files&&e.dataTransfer.files[0]); });
+$('i2i-ds').addEventListener('input',function(e){ $('i2i-dsv').textContent=parseFloat(e.target.value).toFixed(2); });
+$('i2i-clear').addEventListener('click',function(){
+  i2iDataUrl=null; $('i2i-preview').classList.add('hidden'); $('i2i-img').src=''; $('i2i-drop').classList.remove('hidden');
+});
+function handleI2iFile(f){
+  if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    i2iDataUrl=rd.result;
+    $('i2i-img').src=rd.result; $('i2i-preview').classList.remove('hidden'); $('i2i-drop').classList.add('hidden');
+  };
+  rd.readAsDataURL(f);
+}
+
+/* --- render per tab --- */
+function renderCanvas(){
+  var page=state.page;
+  var hideMain = !(page==='text'||page==='img');
+  $('img2img-card').classList.toggle('hidden', page!=='img');
+  $('empty').style.display = (hideMain || state.results.length>0) ? 'none' : '';
+  $('grid').style.display = hideMain?'none':'';
+  $('tab-placeholder').classList.toggle('hidden', !hideMain);
+  $('tab-placeholder').classList.toggle('flex', hideMain);
+  if(page==='edit') $('tab-placeholder-text').textContent='Edit / Inpainting — segera hadir';
+  else if(page==='video') $('tab-placeholder-text').textContent='Text / Image to Video — segera hadir';
+  else if(page==='prime') $('tab-placeholder-text').textContent='Prime — segera hadir';
+}
+
+/* --- riwayat di mobile --- */
+$('btn-history').addEventListener('click',function(){ $('rightPan').classList.toggle('mobile-open'); });
+$('overlay').addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); });
 
 renderLora();
 setModel(MODELS[0]);
 updWH();
+loadSettings(); applySettingsUI();
+try{
+  var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
+  if(Array.isArray(saved)) state.results=saved;
+}catch(e){}
+renderCanvas();
+renderGrid();
+renderRight();
 </script>
 </body>
 </html>

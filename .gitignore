@@ -1,0 +1,13 @@
+# Node / deploy tools
+node_modules/
+.firebase/
+firebase-debug.log
+
+# Local env & secrets
+*.local
+.env
+.env.*
+
+# Model files (terlalu besar untuk GitHub)
+*.safetensors
+models/
