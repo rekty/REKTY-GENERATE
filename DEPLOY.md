@@ -74,34 +74,39 @@ localStorage).
 
 ---
 
-## 3. Deploy ke Cloudflare Pages (disarankan — paling mudah)
+## 3. Deploy ke Cloudflare Pages (gratis — yang dipakai sekarang)
 
-Backend Cloudflare Pages Functions otomatis jalan dari folder `functions/`.
+Backend di-deploy sebagai **Advanced Mode `_worker.js`** (satu worker
+self-contained: `/api/*` → logika backend, path lain → `index.html`).
+Alasan: pada direct-upload via wrangler, Pages Functions berbasis file
+(`functions/`) kadang tidak ter-attach di akun baru, dan binding `env.ASSETS`
+pada direct-upload tidak menyajikan file statis. `_worker.js` menghindari
+keduanya. (Folder `functions/` tetap ada sebagai opsi deploy via dashboard Git.)
 
-**Cara A — dashboard (tanpa CLI):**
-1. Upload repo ini ke GitHub (atau zip → drag ke dashboard).
-2. Cloudflare Pages → **Create project** → hubungkan repo.
-3. Build settings: **Build command** kosong, **Build output directory**: `/`
-   (root). Deploy.
-4. Tambah environment variable (minimal satu): Settings → Environment
-   variables → `TENSORART_API_KEY` (TAMS), `REPLICATE_API_TOKEN`, dan/atau
-   `FAL_API_KEY` sesuai provider yang dipakai → **Save and redeploy**.
-
-**Cara B — CLI (wrangler):**
+**Langkah deploy (CLI, sudah diverifikasi):**
 ```bash
 npx wrangler login                                  # login browser (sekali)
-npx wrangler pages project create rekty-generator --production-branch main
+node scripts/build_worker.mjs                       # bangun _worker.js dari functions/api.js + index.html
+npx wrangler pages project create rekty-generator --production-branch main   # sekali saja
 npx wrangler pages deploy . --project-name rekty-generator --branch main
 npx wrangler pages secret put TENSORART_API_KEY --project-name rekty-generator    # token TAMS
 npx wrangler pages secret put REPLICATE_API_TOKEN --project-name rekty-generator  # token Replicate
 npx wrangler pages secret put FAL_API_KEY --project-name rekty-generator          # key fal.ai
 ```
-Upload otomatis mengecualikan `functions-firebase/`, `node_modules`, dan
-berkas lokal via `.assetsignore` — hanya `index.html` + `functions/api.js`
-(backend Pages Functions) yang ter-upload.
+> Pakai `wrangler@3` (mis. `npx wrangler@3.90.0`) — wrangler 4 sempat gagal
+> upload (500) di akun baru. Setelah mengubah `index.html` / `functions/api.js`,
+> jalankan ulang `node scripts/build_worker.mjs` sebelum deploy.
+
+Upload otomatis mengecualikan `firebase-backend/`, `node_modules`, dan berkas
+lokal via `.assetsignore`.
 
 Hasil: `https://<project>.pages.dev` — frontend + `/api/*` di origin yang sama,
 jadi tidak ada masalah CORS dan API key aman di server.
+
+**Cara alternatif — dashboard Git:** Cloudflare Pages → **Create project** →
+hubungkan repo GitHub → Build settings kosong, output dir `/` → Deploy.
+Kalau jalur ini yang dipakai, backend memakai `functions/api.js` (Pages
+Functions) secara otomatis.
 
 ---
 
@@ -118,7 +123,7 @@ jadi tidak ada masalah CORS dan API key aman di server.
 > firebase deploy --config firebase-free.json --only hosting
 > ```
 
-Konfigurasi sudah ada di repo (`firebase.json` + `functions-firebase/`).
+Konfigurasi sudah ada di repo (`firebase.json` + `firebase-backend/`).
 Prasyarat (mode penuh): project Firebase dengan paket **Blaze** (Cloud
 Functions butuh pay-as-you-go), `npm i -g firebase-tools`, sudah
 `firebase login`.
@@ -129,7 +134,7 @@ Functions butuh pay-as-you-go), `npm i -g firebase-tools`, sudah
    ```
 2. Install dependency functions:
    ```bash
-   cd functions-firebase && npm install && cd ..
+   cd firebase-backend && npm install && cd ..
    ```
 3. Set API key sebagai secret (minimal satu, sesuai provider yang dipakai):
    ```bash
@@ -145,7 +150,7 @@ Functions butuh pay-as-you-go), `npm i -g firebase-tools`, sudah
    ```
    Hosting + Functions sekaligus. Rewrite `/api/**` → fungsi `api` sudah diatur
    di `firebase.json`; region fungsi (`asia-southeast2`) sudah disamakan di
-   `functions-firebase/index.js` — kalau mau ganti region, ubah **keduanya**.
+   `firebase-backend/index.js` — kalau mau ganti region, ubah **keduanya**.
 5. Verifikasi: buka `https://<project>.web.app/api/health` → `{"ok": true, ...}`.
 
 Uji handler functions lokal tanpa deploy (butuh step 2 dulu):
@@ -173,7 +178,7 @@ Mode = Auto untuk simulasi.
 ```
 index.html                  UI lengkap (satu file, tanpa build)
 functions/api.js            Cloudflare Pages Function: /api/generate, /api/task, /api/health
-functions-firebase/         Versi Firebase Cloud Functions (sama logikanya)
+firebase-backend/            Versi Firebase Cloud Functions (sama logikanya)
 firebase.json               Konfigurasi Firebase (hosting + rewrite /api -> functions)
 scripts/dev_server.py       Server lokal + mock TAMS untuk uji coba
 ```

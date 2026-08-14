@@ -4,7 +4,7 @@
     "ignore": [
       "**/.*",
       "**/node_modules/**",
-      "functions*/**",
+      "firebase-backend/**",
       "firebase.json",
       "DEPLOY.md",
       "AGENTS.md",
@@ -22,6 +22,6 @@
     ]
   },
   "functions": {
-    "source": "functions-firebase"
+    "source": "firebase-backend"
   }
 }
