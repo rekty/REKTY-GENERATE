@@ -518,6 +518,39 @@ async function falGetJob(jobId, apiKey, model) {
   return out;
 }
 
+/* ----------------------- penyimpanan gambar (KV) ----------------------- */
+
+/**
+ * Simpan gambar hasil generate ke Cloudflare KV (binding IMAGES, namespace
+ * `rekty-generator-REKTY_IMAGES`) dan kembalikan URL permanen `/img/<nama>`.
+ *
+ * Dipakai KV, bukan R2, karena R2 butuh metode pembayaran (kartu) saat
+ * aktivasi, sedangkan KV termasuk free plan Workers tanpa billing.
+ * Batasan KV: nilai maks 25 MiB/objek — gambar lebih besar dari 20 MiB
+ * dilewati (fallback ke URL asli provider, aman).
+ */
+async function archiveImages(urls, env) {
+  if (!env || !env.IMAGES || !Array.isArray(urls) || !urls.length) return urls;
+  const out = [];
+  for (const u of urls) {
+    if (!u) { out.push(u); continue; }
+    try {
+      const res = await fetchWithTimeout(u, {}, 60000);
+      if (!res.ok) { out.push(u); continue; }
+      const buf = await res.arrayBuffer();
+      if (buf.byteLength > 20 * 1024 * 1024) { out.push(u); continue; } // > 20 MiB: lewati
+      const ct = String(res.headers.get('content-type') || 'image/png').split(';')[0] || 'image/png';
+      const ext = (ct.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').slice(0, 4) || 'png';
+      const name = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)) + '.' + ext;
+      await env.IMAGES.put(name, buf);
+      out.push('/img/' + name);
+    } catch {
+      out.push(u); // gagal arsip — tetap tampilkan URL asli provider
+    }
+  }
+  return out;
+}
+
 /* ---------------------------- handlers ------------------------------ */
 
 export async function onRequest(context) {
@@ -534,6 +567,7 @@ export async function onRequest(context) {
     if (method === 'GET' && url.pathname === '/api/health') {
       return json({
         ok: true,
+        storage: env && env.IMAGES ? 'kv' : null,
         hasKeys: {
           tams: !!(env && env.TENSORART_API_KEY),
           replicate: !!(env && env.REPLICATE_API_TOKEN),
@@ -596,7 +630,29 @@ export async function onRequest(context) {
       if (provider === 'replicate') r = await replicateGetJob(jobId, apiKey);
       else if (provider === 'fal') r = await falGetJob(jobId, apiKey, falModel);
       else r = await tamsGetJob(jobId, apiKey);
+
+      // Arsipkan gambar hasil ke R2 supaya URL-nya permanen (tidak kedaluwarsa).
+      if (Array.isArray(r.images) && r.images.length) {
+        r.images = await archiveImages(r.images, env);
+      }
       return json({ ok: true, provider, ...r });
+    }
+
+    // ---- sajikan gambar arsip (URL permanen /img/<nama>) ----
+    if (method === 'GET' && url.pathname.startsWith('/img/')) {
+      const name = url.pathname.slice(5);
+      if (!name || !env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
+      // Catatan: pakai { type: 'arrayBuffer' }, bukan 'stream' — pada namespace
+      // KV format URL-encoded, get type stream mengembalikan stream kosong
+      // (bug runtime); arrayBuffer terbukti bekerja.
+      const buf = await env.IMAGES.get(name, { type: 'arrayBuffer' });
+      if (buf === null || buf === undefined) return json({ error: 'Gambar tidak ditemukan' }, 404);
+      const ext = name.split('.').pop().toLowerCase();
+      const ct = ({ png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif' })[ext] || 'image/png';
+      return new Response(buf, {
+        status: 200,
+        headers: { 'Content-Type': ct, 'Cache-Control': 'public, max-age=31536000, immutable', ...corsHeaders() },
+      });
     }
 
     return json({ error: 'Endpoint tidak dikenal' }, 404);

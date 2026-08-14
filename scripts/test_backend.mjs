@@ -183,8 +183,32 @@ globalThis.fetch = async (url, opts) => {
     throw new Error('fal tak tertangani: ' + u);
   }
 
+  // --- gambar hasil generate (dipakai saat arsip R2 aktif) ---
+  if (method === 'GET' && u.startsWith('https://img.')) {
+    return new Response(new Uint8Array([137, 80, 78, 71, 1, 2, 3]), { headers: { 'content-type': 'image/png' } });
+  }
+
   throw new Error('fetch tak tertangani: ' + method + ' ' + u);
 };
+
+// ---------- tiruan Cloudflare KV (namespace IMAGES) ----------
+const kvstore = new Map();
+const IMAGES = {
+  async put(key, value) {
+    kvstore.set(key, value);
+  },
+  async get(key, opts) {
+    const it = kvstore.get(key);
+    if (it === undefined) return null;
+    if (opts && opts.type === 'stream') return { value: it, metadata: {} };
+    return it;
+  },
+};
+
+async function runRaw(reqUrl, env = {}) {
+  const req = new Request('http://test.local' + reqUrl, { method: 'GET' });
+  return onRequest({ request: req, env });
+}
 
 // ============================ TES ============================
 let passed = 0;
@@ -344,6 +368,41 @@ console.log('fal.ai (flux dev):');
   assert.strictEqual(t.data.status, 'SUCCESS');
   assert.deepStrictEqual(t.data.images, ['https://img.fal/fal_dev999.png']);
   ok('task (model tersandikan) -> SUCCESS + gambar');
+}
+
+console.log('Cloudflare KV (arsip gambar):');
+{
+  const h = await run('/api/health', null, { IMAGES });
+  assert.strictEqual(h.data.storage, 'kv', 'health storage:kv saat binding IMAGES ada');
+  const h2 = await run('/api/health', null, {});
+  assert.strictEqual(h2.data.storage, null, 'health storage null tanpa binding');
+  ok('health -> storage sesuai binding');
+
+  const t = await run('/api/task?id=12345', null, { IMAGES }, AUTH);
+  assert.strictEqual(t.data.status, 'SUCCESS');
+  assert.ok(t.data.images.length === 2, '2 gambar diarsip');
+  for (const img of t.data.images) {
+    assert.ok(img.startsWith('/img/'), 'URL permanen /img/<nama>: ' + img);
+  }
+  assert.strictEqual(kvstore.size, 2, '2 objek tersimpan di KV');
+  ok('task SUCCESS -> gambar diarsip ke KV (URL /img/...)');
+
+  const key = t.data.images[0].slice(5);
+  const raw = await runRaw('/img/' + key, { IMAGES });
+  assert.strictEqual(raw.status, 200);
+  assert.strictEqual(raw.headers.get('content-type'), 'image/png');
+  assert.ok(raw.headers.get('cache-control').includes('immutable'), 'cache-control immutable');
+  const bytes = new Uint8Array(await raw.arrayBuffer());
+  assert.deepStrictEqual(Array.from(bytes), [137, 80, 78, 71, 1, 2, 3], 'body gambar sama');
+  ok('GET /img/<nama> -> 200 + content-type + body');
+
+  const miss = await runRaw('/img/tidak-ada.png', { IMAGES });
+  assert.strictEqual(miss.status, 404);
+  ok('GET /img/tidak-ada -> 404');
+
+  const nokv = await runRaw('/img/x.png', {});
+  assert.strictEqual(nokv.status, 404);
+  ok('GET /img tanpa binding -> 404');
 }
 
 console.log('Validasi (API key + provider salah):');

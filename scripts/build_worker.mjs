@@ -37,7 +37,7 @@ const HTML_CT = { 'Content-Type': 'text/html; charset=utf-8' };
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname.startsWith('/api/')) {
+    if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/img/')) {
       return onRequest({ request, env, data: {}, waitUntil: ctx.waitUntil.bind(ctx) });
     }
     return new Response(INDEX_HTML, { status: 200, headers: HTML_CT });
