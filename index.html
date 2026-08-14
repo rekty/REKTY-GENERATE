@@ -21,6 +21,9 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 .btn-blue{background:linear-gradient(95deg,#6F5DFF 0%,#27D4CD 59.7%,#74FF7E 100%);border:none;color:#fff;box-shadow:0 0 18px rgba(111,93,255,.35);padding:0 18px}
 .btn-blue:hover{filter:brightness(1.1);box-shadow:0 0 24px rgba(111,93,255,.5)}
 .btn-blue:active{transform:scale(.98)}
+.btn-gen{background:linear-gradient(95deg,#22c55e,#16a34a);border:none;color:#fff;box-shadow:0 0 18px rgba(34,197,94,.35)}
+.btn-gen:hover{filter:brightness(1.08);box-shadow:0 0 24px rgba(34,197,94,.5)}
+.btn-gen:active{transform:scale(.98)}
 .btn-ghost{color:#a1a1aa;background:transparent;border:1px solid transparent}.btn-ghost:hover{background:#2a2a2a;color:#e8e8e8}
 .tab{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
 .tab:hover{color:#fff;background:#2a2a2a}.tab.sel{color:#fff;background:#2a2a2a}
@@ -132,40 +135,27 @@ input[type=range]{cursor:pointer}
   <aside id="leftpan" class="fixed lg:static z-40 inset-y-0 left-0 pt-14 lg:pt-0 w-[22rem] max-w-[88vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0 border-r bd overflow-y-auto hidebar bg-[#222]">
     <div class="p-4 space-y-4">
 
-      <!-- Prompt block (top of left panel, like TensorArt) -->
-      <div class="rounded-xl bg-[#2a2a2a] border bd overflow-hidden">
-        <div class="flex items-start gap-2 px-3 pt-2">
-          <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-none text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
-        </div>
-        <div class="flex items-center justify-between px-3 py-2">
-          <label class="flex items-center gap-1.5 cursor-pointer select-none">
-            <input id="negcheck" type="checkbox" class="accent-[#6F5DFF]"/>
-            <span class="text-xs text-neutral-400">Negative</span>
-          </label>
-          <div class="flex items-center gap-1.5">
-            <button id="btn-enhance" class="text-xs text-[#6F5DFF] hover:underline font-medium flex items-center gap-1"><i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance</button>
-            <span class="chip" id="chip-a1111">A1111</span>
-            <span class="chip" id="chip-ella">Ella</span>
+      <!-- Models (urutan seperti Tensor.Art: Models -> VAE -> Settings) -->
+      <div class="space-y-3">
+        <span class="text-sm font-semibold">Models</span>
+        <div id="model-card" class="relative border bd rounded-xl bg-[#2a2a2a] hover:border-[rgba(255,255,255,.24)] cursor-pointer p-3">
+          <span id="model-badge" class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#333] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
+          <div class="flex items-center gap-3 mt-2">
+            <img id="model-thumb" src="https://picsum.photos/seed/zimage/64" class="w-16 h-16 rounded-lg object-cover shrink-0 border bd" alt="model"/>
+            <div class="flex-1 min-w-0">
+              <div id="model-name" class="font-semibold text-sm truncate">Z Image - base-bf16</div>
+            </div>
+            <button id="model-info" class="w-6 h-6 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-[rgba(255,255,255,.08)] transition" title="Info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-neutral-500 shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
         </div>
-        <div id="negwrap" class="hidden border-t bd px-4 py-3">
-          <textarea id="negprompt" rows="2" class="w-full bg-transparent border-0 outline-none resize-none text-[13px] text-neutral-100 placeholder-neutral-600" placeholder="Negative prompt..."></textarea>
+        <div class="flex gap-2">
+          <button id="btn-addlora" class="btn btn-ghost flex-1 h-9 border bd text-xs">Add LoRA</button>
+          <button class="btn btn-ghost flex-1 h-9 border bd text-xs">Add Embedding</button>
         </div>
-      </div>
-
-      <!-- Model -->
-      <div id="model-card" class="relative border bd rounded-xl bg-[#2a2a2a] hover:border-[rgba(255,255,255,.24)] cursor-pointer p-3">
-        <span id="model-badge" class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#333] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
-        <div class="flex items-center gap-3 mt-2">
-          <img id="model-thumb" src="https://picsum.photos/seed/zimage/64" class="w-16 h-16 rounded-lg object-cover shrink-0 border bd" alt="model"/>
-          <div class="flex-1 min-w-0">
-            <div id="model-name" class="font-semibold text-sm truncate">Z Image - base-bf16</div>
-          </div>
-          <button id="model-info" class="w-6 h-6 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-[rgba(255,255,255,.08)] transition" title="Info">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-          </button>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-neutral-500 shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
-        </div>
+        <button class="btn btn-ghost w-full h-9 border bd text-xs">Add ControlNet</button>
       </div>
 
       <!-- LoRA -->
@@ -174,28 +164,20 @@ input[type=range]{cursor:pointer}
           <span class="text-sm font-semibold">LoRA</span>
           <i data-icon="caret-down" class="w-4 h-4 text-neutral-500"></i>
         </div>
-         <div id="lora-list" class="space-y-2"></div>
-       </div>
-
-       <div>
-         <div class="flex items-center justify-between">
-           <span class="text-sm font-semibold">Trigger Words</span>
-           <span class="text-xs text-neutral-500">(<span id="tr-count">0</span>)</span>
-         </div>
-         <div class="flex items-center justify-between mt-1">
-           <span class="text-xs text-neutral-400">Add Trigger Words to Prompts</span>
-           <button id="addall-trig" class="text-xs text-[#6F5DFF] hover:underline font-medium">Add All</button>
-         </div>
-         <div class="flex flex-wrap gap-1.5 mt-2" id="triggers"></div>
-       </div>
-
-      <!-- Add buttons -->
-      <div class="flex gap-2">
-        <button id="btn-addlora" class="btn btn-ghost flex-1 h-9 border bd text-xs">Add LoRA</button>
-        <button class="btn btn-ghost flex-1 h-9 border bd text-xs">Add Embedding</button>
+        <div id="lora-list" class="space-y-2"></div>
       </div>
-      <div class="flex gap-2">
-        <button class="btn btn-ghost flex-1 h-9 border bd text-xs">Add ControlNet</button>
+
+      <!-- Trigger Words -->
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold">Trigger Words</span>
+          <span class="text-xs text-neutral-500">(<span id="tr-count">0</span>)</span>
+        </div>
+        <div class="flex items-center justify-between mt-1">
+          <span class="text-xs text-neutral-400">Add Trigger Words to Prompts</span>
+          <button id="addall-trig" class="text-xs text-[#6F5DFF] hover:underline font-medium">Add All</button>
+        </div>
+        <div class="flex flex-wrap gap-1.5 mt-2" id="triggers"></div>
       </div>
 
       <!-- VAE -->
@@ -361,6 +343,34 @@ input[type=range]{cursor:pointer}
   <!-- CENTER: image grid only -->
   <main id="canvas" class="flex-1 overflow-y-auto hidebar bg-[#181818]">
     <div class="p-4 max-w-3xl mx-auto">
+
+      <!-- Prompt bar (Tensor.Art: di tengah atas, di atas grid gambar) -->
+      <div id="promptbar" class="mb-4 rounded-2xl border bd bg-[#1f1f1f] overflow-hidden">
+        <div class="flex items-start gap-2 px-4 pt-3">
+          <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-none text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
+        </div>
+        <div class="flex items-center justify-between gap-2 flex-wrap px-3 py-2 border-t bd">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input id="negcheck" type="checkbox" class="accent-[#6F5DFF]"/>
+            <span class="text-xs text-neutral-400">Negative</span>
+          </label>
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <button id="btn-enhance" class="text-xs text-[#6F5DFF] hover:underline font-medium flex items-center gap-1"><i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance</button>
+            <span class="chip" id="chip-a1111">A1111</span>
+            <span class="chip" id="chip-ella">Ella</span>
+            <select id="ncount" class="inp w-[5.4rem] text-xs h-8" title="Jumlah gambar">
+              <option value="1">1 image</option>
+              <option value="2" selected>2 images</option>
+              <option value="4">4 images</option>
+            </select>
+            <button id="btn-go2" class="btn btn-gen h-9 px-4 whitespace-nowrap"><i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">- 1.22</span></button>
+          </div>
+        </div>
+        <div id="negwrap" class="hidden border-t bd px-4 py-3">
+          <textarea id="negprompt" rows="2" class="w-full bg-transparent border-0 outline-none resize-none text-[13px] text-neutral-100 placeholder-neutral-600" placeholder="Negative prompt..."></textarea>
+        </div>
+      </div>
+
       <!-- Img2Img upload -->
       <div id="img2img-card" class="hidden mb-4 border bd rounded-xl bg-[#222] p-4">
         <div class="flex items-center justify-between mb-2">
@@ -832,19 +842,32 @@ $('overlay').addEventListener('click',function(){ closeLeft(); });
 function openLeft(){ $('overlay').classList.remove('hidden'); $('leftpan').classList.remove('-translate-x-full'); }
 function closeLeft(){ $('overlay').classList.add('hidden'); if(window.innerWidth<1024) $('leftpan').classList.add('-translate-x-full'); }
 
-/* ===== image count ===== */
+/* ===== image count (dropdown di prompt bar + tombol navbar) ===== */
+function applyNcol(){
+  var cols=state.ncol>1?2:1;
+  $('grid').className='grid grid-cols-'+cols+' gap-3';
+  $('ncollbl').textContent=cols;
+  var sel=$('ncount'); if(sel) sel.value=String(state.ncol);
+}
 $('ncol').addEventListener('click',function(){
   state.ncol = state.ncol===2?1:2;
-  $('grid').className='grid grid-cols-'+state.ncol+' gap-3';
-  $('ncollbl').textContent=state.ncol;
+  applyNcol();
+});
+$('ncount').addEventListener('change',function(){
+  state.ncol=parseInt($('ncount').value)||1;
+  applyNcol();
 });
 
 /* ===== generate (real API / demo fallback) ===== */
 $('btn-go').addEventListener('click',doGenerate);
+$('btn-go2').addEventListener('click',doGenerate);
 function setBusy(b){
-  $('btn-go').disabled=b; $('btn-go').style.opacity=b?'0.5':'1';
-  $('btn-go').innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
-    :'<i data-icon="play" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">+$0.33</span>';
+  ['btn-go','btn-go2'].forEach(function(id){
+    var el=$(id); if(!el) return;
+    el.disabled=b; el.style.opacity=b?'0.5':'1';
+    el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
+      :'<i data-icon="play" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">+$0.33</span>';
+  });
 }
 function extractImages(data){
   if(!data) return [];
@@ -1315,6 +1338,7 @@ $('overlay').addEventListener('click',function(){ $('rightPan').classList.remove
 renderLora();
 setModel(MODELS[0]);
 updWH();
+applyNcol();
 loadSettings(); applySettingsUI();
 handleOAuthCallback();
 try{
