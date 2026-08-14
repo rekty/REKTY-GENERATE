@@ -8,6 +8,9 @@ firebase-debug.log
 .env
 .env.*
 
+# Wrangler / Cloudflare
+.wrangler/
+
 # Model files (terlalu besar untuk GitHub)
 *.safetensors
 models/
