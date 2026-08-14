@@ -96,23 +96,10 @@ npx wrangler pages secret put POLLINATIONS_API_KEY --project-name rekty-generato
 npx wrangler pages secret put POLLINATIONS_APP_KEY --project-name rekty-generator  # opsional (BYOP) — pk_* untuk login "bawa pollen sendiri"
 ```
 
-**Cloudflare Queues (antrian generate Pollinations):** biar `POST /api/generate`
-balas seketika dan generate diproses di latar belakang (retry + backoff):
-
-```bash
-npx wrangler@3.90.0 queues create rekty-generate                     # buat queue (free plan)
-npx wrangler@3.90.0 deploy -c consumer/wrangler.toml                 # deploy consumer worker
-npx wrangler@3.90.0 secret put POLLINATIONS_API_KEY -c consumer/wrangler.toml  # key sk_* utk consumer
-node scripts/build_worker.mjs && npx wrangler@3.90.0 pages deploy . --project-name rekty-generator
-```
-
-Pages project jadi **producer** (binding `REKTY_QUEUE` di `wrangler.toml`);
-**consumer = Worker terpisah** `rekty-generate-consumer` (Pages Functions tidak
-bisa jadi queue consumer — batasan resmi Cloudflare). Consumer membaca token
-BYOP dari KV `oauth:<session>` (job cuma bawa session id, bukan token),
-memproses, lalu menulis status ke KV `task:pollinations:<id>` yang sama —
-frontend polling `/api/task` tetap jalan tanpa perubahan. Tanpa binding queue,
-provider Pollinations otomatis kembali ke jalur sinkron lama.
+**Generate Pollinations bersifat sinkron langsung** — `POST /api/generate`
+memanggil Pollinations sekarang juga dan balas `images` langsung (hasil juga
+diarsip ke KV, task tetap bisa di-poll). Tidak ada antrian Cloudflare Queues
+lagi (dihapus karena lebih lambat — menunggu consumer terpisah).
 
 **Provider Pollinations (gratis):** provider ke-4, **bisa dipakai tanpa API
 key** (endpoint legacy `image.pollinations.ai`, model otomatis). Kalau punya

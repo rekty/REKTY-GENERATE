@@ -644,104 +644,6 @@ async function pollinationsGetTask(jobId, env) {
   return safeJson(raw) || { status: 'FAILED', error: 'Data task rusak' };
 }
 
-/* ---------------------- Cloudflare Queues (antrian generate) ---------------------- */
-
-/** Jeda mundur eksponensial antar percobaan consumer: 1, 2, 4, 8, 16, ... (maks 60 dtk). */
-function queueDelay(attempt) {
-  return Math.min(Math.pow(2, Math.max(1, attempt) - 1), 60);
-}
-
-/** Error yang layak dicoba ulang (jaringan / timeout / 5xx / 429). */
-function isRetryableErr(text) {
-  return /timeout|timed ?out|ETIMEDOUT|fetch failed|ECONN|abort|\b5\d\d\b|\b429\b|temporary/i.test(text);
-}
-
-/**
- * Producer: kirim job generate Pollinations ke queue, balas taskId seketika.
- * Konsumen (Worker terpisah `rekty-generate-consumer`) memproses di latar
- * belakang: call Pollinations -> arsip KV -> tulis status SUCCESS/FAILED.
- * Frontend tetap polling /api/task (task disimpan WAITING -> RUNNING -> SUCCESS).
- */
-async function pollinationsEnqueue(body, env, sessionId) {
-  const params = body.params || body;
-  const id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2);
-  const taskId = 'pollinations:' + id;
-  const job = {
-    id,
-    provider: 'pollinations',
-    params: {
-      prompt: String(params.prompt || '').slice(0, 1500),
-      model: String(params.model || '').trim(),
-      width: clampInt(params.width, 256, 1920, 1024),
-      height: clampInt(params.height, 256, 1920, 1024),
-      seed: toSeed(params.seed),
-    },
-    session: sessionId || '',
-    createdAt: Date.now(),
-  };
-  let backlog = 0;
-  try {
-    const res = await env.REKTY_QUEUE.send(job);
-    if (res && res.metadata && res.metadata.metrics) backlog = res.metadata.metrics.backlogCount || 0;
-  } catch (e) {
-    throw new Error('Antrian generate gagal: ' + ((e && e.message) || e));
-  }
-  if (env && env.IMAGES) {
-    await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'WAITING', progress: 0, queue: backlog || '' })).catch(() => {});
-  }
-  return { taskId, images: [], queue: true, position: backlog };
-}
-
-/**
- * Proses satu job Pollinations dari queue.
- * - Job pakai session BYOP -> token diambil dari KV oauth:<session>; kalau
- *   hilang/kedaluwarsa -> GAGAL (jangan diam-diam pindah ke key pemilik).
- * - Tanpa session -> secret env POLLINATIONS_API_KEY, atau jalur gratis.
- */
-async function processQueuedJob(job, env) {
-  const session = String(job.session || '').trim();
-  let apiKey = null;
-  if (session && env && env.IMAGES) {
-    const raw = await env.IMAGES.get('oauth:' + session, { type: 'text' }).catch(() => null);
-    const rec = raw ? safeJson(raw) : null;
-    if (rec && rec.token && (!rec.expiresAt || rec.expiresAt > Date.now())) apiKey = rec.token;
-    else throw new Error('Sesi Pollinations kedaluwarsa — login ulang di panel API');
-  } else if (env && env.POLLINATIONS_API_KEY) {
-    apiKey = env.POLLINATIONS_API_KEY;
-  }
-  return pollinationsCreateJob({ params: job.params || {} }, env, apiKey);
-}
-
-/**
- * Consumer handler Cloudflare Queues — dipanggil oleh Worker terpisah
- * (`consumer/`, lihat consumer/wrangler.toml). Pages Functions tidak bisa
- * jadi consumer (batasan resmi), makanya dipisah.
- * Error retryable -> msg.retry() dengan backoff; non-retryable -> FAILED di KV.
- */
-export async function queue(batch, env) {
-  for (const msg of batch.messages) {
-    const job = (msg && msg.body) || {};
-    const id = String(job.id || '');
-    if (!id) continue;
-    try {
-      if (env && env.IMAGES) {
-        await env.IMAGES.put('task:pollinations:' + id, JSON.stringify({ status: 'RUNNING', progress: 25 })).catch(() => {});
-      }
-      const r = await processQueuedJob(job, env);
-      if (env && env.IMAGES) {
-        await env.IMAGES.put('task:pollinations:' + id, JSON.stringify({ status: 'SUCCESS', progress: 100, images: r.images })).catch(() => {});
-      }
-    } catch (e) {
-      const text = (e && e.message) || String(e);
-      if (isRetryableErr(text) && msg.attempts < 6) {
-        msg.retry({ delaySeconds: queueDelay(msg.attempts) });
-      } else if (env && env.IMAGES) {
-        await env.IMAGES.put('task:pollinations:' + id, JSON.stringify({ status: 'FAILED', error: text.slice(0, 400) })).catch(() => {});
-      }
-    }
-  }
-}
-
 /* ---------------------------- handlers ------------------------------ */
 
 async function onRequest(context) {
@@ -766,7 +668,6 @@ async function onRequest(context) {
           pollinations: true, // gratis, tanpa key
         },
         byop: !!(env && env.POLLINATIONS_APP_KEY), // OAuth BYOP siap
-        queue: !!(env && env.REKTY_QUEUE), // Cloudflare Queues (antrian generate Pollinations)
         tams: TAMS_BASE,
       });
     }
@@ -933,15 +834,8 @@ async function onRequest(context) {
       if (provider === 'replicate') r = await replicateCreateJob(body, apiKey);
       else if (provider === 'fal') r = await falCreateJob(body, apiKey);
       else if (provider === 'pollinations') {
-        // Queue aktif -> enqueue & balas seketika; konsumen memproses di
-        // latar belakang (frontend tetap poll /api/task). Tanpa queue
-        // (atau payload minta sinkron: body.queue=false) -> jalur lama.
-        if (env && env.REKTY_QUEUE && body.queue !== false) {
-          const sessionId = String((request.headers && request.headers.get('x-session')) || (body && body.session) || '').trim();
-          r = await pollinationsEnqueue(body, env, sessionId);
-        } else {
-          r = await pollinationsCreateJob(body, env, apiKey);
-        }
+        // Sinkron langsung: generate sekarang, balas hasil (tidak lewat antrian).
+        r = await pollinationsCreateJob(body, env, apiKey);
       }
       else r = await tamsCreateJob(body, apiKey);
       return json({ ok: true, provider, ...r });
@@ -1027,10 +921,5 @@ export default {
       return onRequest({ request, env, data: {}, waitUntil: ctx.waitUntil.bind(ctx) });
     }
     return new Response(INDEX_HTML, { status: 200, headers: HTML_CT });
-  },
-  // Consumer Cloudflare Queues (dipakai oleh Worker terpisah
-  // rekty-generate-consumer — Pages Functions tidak bisa jadi consumer).
-  async queue(batch, env, ctx) {
-    return queue(batch, env, ctx);
   },
 };

@@ -32,11 +32,10 @@ tanpa build, siap di-deploy ke **Firebase Hosting** atau **Cloudflare Pages**.
   cuma pegang session id) → pengguna membayar dari pollen mereka sendiri.
   App Key `pk_*` = secret `POLLINATIONS_APP_KEY`; redirect URI callback:
   `https://<host>/callback` (terdaftar di enter.pollinations.ai/keys).
-- **Cloudflare Queues** untuk antrian generate Pollinations: `POST /api/generate`
-  enqueue job → balas taskId **seketika**; consumer Worker terpisah
-  (`consumer/`, `rekty-generate-consumer`) memproses di latar belakang dengan
-  retry + backoff eksponensial → hasil arsip KV → `/api/task` SUCCESS.
-  Tanpa binding queue (atau `body.queue=false`) → jalur sinkron lama.
+- **Generate Pollinations sinkron langsung** (tanpa antrian): `POST /api/generate`
+  memanggil Pollinations sekarang juga → hasil arsip KV → balas `images`
+  langsung (task tetap bisa di-poll lewat `/api/task`). Lebih cepat karena
+  tidak menunggu antrian/consumer.
 - **Img2Img** (upload/seret gambar + denoising strength) — TAMS
 - Tab Edit / Video / Prime (placeholder), lightbox, riwayat di mobile
 
