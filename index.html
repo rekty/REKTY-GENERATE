@@ -264,8 +264,11 @@ input[type=range]{cursor:pointer}
               <input id="cfg" type="range" min="1" max="10" step="0.5" value="1" class="slider mt-1"/>
             </div>
             <div>
-              <label class="text-xs flex justify-between"><span>Seed</span><button id="dice" class="text-neutral-500 hover:text-white"><i data-icon="dice-five" class="w-4 h-4"></i></button></label>
-              <input id="seed" class="inp text-xs mt-1" value="1010933347943462"/>
+              <label class="text-xs flex justify-between items-center"><span>Seed</span><span class="text-[10px] text-neutral-600">Random</span></label>
+              <div class="flex gap-1.5 mt-1">
+                <input id="seed" class="inp text-xs flex-1" value="1010933347943462"/>
+                <button id="dice" class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;box-shadow:0 0 10px rgba(34,197,94,.35)" title="Acak seed"><i data-icon="dice-five" class="w-4 h-4"></i></button>
+              </div>
             </div>
           </div>
           <div id="adv-fields" class="hidden space-y-3 mt-4 border-t bd pt-3">
@@ -344,7 +347,7 @@ input[type=range]{cursor:pointer}
       <!-- Prompt bar (Tensor.Art: di tengah atas, di atas grid gambar) -->
       <div id="promptbar" class="mb-4 rounded-2xl border bd bg-[#161b22] overflow-hidden">
         <div class="relative px-4 pt-3">
-          <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-none text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed pr-12" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
+          <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-y text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed pr-12 min-h-[4.5rem]" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
           <div class="absolute top-3 right-3 flex items-center gap-0.5">
             <button id="btn-translate" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Terjemahkan prompt ke bahasa Inggris (semua bahasa)"><i data-icon="translate" class="w-4 h-4"></i></button>
             <button id="btn-enhance" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Prompt Enhance — perluas & perbaiki prompt dengan AI"><i data-icon="magic-wand" class="w-4 h-4"></i></button>
