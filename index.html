@@ -345,8 +345,9 @@ input[type=range]{cursor:pointer}
     </div>
   </aside>
 
-  <!-- CENTER: image grid only -->
-  <main id="canvas" class="flex-1 overflow-y-auto overflow-x-hidden bg-[#0d1117]">
+  <!-- CENTER + RIGHT: satu scroll area (scrollbar pojok kanan menggerakkan keduanya bersamaan) -->
+  <div id="mainwrap" class="flex-1 flex overflow-y-auto overflow-x-hidden">
+  <main id="canvas" class="flex-1 min-w-0 bg-[#0d1117]">
     <div class="p-4 max-w-3xl mx-auto">
 
       <!-- Prompt bar (Tensor.Art: di tengah atas, di atas grid gambar) -->
@@ -435,13 +436,14 @@ input[type=range]{cursor:pointer}
       </div>
     </div>
     <!-- Detail hasil aktif (seperti Tensor.Art: Input + Details + params) -->
-    <div id="rdetail" class="flex-1 overflow-y-scroll p-3 space-y-3"></div>
+    <div id="rdetail" class="flex-1 p-3 space-y-3"></div>
     <!-- Riwayat generate (kartu) -->
-    <div id="rhistory" class="hidden flex-1 overflow-y-scroll p-2 space-y-3">
+    <div id="rhistory" class="hidden flex-1 p-2 space-y-3">
       <p id="rcount" class="text-xs text-neutral-500 px-1 pt-1">0 hasil</p>
       <div id="rlist" class="space-y-3"></div>
     </div>
   </aside>
+  </div>
 </div>
 
 <!-- Mobile history toggle -->
