@@ -102,35 +102,39 @@ jadi tidak ada masalah CORS dan API key aman di server.
 
 ## 4. Deploy ke Firebase (Hosting + Cloud Functions)
 
-Prasyarat: `npm i -g firebase-tools`, sudah `firebase login`.
+Konfigurasi sudah ada di repo (`firebase.json` + `functions-firebase/`).
+Prasyarat: project Firebase dengan paket **Blaze** (Cloud Functions butuh
+pay-as-you-go), `npm i -g firebase-tools`, sudah `firebase login`.
 
-1. Inisialisasi project di folder ini:
+1. Hubungkan folder ini ke project Firebase-mu:
    ```bash
-   firebase init hosting functions
+   firebase use --add        # pilih project (kalau belum ada: buat di console.firebase.google.com)
    ```
-   - Hosting: **public: "."** (sesuai `firebase.json` yang sudah ada),
-     single page: **tidak**, overwrite: **tidak**.
-   - Functions: pilih source `functions-firebase`, pakai `firebase.json` yang
-     sudah disiapkan.
 2. Install dependency functions:
    ```bash
    cd functions-firebase && npm install && cd ..
    ```
-3. Set API key sebagai secret (minimal satu, sesuai provider):
+3. Set API key sebagai secret (minimal satu, sesuai provider yang dipakai):
    ```bash
    firebase functions:secrets:set TENSORART_API_KEY
    firebase functions:secrets:set REPLICATE_API_TOKEN
    firebase functions:secrets:set FAL_API_KEY
    ```
+   Deploy tetap jalan tanpa secret (key bisa dikirim dari browser via panel
+   API), tapi untuk publik selalu pakai secret.
 4. Deploy:
    ```bash
    firebase deploy
    ```
-   (Hosting + Functions sekaligus; rewrite `/api/**` sudah diatur di
-   `firebase.json` → fungsi `api` region `asia-southeast2`.)
+   Hosting + Functions sekaligus. Rewrite `/api/**` → fungsi `api` sudah diatur
+   di `firebase.json`; region fungsi (`asia-southeast2`) sudah disamakan di
+   `functions-firebase/index.js` — kalau mau ganti region, ubah **keduanya**.
+5. Verifikasi: buka `https://<project>.web.app/api/health` → `{"ok": true, ...}`.
 
-> Kalau region berbeda, ubah di `firebase.json` dan di bagian
-> `setGlobalOptions` / `onRequest` di `functions-firebase/index.js`.
+Uji handler functions lokal tanpa deploy (butuh step 2 dulu):
+```bash
+node scripts/smoke_firebase.cjs
+```
 
 ---
 
