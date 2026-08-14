@@ -1,7 +1,0 @@
-Kartu galeri satu kesatuan: gambar + detail sejajar penuh, panel Detail mengikuti kartu aktif
-
-- makeGalleryRow: kolom gambar & detail sama tinggi (self-stretch), gambar
-  h-full object-contain agar mengisi penuh tinggi kartu, detail meregang
-  mengikuti — tiap kartu tampil seperti satu unit persis Tensor.Art
-- renderDetail: tinggi panel Detail kanan disinkronkan ke tinggi kartu
-  galeri yang aktif (minHeight), di-resync saat klik kartu/riwayat & resize
