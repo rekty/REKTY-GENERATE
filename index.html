@@ -1,0 +1,1212 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rekty AI — Text to Image</title>
+<script>window.__ta_style__=true</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/@phosphor-icons/web/phosphor-icon.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif;background:#181818;color:#e8e8e8;min-height:100vh}
+.hidebar::-webkit-scrollbar{display:none}.hidebar{scrollbar-width:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
+.bd{border-color:rgba(255,255,255,.12)}
+.inp{border:1px solid rgba(255,255,255,.16);border-radius:8px;background:#2a2a2a;color:#e8e8e8;padding:8px 11px;outline:none;font-size:13px;width:100%}
+.inp:focus{border-color:#6F5DFF}
+.btn{border-radius:10px;font-weight:600;transition:.15s;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px}
+.btn-blue{background:linear-gradient(95deg,#6F5DFF 0%,#27D4CD 59.7%,#74FF7E 100%);border:none;color:#fff;box-shadow:0 0 18px rgba(111,93,255,.35);padding:0 18px}
+.btn-blue:hover{filter:brightness(1.1);box-shadow:0 0 24px rgba(111,93,255,.5)}
+.btn-blue:active{transform:scale(.98)}
+.btn-ghost{color:#a1a1aa;background:transparent;border:1px solid transparent}.btn-ghost:hover{background:#2a2a2a;color:#e8e8e8}
+.tab{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
+.tab:hover{color:#fff;background:#2a2a2a}.tab.sel{color:#fff;background:#2a2a2a}
+.tab .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.tab.sel .dot{display:none}
+.tab.sel::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:20px;height:2px;border-radius:2px;background:linear-gradient(95deg,#6F5DFF,#27D4CD);position:absolute}
+.tab{position:relative}
+.slider{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:rgba(255,255,255,.14);outline:none;width:100%}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;border:3px solid #6F5DFF;cursor:pointer;box-shadow:0 0 6px rgba(111,93,255,.4);transition:.12s}
+.slider::-webkit-slider-thumb:hover{transform:scale(1.1)}
+.lora-sl{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:rgba(255,255,255,.12);outline:none}
+.lora-sl::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #6F5DFF;cursor:pointer}
+.lora-card{position:relative;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#2a2a2a;transition:.12s;padding:8px 10px 10px}
+.lora-card:hover{border-color:rgba(255,255,255,.24)}
+.lora-label{position:absolute;top:0;left:0;font-size:9px;color:#9a9aa2;background:#333;border:1px solid rgba(255,255,255,.1);padding:2px 6px;border-radius:6px;border-top-left-radius:10px;border-bottom-right-radius:6px;z-index:2}
+.lora-top{display:flex;align-items:center;gap:8px;margin-top:8px}
+.lora-thumb{width:34px;height:34px;border-radius:6px;border:1px solid rgba(255,255,255,.12);object-fit:cover;flex-shrink:0}
+.lora-name{font-size:12px;font-weight:600;color:#e8e8e8;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lora-icons{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.lora-icon{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#71717a;background:transparent;transition:.12s}
+.lora-icon:hover{background:rgba(255,255,255,.08);color:#fff}
+.lora-icon.del:hover{background:rgba(239,68,68,.15);color:#ef4444}
+.lora-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.lora-slider-row{display:flex;align-items:center;gap:4px;margin-top:6px}
+.l-slider{position:relative;flex:1;height:16px;display:flex;align-items:center}
+.l-track{position:absolute;left:0;right:0;height:4px;border-radius:4px;background:rgba(255,255,255,.13)}
+.l-fill{position:absolute;left:0;top:50%;transform:translateY(-50%);height:4px;border-radius:4px;background:linear-gradient(95deg,#6F5DFF,#27D4CD)}
+.l-handle{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #6F5DFF;box-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none}
+.lora-sl{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.l-num{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.lora-input{width:30px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#181818;color:#e8e8e8;font-size:12px;text-align:center;outline:none;padding:4px 0}
+.lora-input:focus{border-color:#6F5DFF}
+.lora-url-inp{font-size:11px;padding:6px 9px;margin-top:2px}
+.lora-btn{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#9a9aa2;background:transparent;border:none;transition:.12s}
+.lora-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.lora-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.tag{background:#2a2a2a;border:1px solid rgba(255,255,255,.12);color:#e0e0e0;display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:4px 8px;border-radius:6px}
+.ar{border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#2a2a2a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px;cursor:pointer;transition:.12s;min-width:0}
+.ar:hover{border-color:rgba(255,255,255,.3)}
+.ar.sel{border-color:#27D4CD;background:#222}
+.ar.sel .ar-desc{color:#27D4CD}
+.ar-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.ar-ico svg{width:100%;height:100%}
+.ar-name{font-size:11px;color:#e8e8e8;white-space:nowrap}
+.ar-desc{font-size:9px;color:#9a9aa2;white-space:nowrap}
+.field{display:flex;flex-direction:column;gap:3px}
+.rtab{border:1px solid transparent;border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:transparent}
+.rtab:hover{color:#fff}.rtab.sel{background:#2a2a2a;color:#fff}
+.rcard{border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:#222}
+.chip{border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#2a2a2a;transition:.12s}
+.chip:hover{color:#fff}.chip.on{border-color:#6F5DFF;color:#fff;background:#222}
+#toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
+@media (max-width:1023px){#rightPan.mobile-open{position:fixed;top:56px;right:0;bottom:0;left:auto;z-index:40;display:flex;width:min(21rem,92vw);box-shadow:-8px 0 30px rgba(0,0,0,.5)}}
+textarea{caret-color:#6F5DFF}
+input[type=checkbox]{width:14px;height:14px;cursor:pointer}
+input[type=range]{cursor:pointer}
+:focus-visible{outline:2px solid #6F5DFF;outline-offset:2px}
+.wvnum{border:1px solid rgba(255,255,255,.16);border-radius:6px;background:#2a2a2a;color:#e8e8e8;padding:3px 6px;width:64px;font-size:12px;text-align:right;outline:none}
+.wvnum:focus{border-color:#27D4CD}
+.mtab{padding:8px 14px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
+.mtab:hover{color:#fff;background:#2a2a2a}.mtab.sel{color:#fff;background:#2a2a2a;border-bottom:2px solid #6F5DFF}
+.mchip{border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#2a2a2a;transition:.12s;white-space:nowrap}
+.mchip:hover{color:#fff}.mchip.on{border-color:#6F5DFF;color:#fff;background:rgba(111,93,255,.15)}
+.mcard{border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:#2a2a2a;transition:.15s}
+.mcard:hover{border-color:rgba(111,93,255,.55);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.mcard-img{position:relative;aspect-ratio:3/4;overflow:hidden}
+.mcard-img img{width:100%;height:100%;object-fit:cover;transition:.3s}
+.mcard:hover .mcard-img img{transform:scale(1.05)}
+.mcard-badge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);font-size:10px;padding:2px 6px;border-radius:4px;color:#e8e8e8;font-weight:500}
+.mcard-star{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#9a9aa2;transition:.12s}
+.mcard-star:hover{color:#eab308}.mcard-star.on{color:#eab308}
+.mcard-views{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);font-size:10px;padding:2px 6px;border-radius:4px;color:#e8e8e8;display:flex;align-items:center;gap:3px}
+.mcard-info{padding:8px}
+.mcard-name{font-size:12px;font-weight:600;color:#e8e8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcard-meta{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.mcard-ver{font-size:11px;color:#9a9aa2;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:2px 6px}
+.mcard-sel{font-size:11px;border:1px solid #6F5DFF;color:#6F5DFF;background:transparent;border-radius:4px;padding:2px 10px;font-weight:600;cursor:pointer;transition:.12s}
+.mcard-sel:hover{background:#6F5DFF;color:#fff}
+</style>
+</head>
+<body>
+
+<header class="fixed top-0 left-0 right-0 z-40 h-14 bg-[#181818]/85 backdrop-blur border-b bd flex items-center px-2 sm:px-3 gap-2">
+  <button id="mmenu" class="lg:hidden text-neutral-400 p-1"><i data-icon="list" class="w-5 h-5"></i></button>
+  <div class="w-6 h-6 shrink-0 hidden sm:flex items-center justify-center">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="url(#g)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6F5DFF"/><stop offset="1" stop-color="#6F5DFF"/></linearGradient></defs></svg>
+  </div>
+  <div class="flex items-center gap-0.5 hidebar overflow-x-auto flex-1">
+    <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span>Text2Img</div>
+    <div class="tab" data-tab="img"><span class="dot" style="background:#22c55e"></span>Img2Img</div>
+    <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span>Edit</div>
+    <div class="tab" data-tab="video"><span class="dot" style="background:#ef4444"></span>Video</div>
+    <div class="tab" data-tab="prime"><span class="dot" style="background:#3b82f6"></span>Prime</div>
+  </div>
+  <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+    <button id="ncol" class="text-neutral-400 hover:text-white p-1.5 hidden sm:flex items-center gap-1 text-xs" title="Jumlah kolom"><i data-icon="squares-four" class="w-4 h-4"></i><span id="ncollbl">2</span></button>
+    <button id="btn-go" class="btn btn-blue h-10 px-4 sm:px-5 whitespace-nowrap">
+      <i data-icon="play" class="w-4 h-4"></i>Generate
+      <span class="text-xs opacity-90 font-normal" id="price">+$0.33</span>
+    </button>
+  </div>
+</header>
+
+<div id="overlay" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden"></div>
+
+<div class="pt-14 flex h-[calc(100vh-56px)] overflow-hidden">
+
+  <!-- LEFT PANEL -->
+  <aside id="leftpan" class="fixed lg:static z-40 inset-y-0 left-0 pt-14 lg:pt-0 w-[22rem] max-w-[88vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0 border-r bd overflow-y-auto hidebar bg-[#222]">
+    <div class="p-4 space-y-4">
+
+      <!-- Prompt block (top of left panel, like TensorArt) -->
+      <div class="rounded-xl bg-[#2a2a2a] border bd overflow-hidden">
+        <div class="flex items-start gap-2 px-3 pt-2">
+          <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-none text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
+        </div>
+        <div class="flex items-center justify-between px-3 py-2">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none">
+            <input id="negcheck" type="checkbox" class="accent-[#6F5DFF]"/>
+            <span class="text-xs text-neutral-400">Negative</span>
+          </label>
+          <div class="flex items-center gap-1.5">
+            <button id="btn-enhance" class="text-xs text-[#6F5DFF] hover:underline font-medium flex items-center gap-1"><i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance</button>
+            <span class="chip" id="chip-a1111">A1111</span>
+            <span class="chip" id="chip-ella">Ella</span>
+          </div>
+        </div>
+        <div id="negwrap" class="hidden border-t bd px-4 py-3">
+          <textarea id="negprompt" rows="2" class="w-full bg-transparent border-0 outline-none resize-none text-[13px] text-neutral-100 placeholder-neutral-600" placeholder="Negative prompt..."></textarea>
+        </div>
+      </div>
+
+      <!-- Model -->
+      <div id="model-card" class="relative border bd rounded-xl bg-[#2a2a2a] hover:border-[rgba(255,255,255,.24)] cursor-pointer p-3">
+        <span id="model-badge" class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#333] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
+        <div class="flex items-center gap-3 mt-2">
+          <img id="model-thumb" src="https://picsum.photos/seed/zimage/64" class="w-16 h-16 rounded-lg object-cover shrink-0 border bd" alt="model"/>
+          <div class="flex-1 min-w-0">
+            <div id="model-name" class="font-semibold text-sm truncate">Z Image - base-bf16</div>
+          </div>
+          <button id="model-info" class="w-6 h-6 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-[rgba(255,255,255,.08)] transition" title="Info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </button>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-neutral-500 shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+
+      <!-- LoRA -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-semibold">LoRA</span>
+          <i data-icon="caret-down" class="w-4 h-4 text-neutral-500"></i>
+        </div>
+         <div id="lora-list" class="space-y-2"></div>
+       </div>
+
+       <div>
+         <div class="flex items-center justify-between">
+           <span class="text-sm font-semibold">Trigger Words</span>
+           <span class="text-xs text-neutral-500">(<span id="tr-count">0</span>)</span>
+         </div>
+         <div class="flex items-center justify-between mt-1">
+           <span class="text-xs text-neutral-400">Add Trigger Words to Prompts</span>
+           <button id="addall-trig" class="text-xs text-[#6F5DFF] hover:underline font-medium">Add All</button>
+         </div>
+         <div class="flex flex-wrap gap-1.5 mt-2" id="triggers"></div>
+       </div>
+
+      <!-- Add buttons -->
+      <div class="flex gap-2">
+        <button id="btn-addlora" class="btn btn-ghost flex-1 h-9 border bd text-xs">Add LoRA</button>
+        <button class="btn btn-ghost flex-1 h-9 border bd text-xs">Add Embedding</button>
+      </div>
+      <div class="flex gap-2">
+        <button class="btn btn-ghost flex-1 h-9 border bd text-xs">Add ControlNet</button>
+      </div>
+
+      <!-- VAE -->
+      <div class="field">
+        <span class="text-sm">VAE</span>
+        <select id="vae" class="inp">
+          <option value="automatic">Automatic</option>
+          <option value="none">None</option>
+          <option value="vae-ft-mse-840000-ema-pruned.ckpt">vae-ft-mse-840000-ema-pruned.ckpt</option>
+          <option value="kl-f8-anime.ckpt">kl-f8-anime.ckpt</option>
+          <option value="kl-f8-anime2.ckpt">kl-f8-anime2.ckpt</option>
+          <option value="YOZORA.vae.pt">YOZORA.vae.pt</option>
+          <option value="orangemix.vae.pt">orangemix.vae.pt</option>
+          <option value="blessed2.vae.pt">blessed2.vae.pt</option>
+          <option value="animevae.pt">animevae.pt</option>
+          <option value="ClearVAE.safetensors">ClearVAE.safetensors</option>
+          <option value="pastel-waifu-diffusion.vae.pt">pastel-waifu-diffusion.vae.pt</option>
+          <option value="cute_vae.safetensors">cute_vae.safetensors</option>
+          <option value="sdxl_vae.safetensors">sdxl_vae.safetensors</option>
+          <option value="sdxl-vae-fp16-fix.safetensors">sdxl-vae-fp16-fix.safetensors</option>
+          <option value="xlVAEC_c91.safetensors">xlVAEC_c91.safetensors</option>
+          <option value="lastpieceXLVAE_baseonA0897.safetensors">lastpieceXLVAE_baseonA0897.safetensors</option>
+          <option value="playground-v2.5-fp16-vae.safetensors">playground-v2.5-fp16-vae.safetensors</option>
+          <option value="ae.sft">ae.sft</option>
+          <option value="pixel_space">pixel_space</option>
+        </select>
+      </div>
+
+      <!-- Settings -->
+      <div class="space-y-4">
+        <span class="text-sm font-semibold">Settings</span>
+        <div>
+          <div class="grid grid-cols-4 gap-2">
+            <button class="ar" data-ar="portrait">
+              <span class="ar-ico"><svg viewBox="0 0 24 24" fill="none"><rect x="6" y="2.5" width="12" height="19" rx="2.5" stroke="currentColor" stroke-width="1.6"/></svg></span>
+              <span class="ar-name">Portrait</span>
+              <span class="ar-desc">768x1152</span>
+            </button>
+            <button class="ar" data-ar="landscape">
+              <span class="ar-ico"><svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="6" width="19" height="12" rx="2.5" stroke="currentColor" stroke-width="1.6"/></svg></span>
+              <span class="ar-name">Landscape</span>
+              <span class="ar-desc">1152x768</span>
+            </button>
+            <button class="ar" data-ar="square">
+              <span class="ar-ico"><svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="2.5" width="19" height="19" rx="2.5" stroke="currentColor" stroke-width="1.6"/></svg></span>
+              <span class="ar-name">Square</span>
+              <span class="ar-desc">1024x1024</span>
+            </button>
+            <button class="ar sel" data-ar="custom">
+              <span class="ar-ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8h5M13 8h7M4 16h9M17 16h3M9 5.5v5M17 13.5v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+              <span class="ar-name">custom</span>
+              <span class="ar-desc">custom</span>
+            </button>
+          </div>
+          <div class="text-xs text-neutral-500 mt-1.5" id="ar-label">custom</div>
+        </div>
+        <div>
+          <label class="text-xs flex justify-between items-center"><span>Width</span>
+            <input id="wv" type="number" min="256" max="1536" step="64" value="768" class="wvnum"/></label>
+          <input id="width" type="range" min="256" max="1536" step="64" value="768" class="slider mt-1"/>
+        </div>
+        <div>
+          <label class="text-xs flex justify-between items-center"><span>Height</span>
+            <input id="hv" type="number" min="256" max="1536" step="64" value="1152" class="wvnum"/></label>
+          <input id="height" type="range" min="256" max="1536" step="64" value="1152" class="slider mt-1"/>
+        </div>
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs">Sampling Method</span>
+            <button id="adv-toggle" class="text-xs text-neutral-500 hover:text-white flex items-center gap-1"><i data-icon="caret-down" class="w-3.5 h-3.5"></i>Advanced</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <div class="field"><label class="text-[11px] text-neutral-500">Sampler</label>
+              <select id="sampler" class="inp text-xs">
+                <option>Euler a</option><option>Euler</option><option>LMS</option><option>LMS Karras</option><option>DDIM</option><option>LCM</option><option>Heun</option><option>DPM fast</option><option>DPM2</option><option>DPM2 a</option><option>DPM2 Karras</option><option>DPM2 a Karras</option><option>DPM++ 2S a</option><option>DPM++ 2M</option><option>DPM++ SDE</option><option>DPM++ 2S a Karras</option><option>DPM++ 2M Karras</option><option>DPM++ SDE Karras</option><option>DPM++ 2M SDE Karras</option><option>Restart</option><option>DPM++ 2M SDE Exponential</option><option>DPM++ 2M SDE Heun</option><option>DPM++ 2M SDE Heun Karras</option><option>DPM++ 2M SDE Heun Exponential</option><option>DPM++ 2M SGM Uniform</option><option>DPM++ 3M SDE</option><option>DPM++ 3M SDE Karras</option><option>DPM++ 3M SDE Exponential</option><option>euler_dy</option><option>euler_smea_dy</option>
+              </select></div>
+            <div class="field"><label class="text-[11px] text-neutral-500">Scheduler</label>
+              <select id="sched" class="inp text-xs"><option>normal</option><option>simple</option><option>karras</option><option>exponential</option><option>sgm_uniform</option><option>ddim_uniform</option><option>beta</option><option>linear_quadratic</option></select></div>
+          </div>
+<div class="space-y-3 mt-3">
+            <div>
+              <label class="text-xs flex justify-between"><span>Sampling Steps</span><span id="sv" class="text-neutral-500">10</span></label>
+              <input id="steps" type="range" min="1" max="50" value="10" class="slider mt-1"/>
+            </div>
+            <div>
+              <label class="text-xs flex justify-between"><span>CFG Scale</span><span id="cfv" class="text-neutral-500">1</span></label>
+              <input id="cfg" type="range" min="1" max="10" step="0.5" value="1" class="slider mt-1"/>
+            </div>
+            <div>
+              <label class="text-xs flex justify-between"><span>Seed</span><button id="dice" class="text-neutral-500 hover:text-white"><i data-icon="dice-five" class="w-4 h-4"></i></button></label>
+              <input id="seed" class="inp text-xs mt-1" value="1010933347943462"/>
+            </div>
+          </div>
+          <div id="adv-fields" class="hidden space-y-3 mt-4 border-t bd pt-3">
+            <div>
+              <label class="text-xs flex justify-between"><span>Clip Skip</span><span id="csv" class="text-neutral-500">2</span></label>
+              <input id="clipskip" type="range" min="1" max="12" value="2" class="slider mt-1"/>
+            </div>
+            <div>
+              <label class="text-xs flex justify-between"><span>ENSD</span><span id="ensd" class="text-neutral-500">31337</span></label>
+              <input id="etansd" type="range" min="0" max="31337" value="31337" class="slider mt-1"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upscale (separate, di bawah) -->
+        <div class="mt-4">
+          <label class="text-xs flex justify-between items-center"><span>Upscale</span><span class="text-neutral-500">2x</span></label>
+          <input id="upscale" type="range" min="1" max="4" step="0.5" value="2" class="slider mt-1"/>
+        </div>
+      </div>
+
+      <!-- API Settings -->
+      <div class="border bd rounded-xl bg-[#2a2a2a] p-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold">API</span>
+          <span id="api-status" class="text-[10px] text-neutral-500"></span>
+        </div>
+        <div class="field">
+          <label class="text-[11px] text-neutral-500">Provider</label>
+          <select id="apiprovider" class="inp text-xs">
+            <option value="tams">Tensor.Art (TAMS)</option>
+            <option value="replicate">Replicate (SDXL)</option>
+            <option value="fal">fal.ai (fast-sdxl)</option>
+            <option value="pollinations">Pollinations (GRATIS, tanpa key)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="text-[11px] text-neutral-500" id="apikey-label">API Key TAMS (tams.tensor.art)</label>
+          <input id="apikey" type="password" class="inp" placeholder="Bearer token..." autocomplete="off"/>
+        </div>
+        <div id="api-hint" class="text-[10px] text-neutral-600"></div>
+        <div class="field">
+          <label class="text-[11px] text-neutral-500">Mode</label>
+          <select id="apimode" class="inp text-xs">
+            <option value="auto">Auto (backend &rarr; demo)</option>
+            <option value="real">Real API (wajib backend)</option>
+            <option value="demo">Demo (simulasi saja)</option>
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button id="api-save" class="btn btn-ghost flex-1 h-8 border bd text-xs">Simpan</button>
+          <button id="api-test" class="btn btn-ghost flex-1 h-8 border bd text-xs">Tes</button>
+        </div>
+      </div>
+
+      <!-- Bottom -->
+      <div class="pt-1 border-t bd space-y-2">
+        <button class="btn btn-ghost w-full h-9 justify-between"><span>Paste Generation Data</span><i data-icon="clipboard" class="w-4 h-4"></i></button>
+        <button class="btn btn-ghost w-full h-9 justify-between"><span>Presets</span><i data-icon="bookmark-simple" class="w-4 h-4"></i></button>
+        <button class="btn btn-ghost w-full h-9 justify-between"><span>Reset</span><i data-icon="key" class="w-4 h-4"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTER: image grid only -->
+  <main id="canvas" class="flex-1 overflow-y-auto hidebar bg-[#181818]">
+    <div class="p-4 max-w-3xl mx-auto">
+      <!-- Img2Img upload -->
+      <div id="img2img-card" class="hidden mb-4 border bd rounded-xl bg-[#222] p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-semibold">Img2Img — gambar awal</span>
+          <span id="i2i-clear" class="text-xs text-neutral-500 hover:text-white cursor-pointer">Hapus</span>
+        </div>
+        <div id="i2i-drop" class="border-2 border-dashed bd rounded-xl p-6 text-center cursor-pointer text-neutral-500 hover:border-[#6F5DFF] text-xs">
+          Klik atau seret gambar ke sini
+        </div>
+        <input id="i2i-file" type="file" accept="image/*" class="hidden"/>
+        <div id="i2i-preview" class="hidden mt-3">
+          <img id="i2i-img" class="w-40 h-40 object-cover rounded-lg border bd" alt=""/>
+        </div>
+        <div class="mt-3">
+          <label class="text-xs flex justify-between"><span>Denoising Strength</span><span id="i2i-dsv" class="text-neutral-500">0.50</span></label>
+          <input id="i2i-ds" type="range" min="0" max="1" step="0.05" value="0.5" class="slider mt-1"/>
+        </div>
+      </div>
+
+      <!-- Tab placeholder (Edit/Video/Prime) -->
+      <div id="tab-placeholder" class="hidden flex-col items-center justify-center h-[50vh] text-neutral-600">
+        <i data-icon="hourglass-medium" class="w-12 h-12 mb-3"></i>
+        <p class="text-sm" id="tab-placeholder-text">Tab ini segera hadir</p>
+      </div>
+
+      <div id="empty" class="flex flex-col items-center justify-center h-[60vh] text-neutral-600">
+        <i data-icon="image-square" class="w-14 h-14 mb-3"></i>
+        <p class="text-sm">Hasil generate akan tampil di sini</p>
+        <p class="text-xs text-neutral-700 mt-1">Isi prompt lalu tekan Generate</p>
+      </div>
+      <div id="grid" class="grid grid-cols-2 gap-3"></div>
+    </div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <aside id="rightPan" class="w-[21rem] shrink-0 border-l bd bg-[#222] hidden lg:flex flex-col">
+    <div class="flex items-center justify-between px-3 py-2 border-b bd">
+      <span class="text-sm font-semibold">Generation History</span>
+      <div class="flex gap-1">
+        <button class="rtab sel" data-f="all">All</button>
+        <button class="rtab" data-f="image">Image</button>
+        <button class="rtab" data-f="video">Video</button>
+        <button class="rtab" data-f="audio">Audio</button>
+      </div>
+    </div>
+    <div class="flex items-center px-3 py-1.5 border-b bd text-neutral-500">
+      <button class="h-7 w-7 flex items-center justify-center text-neutral-500 hover:text-white" title="Kelola"><i data-icon="sliders-horizontal" class="w-4 h-4"></i></button>
+      <span class="mx-auto text-xs" id="rcount">0 hasil</span>
+      <button class="h-7 w-7 flex items-center justify-center text-neutral-500 hover:text-white" title="Reload"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></button>
+    </div>
+    <div id="rlist" class="flex-1 overflow-y-auto hidebar p-2 space-y-3"></div>
+  </aside>
+</div>
+
+<!-- Mobile history toggle -->
+<button id="btn-history" class="lg:hidden fixed bottom-4 right-4 z-30 btn btn-blue h-11 px-4"><i data-icon="clock-counter-clockwise" class="w-4 h-4"></i> Riwayat</button>
+
+<!-- ============ PROGRESS OVERLAY ============ -->
+<div id="progoverlay" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4" style="top:56px">
+  <div class="w-full max-w-sm bg-[#222] border bd rounded-2xl p-5 space-y-3">
+    <div class="flex items-center justify-between">
+      <span id="prog-title" class="text-sm font-semibold">Generating...</span>
+      <button id="prog-cancel" class="text-neutral-500 hover:text-white text-lg leading-none" title="Batal">✕</button>
+    </div>
+    <div class="relative h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+      <div id="prog-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);transition:width .4s"></div>
+    </div>
+    <div class="flex items-center justify-between text-xs text-neutral-500">
+      <span id="prog-status">Mengirim task...</span>
+      <span id="prog-pct">0%</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LIGHTBOX ============ -->
+<div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
+  <div class="relative max-w-3xl w-full bg-[#222] border bd rounded-2xl overflow-hidden">
+    <button id="lb-close" class="absolute top-2 right-2 z-10 w-9 h-9 flex items-center justify-center text-white hover:bg-white/10 rounded-lg text-xl">✕</button>
+    <img id="lb-img" class="w-full max-h-[60vh] object-contain bg-black" alt=""/>
+    <div id="lb-meta" class="p-4 space-y-1.5 text-xs text-neutral-400 overflow-y-auto max-h-[30vh]"></div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#2a2a2a] border bd rounded-xl px-4 py-2.5 text-sm shadow-lg max-w-[85vw]"></div>
+
+<!-- ============ SELECTOR MODAL ============ -->
+<div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
+  <div class="w-full max-w-5xl bg-[#222] border bd rounded-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-4 pt-3 pb-2 border-b bd">
+      <div id="modal-tabs" class="flex items-center gap-1">
+        <button class="mtab sel" data-mtab="basic">Basic Model</button>
+        <button class="mtab" data-mtab="starred">My Starred</button>
+        <button class="mtab" data-mtab="mymodels">My Models</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="relative">
+          <i data-icon="magnifying-glass" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"></i>
+          <input id="msearch" class="inp pl-9 w-56 h-9" placeholder="Search..."/>
+        </div>
+        <button id="mfilters" class="btn btn-ghost h-9 px-3 border bd text-xs shrink-0"><i data-icon="sliders-horizontal" class="w-4 h-4"></i>Filters</button>
+        <button id="modal-close" class="w-9 h-9 flex items-center justify-center text-white hover:bg-[#2a2a2a] rounded-lg text-xl leading-none" title="Tutup">✕</button>
+        <h3 id="modal-title" class="hidden font-semibold text-sm">Pilih Model</h3>
+      </div>
+    </div>
+    <div id="mcat" class="flex items-center gap-1.5 px-4 py-2 hidebar overflow-x-auto"></div>
+    <div id="modal-body" class="max-h-[55vh] overflow-y-auto p-4"></div>
+  </div>
+</div>
+
+
+<script>
+const $ = id => document.getElementById(id);
+const S = 'https://picsum.photos/seed/';
+const state = { results:[], page:'text', aspect:'portrait', ncol:2, model:null };
+
+/* ===== LoRA — daftar asli per provider ===== */
+var LORA_LIBS = {
+  tams: [
+    { name:'Z-Image LoRA | Detail', tags:['detailed','sharp'], thumb:'afro', badge:'Z-IMAGE', views:'12K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image Turbo', tags:['turbo','fast'], thumb:'retro', badge:'Z-IMAGE-TURBO', views:'8K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image HDR', tags:['hdr','vivid'], thumb:'hdr', badge:'Z-IMAGE', views:'15K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image Portrait', tags:['portrait','bokeh'], thumb:'ptrt', badge:'Z-IMAGE', views:'22K', ver:'V1', base:'Z Image' },
+    { name:'Z-Image Artistic', tags:['artistic','paint'], thumb:'art', badge:'Z-IMAGE', views:'18K', ver:'V1', base:'Z Image' },
+    { name:'Flux Realism LoRA', tags:['realistic','photo'], thumb:'fluxl', badge:'FLUX', views:'45K', ver:'V1', base:'FLUX.1' },
+    { name:'Flux Cinematic LoRA', tags:['cinematic','moody'], thumb:'fluxc', badge:'FLUX', views:'33K', ver:'V1', base:'FLUX.1' },
+    { name:'SDXL Fine Detail', tags:['detailed','sharp'], thumb:'detail', badge:'SDXL', views:'500K', ver:'V1', base:'SDXL' },
+    { name:'SDXL Anime Style', tags:['anime','cel'], thumb:'animesl', badge:'SDXL', views:'280K', ver:'V1', base:'SDXL' },
+    { name:'Pony Equestrian Art', tags:['pony','fantasy'], thumb:'ponyl', badge:'PONY', views:'150K', ver:'V1', base:'Pony' },
+    { name:'Nippon-Core Retro - v0.1', tags:['japretr7comm','retro magazine'], thumb:'bilibin', badge:'STYLE', views:'96K', ver:'V.1', base:'SDXL' },
+    { name:'Ivan Bilibin - v0.7', tags:['ivanbilibin5z','illustration','art deco'], thumb:'detail', badge:'ILLUSTRATION', views:'154K', ver:'V.1', base:'SDXL' },
+    { name:'Detail Tweaker - v1.0', tags:['detailed'], thumb:'grain', badge:'UTILITY', views:'1.2M', ver:'V.1', base:'SDXL' },
+    { name:'Film Grain - v0.5', tags:['film grain','analog'], thumb:'grain', badge:'UTILITY', views:'67K', ver:'V.1', base:'SDXL' },
+  ],
+  replicate: [
+    { name:'FLUX.1 [schnell] LoRA', base:'FLUX', model:'black-forest-labs/flux-schnell-lora', tags:['flux-lora'], thumb:'fluxl', badge:'FLUX-LORA', views:'120K', ver:'V1', needUrl:true },
+    { name:'FLUX.1 [dev] LoRA', base:'FLUX', model:'black-forest-labs/flux-dev-lora', tags:['flux-lora'], thumb:'fluxdl', badge:'FLUX-LORA', views:'90K', ver:'V1', needUrl:true },
+    { name:'SDXL + LoRA URL (custom)', base:'SDXL', model:'zylim0702/sdxl-lora-customize-model', tags:['lora'], thumb:'sdxll', badge:'SDXL-LORA', views:'310K', ver:'V1', needUrl:true },
+    { name:'IKEA Instructions (SDXL, bawaan)', base:'SDXL', model:'ostris/ikea-instructions-lora-sdxl', tags:['ikea instructions'], thumb:'ikea', badge:'STYLE', views:'210K', ver:'V1' },
+  ],
+  fal: [
+    { name:'FLUX LoRA', base:'FLUX', model:'fal-ai/flux-lora', tags:['flux-lora'], thumb:'fluxl', badge:'FLUX-LORA', views:'150K', ver:'V1', needUrl:true },
+    { name:'SDXL + LoRA URL (fast-sdxl)', base:'SDXL', model:'fal-ai/fast-sdxl', tags:['lora'], thumb:'sdxll', badge:'SDXL-LORA', views:'120K', ver:'V1', needUrl:true },
+    { name:'Krea 2 LoRA (turbo)', base:'Krea 2', model:'fal-ai/krea-2/turbo/lora', tags:['krea2'], thumb:'krea', badge:'KREA2-LORA', views:'66K', ver:'V1', needUrl:true },
+  ],
+  pollinations: [], // LoRA tidak didukung — gratis, model bawaan saja
+};
+var LORA_LIB = LORA_LIBS.tams; // daftar aktif mengikuti provider
+const LORA = [];
+/* ===== Model modal — daftar model asli per provider ===== */
+var MODEL_LIBS = {
+  tams: [
+    { name:'Z Image - base-bf16', base:'Basic Model', arch:'Z Image', thumb:'zimage', badge:'Z', views:'44K', ver:'V.1', modelId:'1027906253260603805', modelFileId:'1027906254334366245' },
+    { name:'FLUX.1 [dev]', base:'Basic Model', arch:'FLUX.1', thumb:'flux', badge:'FLUX', views:'154K', ver:'V.1', modelId:'1027906282644525056', modelFileId:'1027906282644525057' },
+    { name:'Stable Diffusion XL', base:'Basic Model', arch:'SDXL', thumb:'sdxl', badge:'SDXL 1.0', views:'892K', ver:'V.1', modelId:'1027906309032136704', modelFileId:'1027906309032136705' },
+    { name:'Stable Diffusion 3.5 Medium', base:'Basic Model', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'312K', ver:'V.1', modelId:'1027906317452808192', modelFileId:'1027906317452808193' },
+    { name:'Pony Diffusion V6', base:'Basic Model', arch:'Pony', thumb:'pony', badge:'PONY', views:'2.1M', ver:'V6', modelId:'1027906326874271744', modelFileId:'1027906326874271745' },
+    { name:'Illustrious XL', base:'Basic Model', arch:'Illustrious', thumb:'illust', badge:'ILLUSTRIOUS', views:'67K', ver:'V.1', modelId:'1027906335782414336', modelFileId:'1027906335782414337' },
+    { name:'Anima', base:'Basic Model', arch:'Anima', thumb:'anima', badge:'ANIMA', views:'52K', ver:'V.1', modelId:'1027906344716771840', modelFileId:'1027906344716771841' },
+    { name:'DreamShaper', base:'Basic Model', arch:'SDXL', thumb:'dream', badge:'DS', views:'812K', ver:'V.5', modelId:'1027906353499429888', modelFileId:'1027906353499429889' },
+    { name:'Realistic Vision', base:'Basic Model', arch:'SDXL', thumb:'real', badge:'RV', views:'645K', ver:'V.6.0', modelId:'1027906362412531712', modelFileId:'1027906362412531713' },
+    { name:'Counterfeit', base:'Basic Model', arch:'SDXL', thumb:'counter', badge:'COUNTERFEIT', views:'420K', ver:'V.5', modelId:'1027906371334727680', modelFileId:'1027906371334727681' },
+    { name:'Lyriel', base:'Basic Model', arch:'SDXL', thumb:'lyriel', badge:'LYRIEL', views:'320K', ver:'V.1.6', modelId:'1027906379996013568', modelFileId:'1027906379996013569' },
+    { name:'Juggernaut', base:'Basic Model', arch:'SDXL', thumb:'jug', badge:'JUGG', views:'210K', ver:'V.9', modelId:'1027906388421099520', modelFileId:'1027906388421099521' },
+  ],
+  replicate: [
+    { name:'FLUX.1 [schnell]', base:'Replicate', arch:'FLUX', thumb:'flux', badge:'FLUX', views:'4M', ver:'V1', model:'black-forest-labs/flux-schnell' },
+    { name:'FLUX.1 [dev]', base:'Replicate', arch:'FLUX', thumb:'fluxd', badge:'FLUX', views:'2.1M', ver:'V1', model:'black-forest-labs/flux-dev' },
+    { name:'SDXL 1.0', base:'Replicate', arch:'SDXL', thumb:'sdxl', badge:'SDXL 1.0', views:'1.2M', ver:'V1', model:'stability-ai/sdxl' },
+    { name:'Stable Diffusion 3.5 Large', base:'Replicate', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'1.5M', ver:'V1', model:'stability-ai/stable-diffusion-3.5-large' },
+    { name:'SDXL Lightning 4-Step', base:'Replicate', arch:'SDXL', thumb:'lightning', badge:'LIGHTNING', views:'1.8M', ver:'V1', model:'bytedance/sdxl-lightning-4step' },
+    { name:'RealVisXL V4.0', base:'Replicate', arch:'SDXL', thumb:'real', badge:'REALISTIC', views:'900K', ver:'V4.0', model:'lucataco/realvisxl-v4.0' },
+    { name:'Juggernaut XL V9', base:'Replicate', arch:'SDXL', thumb:'jug', badge:'JUGG', views:'750K', ver:'V9', model:'digiplay/Juggernaut_XL_v9' },
+    { name:'SDXL Emoji', base:'Replicate', arch:'SDXL', thumb:'emoji', badge:'EMOJI', views:'600K', ver:'V1', model:'fofr/sdxl-emoji' },
+  ],
+  fal: [
+    { name:'FLUX.1 [schnell]', base:'fal.ai', arch:'FLUX', thumb:'flux', badge:'FLUX', views:'5M', ver:'V1', model:'fal-ai/flux/schnell' },
+    { name:'FLUX.1 [dev]', base:'fal.ai', arch:'FLUX', thumb:'fluxd', badge:'FLUX', views:'3M', ver:'V1', model:'fal-ai/flux/dev' },
+    { name:'Fast SDXL', base:'fal.ai', arch:'SDXL', thumb:'fastsdxl', badge:'FAL', views:'2.5M', ver:'V1', model:'fal-ai/fast-sdxl' },
+    { name:'SDXL', base:'fal.ai', arch:'SDXL', thumb:'sdxl', badge:'SDXL 1.0', views:'1.1M', ver:'V1', model:'fal-ai/sdxl' },
+    { name:'Stable Diffusion 3.5 Large', base:'fal.ai', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'900K', ver:'V1', model:'fal-ai/stable-diffusion-v35-large' },
+    { name:'Playground v2.5', base:'fal.ai', arch:'SDXL', thumb:'play', badge:'PLAY', views:'700K', ver:'V2.5', model:'fal-ai/playground/v2.5' },
+    { name:'Krea 2 Turbo', base:'fal.ai', arch:'Krea 2', thumb:'krea', badge:'KREA2', views:'1.1M', ver:'V2', model:'fal-ai/krea-2/turbo' },
+  ],
+  pollinations: [
+    { name:'Auto (model terbaik)', base:'Pollinations', arch:'Auto', thumb:'sana', badge:'GRATIS', views:'∞', ver:'V1', model:'' },
+    { name:'FLUX', base:'Pollinations', arch:'FLUX', thumb:'flux', badge:'GRATIS', views:'∞', ver:'V1', model:'flux' },
+    { name:'Turbo', base:'Pollinations', arch:'Turbo', thumb:'turbo', badge:'GRATIS', views:'∞', ver:'V1', model:'turbo' },
+    { name:'Sana', base:'Pollinations', arch:'Sana', thumb:'sana', badge:'GRATIS', views:'∞', ver:'V1', model:'sana' },
+  ],
+};
+var MODELS = MODEL_LIBS.tams; // daftar aktif mengikuti provider
+var MCAT = ['Try Now','ALL','OFFICIAL MODEL','MEME','EXCLUSIVE','BEAUTY','3D','2.5D','MALE','ANIME','REALISTIC','STYLE','GAME','DESIGN','SCENERY','BUILDINGS','MECHA'];
+var _curList=[], _curOnSel=function(){};
+function renderCards(list, onSel){
+  _curList=list; _curOnSel=onSel;
+  var b=$('modal-body'); b.innerHTML='';
+  if(!list.length){ b.innerHTML='<p class="text-xs text-neutral-500 p-3 text-center">Tidak ada hasil.</p>'; return; }
+  var grid=document.createElement('div');
+  grid.className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3';
+  list.forEach(function(m){
+    var d=document.createElement('div');
+    d.className='mcard';
+    d.innerHTML ='<div class="mcard-img">'
+      +'<img src="'+S+m.thumb+'/300"/>'
+      +'<span class="mcard-badge">'+m.badge+'</span>'
+      +'<div class="mcard-star"><i data-icon="star" class="w-4 h-4"></i></div>'
+      +'<div class="mcard-views"><i data-icon="play-fill" class="w-3 h-3"></i>'+m.views+'</div>'
+      +'</div>'
+      +'<div class="mcard-info">'
+      +'<div class="mcard-name" title="'+m.name+'">'+m.name+'</div>'
+      +'<div class="mcard-meta">'
+      +'<select class="mcard-ver"><option>'+m.ver+'</option><option>V.2</option><option>V.3</option></select>'
+      +'<button class="mcard-sel">Select</button>'
+      +'</div></div>';
+    d.querySelector('.mcard-star').addEventListener('click',function(e){ e.target.closest('.mcard-star').classList.toggle('on'); });
+    d.querySelector('.mcard-sel').addEventListener('click',function(){ _curOnSel(m); });
+    grid.appendChild(d);
+  });
+  b.appendChild(grid);
+}
+function applySearch(){
+  var q=($('msearch').value||'').toLowerCase();
+  renderCards(_curList.filter(function(m){return !q||m.name.toLowerCase().indexOf(q)>=0}), _curOnSel);
+}
+$('msearch').addEventListener('input',applySearch);
+$('mfilters').addEventListener('click',function(){ $('mcat').classList.toggle('hidden'); $('mfilters').classList.toggle('on'); });
+document.querySelectorAll('.mtab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.mtab').forEach(function(x){x.classList.remove('sel')});
+    t.classList.add('sel');
+    if(t.dataset.mtab==='basic') renderCards(MODELS, function(m){ setModel(m); closeModal(); });
+    else renderCards([], null);
+  });
+});
+function renderMCat(onPick){
+  var c=$('mcat');
+  if(!onPick) onPick=function(){};
+  var html='';
+  MCAT.forEach(function(cat,i){
+    html+='<button class="mchip" data-mcat="'+cat+'">'+cat+'</button>';
+  });
+  c.innerHTML=html;
+  c.querySelector('.mchip').classList.add('on');
+  c.querySelectorAll('.mchip').forEach(function(ch){
+    ch.addEventListener('click',function(){
+      c.querySelectorAll('.mchip').forEach(function(x){x.classList.remove('on')});
+      ch.classList.add('on');
+      onPick(ch.dataset.mcat);
+    });
+  });
+}
+function setModel(m){
+  state.model=m;
+  $('model-name').textContent=m.name;
+  $('model-thumb').src='https://picsum.photos/seed/'+m.thumb+'/64';
+  var b=$('model-badge'); if(b) b.textContent=(m.base||'Model')+' - '+(m.arch||'');
+}
+function openModelSelector(){
+  $('modal-title').textContent='Pilih Model';
+  renderMCat(function(){ renderCards(MODELS, function(m){ setModel(m); closeModal(); }); });
+  renderCards(MODELS, function(m){ setModel(m); closeModal(); });
+  openModal();
+}
+$('model-card').addEventListener('click',openModelSelector);
+function openLoraModal(){
+  $('modal-title').textContent='Pilih LoRA';
+  var arch=state.model?state.model.arch:'';
+  var avail=function(){ return LORA_LIB.filter(function(l){
+    return (!LORA.some(function(x){return x.name===l.name})) && (!arch || !l.base || l.base===arch);
+  }); };
+  var onSel=function(l){
+    LORA.push({ name:l.name, w:0.8, tags:l.tags, thumb:l.thumb, base:l.base, loraModel:l.model||'', needUrl:l.needUrl, loraUrl:'' });
+    renderLora(); closeModal();
+  };
+  renderMCat(function(){ renderCards(avail(), onSel); });
+  renderCards(avail(), onSel);
+  if(!avail().length){ $('modal-title').textContent='Tidak ada LoRA untuk '+arch; }
+  openModal();
+}
+function openModal(){ $('modal').classList.remove('hidden'); $('modal').classList.add('flex'); }
+function closeModal(){ $('modal').classList.add('hidden'); $('modal').classList.remove('flex'); }
+function openLoraInfo(l){
+  $('modal-title').textContent='Detail LoRA';
+  $('mcat').innerHTML='';
+  var b=$('modal-body');
+  b.innerHTML='<div class="flex gap-3 p-2">'
+    +'<img src="'+S+l.thumb+'/140" class="w-28 h-28 rounded-lg object-cover shrink-0"/>'
+    +'<div class="flex-1 min-w-0">'
+    +'<div class="flex flex-wrap gap-1.5 mb-1">'
+    +'<span class="text-[10px] font-semibold bg-[#2a2a2a] border bd px-1.5 py-0.5 rounded text-neutral-400">LORA</span>'
+    +'<span class="text-[10px] font-semibold bg-[rgba(111,93,255,.15)] border border-[#6F5DFF] px-1.5 py-0.5 rounded text-[#6F5DFF]">'+l.badge+'</span>'
+    +'<span class="text-[10px] font-semibold bg-[#2a2a2a] border bd px-1.5 py-0.5 rounded text-neutral-400">Original</span>'
+    +'</div>'
+    +'<div class="text-sm font-semibold">'+l.name+'</div>'
+    +'<div class="text-xs text-neutral-500 mt-0.5">Rekty AI</div>'
+    +'<div class="flex items-center gap-1 mt-1 text-xs text-neutral-400"><i data-icon="download-simple" class="w-3.5 h-3.5"></i>'+(l.views?l.views:'12K')+' downloads</div>'
+    +'</div></div>'
+    +'<div class="border-t bd mt-2 pt-3">'
+    +'<div class="text-sm font-semibold mb-2 flex items-center gap-1"><i data-icon="tag" class="w-4 h-4"></i>Version Detail</div>'
+    +'<div class="grid grid-cols-2 gap-2 text-xs">'
+    +'<div class="flex justify-between border bd rounded-lg px-2 py-1.5"><span class="text-neutral-500">Base Model</span><span class="text-neutral-200">Z Image</span></div>'
+    +'<div class="flex justify-between border bd rounded-lg px-2 py-1.5"><span class="text-neutral-500">Steps</span><span class="text-neutral-200">2500</span></div>'
+    +'<div class="flex justify-between border bd rounded-lg px-2 py-1.5"><span class="text-neutral-500">Epoch</span><span class="text-neutral-200">12</span></div>'
+    +'<div class="flex justify-between border bd rounded-lg px-2 py-1.5"><span class="text-neutral-500">Trigger Words</span><span class="text-[#27D4CD]">'+l.tags.slice(0,2).join(', ')+'</span></div>'
+    +'</div>'
+    +'<div class="text-xs text-neutral-500 mt-3 mb-1">Description</div>'
+    +'<div class="text-xs text-neutral-400 leading-relaxed">'+l.tags.join(', ')+' — LoRA untuk gaya dan detail tambahan di Z Image.</div>';
+  openModal();
+}
+$('model-info').addEventListener('click',function(e){ e.stopPropagation(); openLoraInfo({name:$('model-name').textContent,badge:'Z Image',thumb:'zimage',tags:['detail','sharp']}); });
+$('modal-close').addEventListener('click',closeModal);
+$('modal').addEventListener('click',function(e){ if(e.target===$('modal')) closeModal(); });
+$('btn-addlora').addEventListener('click',openLoraModal);
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
+function renderLora(){
+  var list = $('lora-list'); list.innerHTML='';
+  if(!LORA.length){ list.innerHTML='<div class="text-xs text-neutral-600 border border-dashed border-[rgba(255,255,255,.16)] rounded-lg p-3 text-center">Belum ada LoRA. Klik "Add LoRA".</div>'; renderTriggers(); return; }
+  LORA.forEach(function(l,ri){
+    var d=document.createElement('div');
+    d.className='lora-card';
+    d.innerHTML=''
+      +'<span class="lora-label">LoRA - '+(l.base||'Z Image')+'</span>'
+      +'<div class="lora-top">'
+      +'<img src="'+S+l.thumb+'/40" class="lora-thumb" alt=""/>'
+      +'<span class="lora-name">'+l.name+'</span>'
+      +'<div class="lora-icons">'
+      +'<button class="lora-icon" data-info="'+ri+'" title="Info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></button>'
+      +'<button class="lora-icon del" data-del="'+ri+'" title="Hapus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>'
+      +'</div>'
+      +'</div>'
+      +'<div class="lora-slider-row">'
+      +'<div class="l-slider"><div class="l-track"></div><div class="l-fill" style="width:'+(l.w/2*100)+'%"></div><div class="l-handle" style="left:'+(l.w/2*100)+'%"></div><input type="range" min="0" max="2" step="0.1" value="'+l.w+'" data-ri="'+ri+'" class="lora-sl"/></div>'
+      +'<div class="l-num">'
+      +'<button class="lora-btn" data-dec="'+ri+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>'
+      +'<input type="text" value="'+l.w.toFixed(1)+'" class="lora-input" data-ri="'+ri+'" inputmode="decimal"/>'
+      +'<button class="lora-btn" data-inc="'+ri+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>'
+      +'</div>'
+      +(l.needUrl?'<div class="mt-2"><input type="text" class="inp lora-url-inp" value="'+(l.loraUrl||'')+'" data-url="'+ri+'" placeholder="https://huggingface.co/user/repo/resolve/main/lora.safetensors"/><div class="mt-1 text-[10px] leading-snug text-neutral-500">URL publik langsung (.safetensors) — contoh HuggingFace resolve. Kaggle tidak bisa (butuh login).</div></div>':'')
+      +'</div>';
+    var sl=d.querySelector('.l-slider [data-ri="'+ri+'"]');
+    var uInp=d.querySelector('[data-url="'+ri+'"]');
+    if(uInp){ uInp.addEventListener('input',function(e){ LORA[ri].loraUrl=e.target.value.trim(); }); }
+    sl.addEventListener('input',function(e){
+      var v=parseFloat(e.target.value); if(isNaN(v))return;
+      LORA[ri].w=v;
+      var pct=(v/2*100);
+      d.querySelector('.l-fill').style.width=pct+'%';
+      d.querySelector('.l-handle').style.left=pct+'%';
+      d.querySelector('.lora-input').value=v.toFixed(1);
+      renderTriggers();
+    });
+    d.querySelector('.l-num [data-inc="'+ri+'"]').addEventListener('click',function(){ setLW(ri,+(LORA[ri].w+0.1).toFixed(1)); renderLora(); });
+    d.querySelector('.l-num [data-dec="'+ri+'"]').addEventListener('click',function(){ setLW(ri,+(LORA[ri].w-0.1).toFixed(1)); renderLora(); });
+    d.querySelector('[data-del="'+ri+'"]').addEventListener('click',function(){ LORA.splice(ri,1); renderLora(); renderTriggers(); });
+    d.querySelector('[data-info="'+ri+'"]').addEventListener('click',function(){ openLoraInfo(l); });
+    list.appendChild(d);
+  });
+  renderTriggers();
+}
+function setLW(i,v){ LORA[i].w=Math.max(0,Math.min(2,v)); }
+var _pendingTrig = [];
+function renderTriggers(){
+  var p=($('prompt').value||'').toLowerCase();
+  var t=$('triggers'); t.innerHTML='';
+  _pendingTrig=[];
+  LORA.filter(function(l){return l.w>0}).forEach(function(l){
+    l.tags.forEach(function(w){ if(p.indexOf(w.toLowerCase())<0) _pendingTrig.push({word:w,lora:l.name}); });
+  });
+  $('tr-count').textContent=_pendingTrig.length;
+  if(!_pendingTrig.length){ t.innerHTML='<span class="text-xs text-neutral-600">Tidak ada trigger word tersisa</span>'; return; }
+  _pendingTrig.forEach(function(item){
+    var b=document.createElement('button');
+    b.className='tag cursor-pointer hover:border-[#27D4CD] hover:text-[#27D4CD] transition';
+    b.innerHTML='<i data-icon="sparkle" class="w-3 h-3 text-[#27D4CD]"></i>'+item.word;
+    b.title='Tambahkan ke prompt ('+item.lora+')';
+    b.addEventListener('click',function(){
+      addWord(item.word);
+      renderTriggers();
+    });
+    t.appendChild(b);
+  });
+}
+function addWord(w){
+  var pr=$('prompt'), cv=pr.value.trim();
+  if(cv && !cv.endsWith(',')) cv+=',';
+  pr.value=cv+w+',';
+  pr.focus();
+}
+function addAllTrig(){
+  var all=_pendingTrig.map(function(x){return x.word});
+  all.forEach(addWord);
+  renderTriggers();
+}
+$('addall-trig').addEventListener('click',addAllTrig);
+
+/* ===== aspect ratio ===== */
+var AR_MAP = {
+  portrait:['Portrait',768,1152],
+  landscape:['Landscape',1152,768],
+  square:['Square',1024,1024],
+  custom:['custom',null,null]
+};
+document.querySelectorAll('.ar').forEach(function(b){
+  b.addEventListener('click',function(){
+    var ar=b.dataset.ar; state.aspect=ar;
+    setArActive(ar);
+    if(ar!=='custom'){ $('width').value=AR_MAP[ar][1]; $('height').value=AR_MAP[ar][2]; }
+    updWH();
+  });
+});
+function updWH(){ $('wv').value=$('width').value; $('hv').value=$('height').value; }
+$('width').addEventListener('input',function(){ $('wv').value=$('width').value; state.aspect='custom'; setArActive('custom'); });
+$('height').addEventListener('input',function(){ $('hv').value=$('height').value; state.aspect='custom'; setArActive('custom'); });
+$('wv').addEventListener('change',function(){ var v=Math.max(256,Math.min(1536,parseInt($('wv').value)||768)); v=Math.round(v/64)*64; $('wv').value=v; $('width').value=v; state.aspect='custom'; setArActive('custom'); });
+$('hv').addEventListener('change',function(){ var v=Math.max(256,Math.min(1536,parseInt($('hv').value)||1152)); v=Math.round(v/64)*64; $('hv').value=v; $('height').value=v; state.aspect='custom'; setArActive('custom'); });
+function setArActive(ar){
+  document.querySelectorAll('.ar').forEach(function(x){x.classList.toggle('sel', x.dataset.ar===ar)});
+  $('ar-label').textContent=AR_MAP[ar][0];
+}
+$('steps').addEventListener('input',function(e){$('sv').textContent=e.target.value});
+$('cfg').addEventListener('input',function(e){$('cfv').textContent=e.target.value});
+$('clipskip').addEventListener('input',function(e){$('csv').textContent=e.target.value});
+$('etansd').addEventListener('input',function(e){$('ensd').textContent=e.target.value});
+$('adv-toggle').addEventListener('click',function(){$('adv-fields').classList.toggle('hidden')});
+$('dice').addEventListener('click',function(){$('seed').value=String(Math.floor(Math.random()*9999999999999999))});
+$('negcheck').addEventListener('change',function(e){$('negwrap').classList.toggle('hidden',!e.target.checked)});
+$('prompt').addEventListener('input',renderTriggers);
+$('btn-enhance').addEventListener('click',function(){
+  var p=($('prompt').value||'').trim();
+  if(!p){ $('prompt').focus(); return; }
+  var b=$('btn-enhance');
+  b.innerHTML='<i data-icon="circle-notch" class="w-3.5 h-3.5 animate-spin"></i>Enhancing...';
+  setTimeout(function(){
+    $('prompt').value=p
+      +'\n\nEnhance detail, lighting, composition, and atmosphere. '
+      +'Ultra-detailed, professional photography, sharp focus, cinematic lighting.';
+    renderTriggers();
+    b.innerHTML='<i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance';
+  },900);
+});
+document.querySelectorAll('.chip').forEach(function(c){
+  c.addEventListener('click',function(){c.classList.toggle('on')});
+});
+
+/* ===== tabs ===== */
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('sel')});
+    t.classList.add('sel'); state.page=t.dataset.tab;
+    renderCanvas();
+  });
+});
+document.querySelectorAll('.rtab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.rtab').forEach(function(x){x.classList.remove('sel')});
+    t.classList.add('sel');
+  });
+});
+
+/* ===== mobile drawer ===== */
+$('mmenu').addEventListener('click',function(){ openLeft(); });
+$('overlay').addEventListener('click',function(){ closeLeft(); });
+function openLeft(){ $('overlay').classList.remove('hidden'); $('leftpan').classList.remove('-translate-x-full'); }
+function closeLeft(){ $('overlay').classList.add('hidden'); if(window.innerWidth<1024) $('leftpan').classList.add('-translate-x-full'); }
+
+/* ===== image count ===== */
+$('ncol').addEventListener('click',function(){
+  state.ncol = state.ncol===2?1:2;
+  $('grid').className='grid grid-cols-'+state.ncol+' gap-3';
+  $('ncollbl').textContent=state.ncol;
+});
+
+/* ===== generate (real API / demo fallback) ===== */
+$('btn-go').addEventListener('click',doGenerate);
+function setBusy(b){
+  $('btn-go').disabled=b; $('btn-go').style.opacity=b?'0.5':'1';
+  $('btn-go').innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
+    :'<i data-icon="play" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">+$0.33</span>';
+}
+function extractImages(data){
+  if(!data) return [];
+  if(Array.isArray(data)) data={images:data};
+  var imgs=data.images||data.data&&data.data.images||data.result&&data.result.images||data.urls||[];
+  return imgs.map(function(i){ return typeof i==='string'?i:(i.url||i.src||i.image||i.path); }).filter(Boolean);
+}
+/* ===== hasil + riwayat (persist localStorage) ===== */
+function persistResults(){
+  try{ localStorage.setItem(RESULTS_KEY,JSON.stringify(state.results.slice(0,60))); }catch(e){}
+}
+function makeGridCard(r){
+  var g=document.createElement('div');
+  g.className='relative rounded-xl overflow-hidden border bd aspect-[4/5] bg-[#2a2a2a] cursor-pointer hover:border-[rgba(255,255,255,.24)]';
+  g.innerHTML='<img src="'+r.src+'" class="w-full h-full object-cover"/>'
+    +(r.demo?'<span class="absolute top-1.5 left-1.5 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300">DEMO</span>':'');
+  g.addEventListener('click',function(){ openLightbox(r); });
+  return g;
+}
+function renderGrid(){
+  var grid=$('grid'); grid.innerHTML='';
+  var arr=state.results.slice().reverse(); // hasil terbaru tampil duluan
+  arr.forEach(function(r){ grid.appendChild(makeGridCard(r)); });
+  $('empty').style.display = state.results.length>0 ? 'none' : '';
+}
+function addResult(r){
+  state.results.unshift(r);
+  if(state.results.length>60) state.results.length=60;
+  persistResults();
+  renderGrid();
+  renderRight();
+}
+
+/* ===== right history ===== */
+function fmtDate(ts){ try{ return new Date(ts).toLocaleDateString('id-ID'); }catch(e){ return ''; } }
+function renderRight(){
+  var list=$('rlist'); list.innerHTML='';
+  if(!state.results.length){ list.innerHTML='<p class="text-xs text-neutral-500 p-4 text-center">Belum ada hasil.</p>'; $('rcount').textContent='0 hasil'; return; }
+  $('rcount').textContent=state.results.length+' hasil';
+  state.results.forEach(function(r,i){
+    var d=document.createElement('div'); d.className='rcard';
+    var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
+    d.innerHTML='<div class="relative">'
+      +'<img src="'+r.src+'" class="w-full aspect-[4/3] object-cover cursor-pointer"/>'
+      +'<button class="absolute top-1.5 right-1.5 w-6 h-6 rounded-md bg-black/50 hover:bg-red-500/80 text-white flex items-center justify-center text-xs" title="Hapus">✕</button>'
+      +'</div>'
+      +'<div class="p-2.5 space-y-1.5 text-xs">'
+      +'<div class="flex items-center gap-1.5"><i data-icon="sparkle" class="w-3 h-3 text-violet-400"></i><span class="bg-violet-500/10 text-violet-300 px-1.5 py-px rounded text-[10px]">'+lbl+'</span></div>'
+      +'<div class="bg-black/40 rounded p-1.5 text-[11px] text-neutral-300 leading-snug cursor-pointer hover:text-white" title="Lihat detail">'+(r.prompt||'').slice(0,90)+'</div>'
+      +'<div class="flex items-center gap-1 text-[10px] text-neutral-500"><i data-icon="layers" class="w-3 h-3"></i>'+LORA.filter(function(l){return l.w>0}).length+' LoRA</div>'
+      +'<div class="space-y-1 text-[10px] text-neutral-500">'
+      +(r.taskId?'<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+r.taskId+'">'+r.taskId+'</span></div>':'')
+      +(r.credits?'<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+r.credits+'</span></div>':'')
+      +'<div class="flex justify-between"><span>Created</span><span class="text-neutral-300">'+fmtDate(r.ts)+'</span></div>'
+      +(r.neg?'<div class="flex justify-between"><span>Negative</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+r.neg+'">'+r.neg+'</span></div>':'')
+      +'<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
+      +'<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300">'+r.seed+'</span></div>'
+      +'</div></div>';
+    d.querySelector('img').addEventListener('click',function(){ openLightbox(r); });
+    d.querySelector('.bg-black\\/40').addEventListener('click',function(){ openLightbox(r); });
+    d.querySelector('button').addEventListener('click',function(){
+      state.results.splice(i,1); persistResults(); renderRight();
+    });
+    list.appendChild(d);
+  });
+}
+
+/* ===== lightbox ===== */
+function openLightbox(r){
+  $('lb-img').src=r.src;
+  var h='';
+  h+='<div class="flex justify-between"><span>Model</span><span class="text-neutral-200">'+(r.model||'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>Prompt</span><span class="text-neutral-200">'+(r.prompt||'-')+'</span></div>';
+  if(r.neg) h+='<div class="flex justify-between"><span>Negative</span><span class="text-neutral-200">'+r.neg+'</span></div>';
+  h+='<div class="flex justify-between"><span>Size</span><span class="text-neutral-200">'+(r.size||'-')+'</span></div>';
+  h+='<div class="flex justify-between"><span>Seed</span><span class="text-neutral-200">'+(r.seed||'-')+'</span></div>';
+  if(r.taskId) h+='<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-200">'+r.taskId+'</span></div>';
+  if(r.credits) h+='<div class="flex justify-between"><span>Credits</span><span class="text-neutral-200">'+r.credits+'</span></div>';
+  h+='<div class="mt-2"><a href="'+r.src+'" target="_blank" rel="noopener" class="text-[#6F5DFF] hover:underline text-xs">Buka gambar asli &nearr;</a></div>';
+  $('lb-meta').innerHTML=h;
+  $('lightbox').classList.remove('hidden'); $('lightbox').classList.add('flex');
+}
+$('lb-close').addEventListener('click',function(){ $('lightbox').classList.add('hidden'); $('lightbox').classList.remove('flex'); });
+$('lightbox').addEventListener('click',function(e){ if(e.target===$('lightbox')){ $('lightbox').classList.add('hidden'); $('lightbox').classList.remove('flex'); } });
+
+/* ===== payload (struktur nyata Tensor.Art) ===== */
+function buildPayload(){
+  var neg=$('negcheck').checked?$('negprompt').value:'';
+  var m=state.model;
+  return {
+    params:{
+      baseModel:{ modelId:m.modelId, modelFileId:m.modelFileId },
+      model:settings.provider==='tams'?'':(m&&m.model?m.model:''),
+      sdxl:{ refiner:false },
+      models:LORA.filter(function(l){return l.w>0}).map(function(l){return { name:l.name, weight:l.w, triggerWords:l.tags, loraModel:l.loraModel||'', loraUrl:l.loraUrl||'' } }),
+      embeddingModels:[],
+      sdVae:$('vae').value==='automatic'?'Automatic':$('vae').value,
+      prompt:$('prompt').value,
+      negativePrompt:neg,
+      height:parseInt($('height').value),
+      width:parseInt($('width').value),
+      imageCount:state.ncol,
+      steps:parseInt($('steps').value),
+      images:i2iDataUrl?[i2iDataUrl]:[],
+      denoisingStrength:parseFloat($('i2i-ds').value)||0.5,
+      cfgScale:parseFloat($('cfg').value),
+      seed:($('seed').value||'').trim()||String(Math.floor(Math.random()*9999999999)),
+      clipSkip:parseInt($('clipskip').value),
+      etaNoiseSeedDelta:parseInt($('etansd').value),
+      v1Clip:false,
+      enablePix2pix:state.page==='img'&&!!i2iDataUrl,
+      guidance:3.5,
+      useFirstLastFrame:false,
+      ksamplerName:$('sampler').value,
+      schedule:$('sched').value
+    },
+    provider:settings.provider||'tams',
+    credits:1.22,
+    taskType:state.page==='img'&&i2iDataUrl?'IMG2IMG':'TXT2IMG',
+    isRemix:false,
+    captchaType:'CLOUDFLARE_TURNSTILE'
+  };
+}
+/* ============ REKTY GENERATOR — versi web full ============
+ * Generate asli via backend (/api -> Tensor.Art Model Service)
+ * atau mode demo (picsum) kalau backend/API key belum aktif.
+ * ========================================================== */
+var SETTINGS_KEY='rekty.settings', RESULTS_KEY='rekty.results';
+var settings={ mode:'auto', provider:'tams', apiKey:'' };
+var PROVIDER_INFO={
+  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
+  replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
+  fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
+  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Gratis tanpa key (model otomatis). Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' }
+};
+
+function loadSettings(){
+  try{
+    var s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+    if(s&&typeof s==='object'){
+      settings.mode=s.mode||'auto'; settings.provider=s.provider||'tams'; settings.apiKey=s.apiKey||'';
+    }
+  }catch(e){}
+}
+function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings)); }catch(e){} }
+function applySettingsUI(){
+  $('apimode').value=settings.mode; $('apikey').value=settings.apiKey;
+  updateProviderUI();
+}
+function updateProviderUI(){
+  var info=PROVIDER_INFO[settings.provider]||PROVIDER_INFO.tams;
+  $('apiprovider').value=settings.provider;
+  $('apikey-label').textContent=info.label;
+  $('api-hint').textContent=info.hint;
+  updateApiStatus();
+  // Ganti daftar model sesuai provider aktif.
+  var lib=MODEL_LIBS[settings.provider]||MODEL_LIBS.tams;
+  if(MODELS!==lib){
+    MODELS=lib;
+    if(MODELS.length) setModel(MODELS[0]);
+  }
+  // Ganti daftar LoRA sesuai provider (LoRA lama dibersihkan).
+  LORA_LIB=LORA_LIBS[settings.provider]||LORA_LIBS.tams;
+  LORA.length=0;
+  renderLora();
+  // Pollinations: ambil daftar model asli dari API (fallback ke daftar statis).
+  if(settings.provider==='pollinations') refreshPollinationsModels();
+}
+function refreshPollinationsModels(){
+  fetch('/api/pollinations-models').then(function(r){ return r.json(); }).then(function(d){
+    if(!d||!Array.isArray(d.models)||!d.models.length) return;
+    var lib=d.models
+      .filter(function(m){ return m.category==='image'&&m.name&&m.name.indexOf('byop/')!==0; })
+      .slice(0,18)
+      .map(function(m){ return { name:m.title||m.name, base:'Pollinations', arch:m.brand||'', thumb:String(m.name).replace(/[^a-z0-9]/gi,''), badge:'POLLI', views:'', ver:'V1', model:m.name }; });
+    if(!lib.length) return;
+    MODEL_LIBS.pollinations=lib;
+    if(MODELS===MODEL_LIBS.pollinations){ setModel(MODELS[0]); }
+  }).catch(function(){});
+}
+function updateApiStatus(){
+  var el=$('api-status'); if(!el) return;
+  if(settings.provider==='pollinations'){
+    el.textContent='Pollinations · gratis';
+    el.style.color='#27D4CD';
+    return;
+  }
+  var name=settings.provider==='tams'?'TAMS':(settings.provider==='replicate'?'Replicate':'fal.ai');
+  el.textContent=name+(settings.apiKey?' · key':' · tanpa key');
+  el.style.color=settings.apiKey?'#27D4CD':'#9a9aa2';
+}
+$('apiprovider').addEventListener('change',function(){
+  settings.provider=$('apiprovider').value; saveSettings(); updateProviderUI();
+});
+$('api-save').addEventListener('click',function(){
+  settings.mode=$('apimode').value; settings.apiKey=$('apikey').value.trim();
+  saveSettings(); updateProviderUI(); toast('Pengaturan API disimpan');
+});
+$('api-test').addEventListener('click',async function(){
+  var b=$('api-test'); b.disabled=true; b.textContent='Tes...';
+  try{
+    var r=await fetch('/api/health',{headers:{'x-api-key':$('apikey').value.trim()||settings.apiKey}});
+    var d=await r.json().catch(function(){return null});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var parts=[];
+    if(d&&d.hasKeys){ ['tams','replicate','fal'].forEach(function(p){ if(d.hasKeys[p]) parts.push(p); }); }
+    toast('Backend OK. Key di env: '+(parts.length?parts.join(', '):'tidak ada')+'. Key di browser: '+(settings.apiKey?'ada':'tidak'));
+  }catch(e){ toast('Backend tidak aktif — deploy dengan Functions atau pakai mode demo'); }
+  b.disabled=false; b.textContent='Tes';
+});
+
+/* --- toast --- */
+var _toastTimer=null;
+function toast(msg){
+  var t=$('toast'); if(!t) return;
+  t.textContent=msg; t.classList.remove('hidden');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(function(){ t.classList.add('hidden'); },3500);
+}
+
+/* --- progress overlay --- */
+var _pollStop=false;
+function showProgress(title,status,pct){
+  $('prog-title').textContent=title;
+  $('prog-status').textContent=status||'';
+  $('prog-bar').style.width=Math.max(0,Math.min(100,pct||0))+'%';
+  $('prog-pct').textContent=Math.round(pct||0)+'%';
+  $('progoverlay').classList.remove('hidden'); $('progoverlay').classList.add('flex');
+}
+function hideProgress(){ $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); }
+$('prog-cancel').addEventListener('click',function(){ _pollStop=true; toast('Membatalkan...'); });
+
+/* --- API client --- */
+function buildApiKey(){ return settings.apiKey||$('apikey').value.trim(); }
+
+async function apiGenerate(payload){
+  var res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':buildApiKey()},body:JSON.stringify(payload)});
+  var d=await res.json().catch(function(){return null});
+  if(!res.ok) throw new Error((d&&d.error)||('HTTP '+res.status));
+  return d||{};
+}
+async function apiTask(taskId){
+  var res=await fetch('/api/task?id='+encodeURIComponent(taskId),{headers:{'x-api-key':buildApiKey()}});
+  var d=await res.json().catch(function(){return null});
+  if(!res.ok) throw new Error((d&&d.error)||('HTTP '+res.status));
+  return d||{};
+}
+
+async function pollTask(taskId,onProg){
+  var start=Date.now(), maxMs=6*60*1000;
+  while(Date.now()-start<maxMs){
+    if(_pollStop) throw new Error('dibatalkan pengguna');
+    var d=await apiTask(taskId);
+    if(d.status==='SUCCESS') return d.images||[];
+    if(d.status==='FAILED') throw new Error(d.error||'Task gagal');
+    if(d.status==='CANCELED') throw new Error('Task dibatalkan');
+    var st=(d.status==='WAITING')?('Antre '+(d.queue||'')):(d.status==='RUNNING'?'Generating...':'Menunggu...');
+    onProg(st,d.progress||0);
+    await new Promise(function(r){ setTimeout(r, d.status==='WAITING'?4000:2000); });
+  }
+  throw new Error('Timeout menunggu hasil generate');
+}
+
+/* --- hasil --- */
+function mkResult(src,par,taskId,credits){
+  return {
+    src:src, prompt:par.params.prompt, neg:par.params.negativePrompt,
+    model:state.model?state.model.name:'',
+    size:par.params.width+'x'+par.params.height, seed:par.params.seed,
+    taskId:taskId||'', credits:credits!=null?credits:'',
+    ts:Date.now(), demo:false, page:state.page
+  };
+}
+function demoResults(par){
+  showProgress('Mode demo','Menyiapkan gambar simulasi...',15);
+  setTimeout(function(){
+    for(var i=0;i<state.ncol;i++){
+      var src=S+Math.floor(Math.random()*1e9)+'/512';
+      addResult({src:src, prompt:par.params.prompt, neg:par.params.negativePrompt,
+        model:state.model?state.model.name:'', size:par.params.width+'x'+par.params.height,
+        seed:par.params.seed, taskId:'', credits:'', ts:Date.now(), demo:true, page:state.page});
+    }
+    hideProgress();
+  },700);
+}
+
+async function doGenerate(){
+  if(state.busy) return;
+  var p=$('prompt').value.trim();
+  if(!p){ openLeft(); $('prompt').focus(); toast('Isi prompt dulu'); return; }
+  var par=buildPayload();
+  state.busy=true; setBusy(true); _pollStop=false;
+  try{
+    if(settings.mode==='demo'||(!buildApiKey()&&settings.provider!=='pollinations')){
+      await new Promise(function(r){ setTimeout(r,300); });
+      demoResults(par);
+      if(!buildApiKey()) toast('Belum ada API key — hasil simulasi. Isi API Key TAMS di panel kiri untuk generate asli.');
+      else toast('Mode demo aktif — hasil simulasi.');
+    }else{
+      showProgress('Mengirim ke TAMS...','Menyiapkan task...',5);
+      var r=await apiGenerate(par);
+      var taskId=r.taskId||r.jobId;
+      if(taskId){
+        var imgs=await pollTask(taskId,function(st,pct){ showProgress('Generating...',st,pct); });
+        imgs.forEach(function(src){ addResult(mkResult(src,par,taskId,r.credits)); });
+      }else{
+        var imgs2=extractImages(r);
+        if(!imgs2.length) throw new Error('Response tanpa gambar');
+        imgs2.forEach(function(src){ addResult(mkResult(src,par,'',r.credits)); });
+      }
+    }
+  }catch(e){
+    if(settings.mode==='auto'){
+      toast('Backend/API belum aktif ('+e.message+') — pakai simulasi demo');
+      demoResults(par);
+    }else{
+      toast('Gagal: '+e.message);
+    }
+  }finally{
+    hideProgress(); state.busy=false; setBusy(false);
+  }
+}
+
+/* --- Img2Img --- */
+var i2iDataUrl=null;
+$('i2i-drop').addEventListener('click',function(){ $('i2i-file').click(); });
+$('i2i-file').addEventListener('change',function(e){ handleI2iFile(e.target.files&&e.target.files[0]); });
+$('i2i-drop').addEventListener('dragover',function(e){ e.preventDefault(); });
+$('i2i-drop').addEventListener('drop',function(e){ e.preventDefault(); handleI2iFile(e.dataTransfer.files&&e.dataTransfer.files[0]); });
+$('i2i-ds').addEventListener('input',function(e){ $('i2i-dsv').textContent=parseFloat(e.target.value).toFixed(2); });
+$('i2i-clear').addEventListener('click',function(){
+  i2iDataUrl=null; $('i2i-preview').classList.add('hidden'); $('i2i-img').src=''; $('i2i-drop').classList.remove('hidden');
+});
+function handleI2iFile(f){
+  if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    i2iDataUrl=rd.result;
+    $('i2i-img').src=rd.result; $('i2i-preview').classList.remove('hidden'); $('i2i-drop').classList.add('hidden');
+  };
+  rd.readAsDataURL(f);
+}
+
+/* --- render per tab --- */
+function renderCanvas(){
+  var page=state.page;
+  var hideMain = !(page==='text'||page==='img');
+  $('img2img-card').classList.toggle('hidden', page!=='img');
+  $('empty').style.display = (hideMain || state.results.length>0) ? 'none' : '';
+  $('grid').style.display = hideMain?'none':'';
+  $('tab-placeholder').classList.toggle('hidden', !hideMain);
+  $('tab-placeholder').classList.toggle('flex', hideMain);
+  if(page==='edit') $('tab-placeholder-text').textContent='Edit / Inpainting — segera hadir';
+  else if(page==='video') $('tab-placeholder-text').textContent='Text / Image to Video — segera hadir';
+  else if(page==='prime') $('tab-placeholder-text').textContent='Prime — segera hadir';
+}
+
+/* --- riwayat di mobile --- */
+$('btn-history').addEventListener('click',function(){ $('rightPan').classList.toggle('mobile-open'); });
+$('overlay').addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); });
+
+renderLora();
+setModel(MODELS[0]);
+updWH();
+loadSettings(); applySettingsUI();
+try{
+  var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
+  if(Array.isArray(saved)) state.results=saved;
+}catch(e){}
+renderCanvas();
+renderGrid();
+renderRight();
+</script>
+</body>
+</html>
+
+
