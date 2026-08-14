@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const src = fs.readFileSync(path.join(root, 'functions', 'api.js'), 'utf8');
 const mod = await import('data:text/javascript;base64,' + Buffer.from(src).toString('base64'));
-const { onRequest, queue } = mod;
+const { onRequest } = mod;
 
 const calls = []; // url + body yang "dikirim" ke provider
 
@@ -60,9 +60,6 @@ function webPayload(provider, model) {
   };
 }
 
-// mode gagal untuk tes consumer queue
-let mockPaidMode = false; // true -> gen API balas 402 (paid-only)
-let mockGenFail = false;  // true -> gen API lempar error jaringan (retryable)
 
 // ---------- tiruan fetch ----------
 globalThis.fetch = async (url, opts) => {
@@ -232,8 +229,6 @@ globalThis.fetch = async (url, opts) => {
   if (u.startsWith('https://image.pollinations.ai/prompt/') || u.startsWith('https://gen.pollinations.ai/image/')) {
     assert.strictEqual(method, 'GET', 'pollinations pakai GET');
     if (u.startsWith('https://gen.pollinations.ai/')) {
-      if (mockGenFail) throw new Error('fetch failed: ETIMEDOUT');
-      if (mockPaidMode) return new Response('{"error":"Insufficient balance"}', { status: 402, headers: { 'content-type': 'application/json' } });
       const auth = opts && opts.headers && opts.headers.Authorization;
       assert.ok(['Bearer test-key', 'Bearer sk_byop_test', 'Bearer sk_env_fallback'].includes(auth), 'gen API pakai Bearer key: ' + auth);
     }
@@ -257,15 +252,6 @@ const IMAGES = {
   },
   async delete(key) {
     kvstore.delete(key);
-  },
-};
-
-// ---------- tiruan Cloudflare Queues (producer) ----------
-const queueSent = [];
-const REKTY_QUEUE = {
-  async send(job) {
-    queueSent.push(job);
-    return { metadata: { metrics: { backlogCount: Math.max(0, queueSent.length - 1) } } };
   },
 };
 
@@ -566,70 +552,6 @@ console.log('OAuth BYOP (Bring Your Own Pollen):');
   const g2 = await run('/api/generate', p2, { POLLINATIONS_API_KEY: 'sk_env_fallback', IMAGES });
   assert.strictEqual(g2.status, 200);
   ok('generate tanpa session -> fallback env POLLINATIONS_API_KEY');
-}
-
-console.log('Cloudflare Queues (antrian generate Pollinations):');
-{
-  // enqueue: generate -> taskId instan + job terkirim (tanpa menunggu)
-  const q1 = await run('/api/generate', webPayload('pollinations', 'flux'), { IMAGES, REKTY_QUEUE });
-  assert.strictEqual(q1.status, 200);
-  assert.ok(String(q1.data.taskId).startsWith('pollinations:'), 'taskId pollinations');
-  assert.deepStrictEqual(q1.data.images, [], 'belum ada gambar (diproses consumer)');
-  assert.strictEqual(q1.data.queue, true, 'flag queue:true');
-  assert.strictEqual(queueSent.length, 1, 'job terkirim ke queue');
-  assert.strictEqual(queueSent[0].provider, 'pollinations');
-  assert.strictEqual(queueSent[0].params.model, 'flux');
-  assert.strictEqual(queueSent[0].session, '');
-  ok('generate + queue -> taskId instan, job terkirim');
-
-  const t1 = await run('/api/task?id=' + encodeURIComponent(q1.data.taskId), null, { IMAGES });
-  assert.strictEqual(t1.data.status, 'WAITING');
-  ok('task -> WAITING sebelum consumer selesai');
-
-  // enqueue dengan session BYOP -> id sesi ikut (bukan token)
-  const q2 = await run('/api/generate', webPayload('pollinations', 'flux'), { IMAGES, REKTY_QUEUE }, { 'x-session': 'sesi-abc' });
-  assert.strictEqual(queueSent.length, 2);
-  assert.strictEqual(queueSent[1].session, 'sesi-abc');
-  ok('generate + x-session -> job.session = id sesi (token tetap di KV)');
-
-  // tanpa binding queue -> jalur sinkron lama
-  const q3 = await run('/api/generate', webPayload('pollinations', 'flux'), { IMAGES });
-  assert.ok(q3.data.images.length === 1, 'tanpa queue -> gambar langsung');
-  ok('tanpa binding REKTY_QUEUE -> fallback sinkron');
-
-  // --- consumer handler ---
-  const retried = [];
-  const fakeMsg = (job, attempts = 1) => ({ id: 'm_' + job.id, body: job, attempts, retry: (o) => retried.push(o), ack: () => {} });
-
-  // consumer sukses: job -> SUCCESS + gambar diarsip
-  await queue({ messages: [fakeMsg({ id: 'job-ok-1', provider: 'pollinations', params: { prompt: 'tes', model: 'flux', width: 512, height: 512, seed: 1 }, session: '' })] }, { IMAGES, POLLINATIONS_API_KEY: 'sk_env_fallback' });
-  const tOk = await run('/api/task?id=' + encodeURIComponent('pollinations:job-ok-1'), null, { IMAGES });
-  assert.strictEqual(tOk.data.status, 'SUCCESS');
-  assert.ok(tOk.data.images.length === 1 && tOk.data.images[0].startsWith('/img/'), 'gambar diarsip: ' + tOk.data.images[0]);
-  ok('consumer -> task SUCCESS + gambar /img/');
-
-  // consumer non-retryable (402 paid) -> FAILED, tanpa retry
-  mockPaidMode = true;
-  await queue({ messages: [fakeMsg({ id: 'job-paid-1', provider: 'pollinations', params: { prompt: 'x', model: 'krea', width: 512, height: 512 }, session: '' })] }, { IMAGES, POLLINATIONS_API_KEY: 'sk_env_fallback' });
-  mockPaidMode = false;
-  const tPaid = await run('/api/task?id=' + encodeURIComponent('pollinations:job-paid-1'), null, { IMAGES });
-  assert.strictEqual(tPaid.data.status, 'FAILED');
-  assert.strictEqual(retried.length, 0, '402 tidak di-retry');
-  ok('consumer 402 paid -> FAILED (tidak retry)');
-
-  // consumer retryable (timeout) -> msg.retry dipanggil
-  mockGenFail = true;
-  await queue({ messages: [fakeMsg({ id: 'job-net-1', provider: 'pollinations', params: { prompt: 'x', model: 'flux', width: 512, height: 512 }, session: '' }, 2)] }, { IMAGES, POLLINATIONS_API_KEY: 'sk_env_fallback' });
-  mockGenFail = false;
-  assert.strictEqual(retried.length, 1, 'error jaringan -> retry dengan backoff');
-  ok('consumer timeout -> msg.retry (backoff)');
-
-  // consumer sesi BYOP hilang -> FAILED (jangan diam-diam pakai env key)
-  await queue({ messages: [fakeMsg({ id: 'job-ses-1', provider: 'pollinations', params: { prompt: 'x', model: 'flux', width: 512, height: 512 }, session: 'sesi-hilang' })] }, { IMAGES, POLLINATIONS_API_KEY: 'sk_env_fallback' });
-  const tSes = await run('/api/task?id=' + encodeURIComponent('pollinations:job-ses-1'), null, { IMAGES });
-  assert.strictEqual(tSes.data.status, 'FAILED');
-  assert.ok(String(tSes.data.error).includes('login ulang'), 'pesan login ulang');
-  ok('consumer sesi BYOP hilang -> FAILED + pesan login ulang');
 }
 
 console.log('Validasi (API key + provider salah):');

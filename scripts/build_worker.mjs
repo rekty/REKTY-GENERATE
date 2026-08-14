@@ -26,6 +26,7 @@ const body = src
   .replace('export async function onRequest(context) {', 'async function onRequest(context) {')
   .replace('export {', '');
 
+
 const router = `
 
 /* ---------- Advanced Mode: /api/* -> backend, path lain -> index.html ---------- */
@@ -41,11 +42,6 @@ export default {
       return onRequest({ request, env, data: {}, waitUntil: ctx.waitUntil.bind(ctx) });
     }
     return new Response(INDEX_HTML, { status: 200, headers: HTML_CT });
-  },
-  // Consumer Cloudflare Queues (dipakai oleh Worker terpisah
-  // rekty-generate-consumer — Pages Functions tidak bisa jadi consumer).
-  async queue(batch, env, ctx) {
-    return queue(batch, env, ctx);
   },
 };
 `;
