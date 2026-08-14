@@ -1,0 +1,17 @@
+# Worker consumer antrian generate Pollinations (lihat worker.js).
+# Pages Functions tidak bisa jadi queue consumer, makanya worker terpisah.
+# Deploy: npx wrangler@3.90.0 deploy -c consumer/wrangler.toml
+name = "rekty-generate-consumer"
+main = "worker.js"
+compatibility_date = "2024-09-01"
+
+# KV yang sama dengan Pages project (status task + arsip gambar + sesi BYOP).
+[[kv_namespaces]]
+binding = "IMAGES"
+id = "67db99d326cc4995995a301814afde8e"
+
+# Konsumsi queue rekty-generate; retry otomatis + backoff (1,2,4,8,16,32 dtk).
+[[queues.consumers]]
+queue = "rekty-generate"
+max_batch_size = 1
+max_retries = 6
