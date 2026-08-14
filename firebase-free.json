@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "**/.*",
+      "**/node_modules/**",
+      "functions*/**",
+      "firebase.json",
+      "firebase-free.json",
+      "DEPLOY.md",
+      "AGENTS.md",
+      "agent.md.txt"
+    ],
+    "rewrites": []
+  }
+}
