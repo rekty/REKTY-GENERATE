@@ -30,6 +30,15 @@ const PROVIDERS = ['tams', 'replicate', 'fal'];
 const PROVIDER_ENV = { tams: 'TENSORART_API_KEY', replicate: 'REPLICATE_API_TOKEN', fal: 'FAL_API_KEY' };
 const SECRET_MAP = { tams: TENSORART_API_KEY, replicate: REPLICATE_API_TOKEN, fal: FAL_API_KEY };
 
+/** Baca secret dengan aman: .value() saat belum di-set tidak boleh melempar. */
+function secretVal(secret, name) {
+  try {
+    const v = secret.value();
+    if (v) return v;
+  } catch { /* secret belum di-set — fallback ke env / header / body */ }
+  return process.env[name] || '';
+}
+
 const REPLICATE_SCHEDULER = {
   'Euler a': 'K_EULER_ANCESTRAL',
   'Euler': 'K_EULER',
@@ -83,7 +92,8 @@ function toSeed(seed) {
 
 async function pickApiKey(request, body, provider) {
   const secret = SECRET_MAP[provider] || TENSORART_API_KEY;
-  if (secret.value()) return secret.value();
+  const sv = secretVal(secret, PROVIDER_ENV[provider] || 'TENSORART_API_KEY');
+  if (sv) return sv;
   const h = request.headers.get('x-api-key');
   if (h) return h;
   if (body && typeof body.apiKey === 'string' && body.apiKey.trim()) return body.apiKey.trim();
@@ -462,7 +472,8 @@ async function falGetJob(jobId, apiKey, model) {
 /* ----------------------------- routes ------------------------------- */
 
 const api = onRequest(
-  { secrets: [TENSORART_API_KEY, REPLICATE_API_TOKEN, FAL_API_KEY], cors: true },
+  // Region harus sama dengan rewrite di firebase.json (asia-southeast2).
+  { region: 'asia-southeast2', secrets: [TENSORART_API_KEY, REPLICATE_API_TOKEN, FAL_API_KEY], cors: true },
   async (req, res) => {
     const method = req.method;
     const path = req.path || '/';
@@ -472,9 +483,9 @@ const api = onRequest(
         return res.json({
           ok: true,
           hasKeys: {
-            tams: !!TENSORART_API_KEY.value(),
-            replicate: !!REPLICATE_API_TOKEN.value(),
-            fal: !!FAL_API_KEY.value(),
+            tams: !!secretVal(TENSORART_API_KEY, 'TENSORART_API_KEY'),
+            replicate: !!secretVal(REPLICATE_API_TOKEN, 'REPLICATE_API_TOKEN'),
+            fal: !!secretVal(FAL_API_KEY, 'FAL_API_KEY'),
           },
           tams: TAMS_BASE,
         });
