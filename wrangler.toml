@@ -10,3 +10,9 @@ compatibility_date = "2024-09-01"
 [[kv_namespaces]]
 binding = "IMAGES"
 id = "67db99d326cc4995995a301814afde8e"
+
+# Cloudflare Queues: producer antrian generate Pollinations.
+# (Consumer = worker terpisah `rekty-generate-consumer`, lihat consumer/.)
+[[queues.producers]]
+binding = "REKTY_QUEUE"
+queue = "rekty-generate"

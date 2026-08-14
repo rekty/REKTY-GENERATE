@@ -42,6 +42,11 @@ export default {
     }
     return new Response(INDEX_HTML, { status: 200, headers: HTML_CT });
   },
+  // Consumer Cloudflare Queues (dipakai oleh Worker terpisah
+  // rekty-generate-consumer — Pages Functions tidak bisa jadi consumer).
+  async queue(batch, env, ctx) {
+    return queue(batch, env, ctx);
+  },
 };
 `;
 
