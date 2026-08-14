@@ -23,6 +23,10 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 .btn-blue{background:linear-gradient(95deg,#6F5DFF 0%,#27D4CD 59.7%,#74FF7E 100%);border:none;color:#fff;box-shadow:0 0 18px rgba(111,93,255,.35);padding:0 18px}
 .btn-blue:hover{filter:brightness(1.1);box-shadow:0 0 24px rgba(111,93,255,.5)}
 .btn-blue:active{transform:scale(.98)}
+/* Tombol Generate seperti Tensor.Art: turquoise-blue */
+.btn-turq{background:linear-gradient(135deg,#1FC7CE 0%,#2E7CF0 100%);border:none;color:#fff;box-shadow:0 0 16px rgba(31,199,206,.35);padding:0 16px}
+.btn-turq:hover{filter:brightness(1.1);box-shadow:0 0 22px rgba(31,199,206,.5)}
+.btn-turq:active{transform:scale(.98)}
 .btn-ghost{color:#a1a1aa;background:transparent;border:1px solid transparent}.btn-ghost:hover{background:#1c2128;color:#e8e8e8}
 .tab{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
 .tab:hover{color:#fff;background:#1c2128}.tab.sel{color:#fff;background:#1c2128}
@@ -119,10 +123,6 @@ input[type=range]{cursor:pointer}
   </div>
   <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
     <button id="ncol" class="text-neutral-400 hover:text-white p-1.5 hidden sm:flex items-center gap-1 text-xs" title="Jumlah kolom"><i data-icon="squares-four" class="w-4 h-4"></i><span id="ncollbl">2</span></button>
-    <button id="btn-go" class="btn btn-blue h-10 px-4 sm:px-5 whitespace-nowrap">
-      <i data-icon="play" class="w-4 h-4"></i>Generate
-      <span class="text-xs opacity-90 font-normal" id="price">+$0.33</span>
-    </button>
   </div>
 </header>
 
@@ -343,7 +343,7 @@ input[type=range]{cursor:pointer}
   </aside>
 
   <!-- CENTER: image grid only -->
-  <main id="canvas" class="flex-1 overflow-y-auto bg-[#0d1117]">
+  <main id="canvas" class="flex-1 overflow-y-auto overflow-x-hidden bg-[#0d1117]">
     <div class="p-4 max-w-3xl mx-auto">
 
       <!-- Prompt bar (Tensor.Art: di tengah atas, di atas grid gambar) -->
@@ -368,6 +368,10 @@ input[type=range]{cursor:pointer}
               <option value="2">2 images</option>
               <option value="4">4 images</option>
             </select>
+            <button id="btn-go" class="btn btn-turq h-9 px-4 whitespace-nowrap">
+              <i data-icon="lightning" class="w-4 h-4"></i>Generate
+              <span class="text-xs opacity-90 font-normal" id="price">- 1.22</span>
+            </button>
           </div>
         </div>
         <div id="negwrap" class="hidden border-t bd px-4 py-3">
@@ -419,9 +423,9 @@ input[type=range]{cursor:pointer}
       </div>
     </div>
     <!-- Detail hasil aktif (seperti Tensor.Art: Input + Details + params) -->
-    <div id="rdetail" class="flex-1 overflow-y-auto p-3 space-y-3"></div>
+    <div id="rdetail" class="flex-1 overflow-y-scroll p-3 space-y-3"></div>
     <!-- Riwayat generate (kartu) -->
-    <div id="rhistory" class="hidden flex-1 overflow-y-auto p-2 space-y-3">
+    <div id="rhistory" class="hidden flex-1 overflow-y-scroll p-2 space-y-3">
       <p id="rcount" class="text-xs text-neutral-500 px-1 pt-1">0 hasil</p>
       <div id="rlist" class="space-y-3"></div>
     </div>
@@ -944,7 +948,7 @@ function setBusy(b){
   var el=$('btn-go'); if(!el) return;
   el.disabled=b; el.style.opacity=b?'0.5':'1';
   el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
-    :'<i data-icon="play" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal" id="price">+$0.33</span>';
+    :'<i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal" id="price">- 1.22</span>';
 }
 function extractImages(data){
   if(!data) return [];
@@ -976,19 +980,6 @@ function renderGrid(){
     var bd=document.createElement('span');
     bd.className='absolute top-2 left-2 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300';
     bd.textContent='DEMO'; wrap.appendChild(bd);
-  }
-  if(state.results.length>1){
-    var nav=document.createElement('div');
-    nav.className='flex items-center gap-3 text-xs text-neutral-400 mt-2';
-    var prv=document.createElement('button');
-    prv.className='w-7 h-7 rounded-lg border bd hover:text-white hover:border-[#6F5DFF] flex items-center justify-center'; prv.innerHTML='‹';
-    prv.addEventListener('click',function(){ _viewIdx=(_viewIdx+1)%state.results.length; renderGrid(); renderDetail(); });
-    var nxt=document.createElement('button');
-    nxt.className='w-7 h-7 rounded-lg border bd hover:text-white hover:border-[#6F5DFF] flex items-center justify-center'; nxt.innerHTML='›';
-    nxt.addEventListener('click',function(){ _viewIdx=(_viewIdx-1+state.results.length)%state.results.length; renderGrid(); renderDetail(); });
-    var cnt=document.createElement('span'); cnt.textContent=(_viewIdx+1)+' / '+state.results.length;
-    nav.appendChild(prv); nav.appendChild(cnt); nav.appendChild(nxt);
-    wrap.appendChild(nav);
   }
   grid.appendChild(wrap);
 }
