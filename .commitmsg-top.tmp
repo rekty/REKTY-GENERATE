@@ -1,0 +1,5 @@
+Tambahkan tombol floating TOP di pojok kanan bawah galeri
+
+Tombol melayang muncul setelah scroll >300px dan lompat instan ke atas
+saat diklik (seperti Tensor.Art). Posisi: kanan bawah di area galeri
+(lg: di kiri panel kanan, mobile: di atas tombol Riwayat).

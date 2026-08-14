@@ -108,6 +108,10 @@ input[type=range]{cursor:pointer}
 .mcard-ver{font-size:11px;color:#9a9aa2;background:transparent;border:1px solid #30363d;border-radius:4px;padding:2px 6px}
 .mcard-sel{font-size:11px;border:1px solid #6F5DFF;color:#6F5DFF;background:transparent;border-radius:4px;padding:2px 10px;font-weight:600;cursor:pointer;transition:.12s}
 .mcard-sel:hover{background:#6F5DFF;color:#fff}
+/* Floating TOP button (seperti Tensor.Art) */
+#btn-top{position:fixed;bottom:4.5rem;right:1.25rem;z-index:35;width:2.6rem;height:2.6rem;border-radius:9999px;display:none;align-items:center;justify-content:center;background:#1c2128;border:1px solid #30363d;color:#9ca3af;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.45);transition:color .15s,border-color .15s,background .15s}
+#btn-top:hover{color:#fff;border-color:#3d444d;background:#21262d}
+@media(min-width:1024px){#btn-top{bottom:1.25rem;right:calc(21rem + 1.25rem)}}
 </style>
 </head>
 <body>
@@ -448,6 +452,9 @@ input[type=range]{cursor:pointer}
 
 <!-- Mobile history toggle -->
 <button id="btn-history" class="lg:hidden fixed bottom-4 right-4 z-30 btn btn-blue h-11 px-4"><i data-icon="clock-counter-clockwise" class="w-4 h-4"></i> Riwayat</button>
+
+<!-- Floating TOP: lompat balik ke atas saat sudah scroll jauh ke bawah -->
+<button id="btn-top" title="Kembali ke atas"><i data-icon="arrow-up" class="w-4 h-4"></i></button>
 
 <!-- ============ PROGRESS OVERLAY ============ -->
 <div id="progoverlay" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4" style="top:56px">
@@ -1556,6 +1563,16 @@ function renderCanvas(){
 
 /* --- riwayat di mobile --- */
 $('btn-history').addEventListener('click',function(){ $('rightPan').classList.toggle('mobile-open'); });
+/* Floating TOP: tampil setelah scroll jauh, klik -> lompat ke atas */
+(function(){
+  var topBtn=$('btn-top');
+  var mw=$('mainwrap');
+  if(!topBtn||!mw) return;
+  function updTopBtn(){ topBtn.style.display=(mw.scrollTop>300)?'flex':'none'; }
+  mw.addEventListener('scroll',updTopBtn,{passive:true});
+  topBtn.addEventListener('click',function(){ mw.scrollTop=0; });
+  updTopBtn();
+})();
 window.addEventListener('resize',function(){ if($('rdetail').innerHTML) renderDetail(); });
 $('overlay').addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); });
 
