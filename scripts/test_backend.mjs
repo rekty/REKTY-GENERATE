@@ -192,6 +192,25 @@ globalThis.fetch = async (url, opts) => {
     return new Response(new Uint8Array([137, 80, 78, 71, 1, 2, 3]), { headers: { 'content-type': 'image/png' } });
   }
 
+  // --- terjemahan prompt (Google gtx gratis) ---
+  if (u.startsWith('https://translate.googleapis.com/translate_a/single')) {
+    assert.ok(u.includes('tl=en'), 'translate: target bahasa Inggris');
+    assert.ok(u.includes('q='), 'translate: q dikirim');
+    return jsonResp([[["a woman in a flower garden", "seorang wanita di taman bunga", null, null, 1]], null, "id", "id", null, null, 1, ""]);
+  }
+
+  // --- refine prompt (Pollinations chat completions) ---
+  if (u === 'https://gen.pollinations.ai/v1/chat/completions') {
+    assert.strictEqual(method, 'POST', 'refine pakai POST');
+    const b = JSON.parse(bodyText);
+    assert.strictEqual(b.model, 'openai', 'refine model openai');
+    assert.ok(Array.isArray(b.messages) && b.messages.length === 2, 'refine ada system+user');
+    assert.strictEqual(b.messages[1].content, 'seorang wanita di taman bunga', 'refine isi prompt');
+    const auth = opts && opts.headers && opts.headers.Authorization;
+    assert.ok(auth, 'refine wajib Bearer key');
+    return jsonResp({ choices: [{ message: { content: 'A beautiful woman standing in a vibrant flower garden, golden hour lighting, shallow depth of field, ultra detailed, masterpiece.' } }] });
+  }
+
   // --- OAuth BYOP: tukar kode -> token ---
   if (u === 'https://enter.pollinations.ai/api/oauth/token') {
     assert.strictEqual(method, 'POST', 'oauth token pakai POST');
@@ -472,6 +491,31 @@ console.log('Pollinations (gratis, tanpa API key):');
   assert.strictEqual(g2.status, 200);
   assert.ok(String(g2.data.images[0]).startsWith('https://image.pollinations.ai/'), 'tanpa KV pakai URL langsung');
   ok('generate tanpa key & tanpa KV -> URL pollinations langsung');
+}
+
+console.log('Translate + Refine prompt:');
+{
+  // translate semua bahasa -> Inggris (gratis via Google gtx)
+  const tr = await run('/api/translate?q=' + encodeURIComponent('seorang wanita di taman bunga'), null, {});
+  assert.strictEqual(tr.status, 200);
+  assert.strictEqual(tr.data.text, 'a woman in a flower garden', 'translate hasil Inggris');
+  assert.strictEqual(tr.data.detected, 'id', 'translate deteksi bahasa');
+  ok('translate -> teks Inggris + deteksi bahasa');
+
+  const trEmpty = await run('/api/translate?q=', null, {});
+  assert.strictEqual(trEmpty.status, 400);
+  ok('translate q kosong -> 400');
+
+  // refine via Pollinations chat (pakai key)
+  const rf = await run('/api/refine', { prompt: 'seorang wanita di taman bunga' }, { POLLINATIONS_API_KEY: 'sk_env_fallback' });
+  assert.strictEqual(rf.status, 200);
+  assert.ok(rf.data.ok, 'refine ok');
+  assert.ok(rf.data.text.includes('flower garden'), 'refine hasil: ' + rf.data.text);
+  ok('refine -> prompt diperluas pakai Pollinations chat');
+
+  const rfNoKey = await run('/api/refine', { prompt: 'seorang wanita' }, {});
+  assert.strictEqual(rfNoKey.status, 400);
+  ok('refine tanpa key -> 400 (perlu BYOP/key)');
 }
 
 console.log('OAuth BYOP (Bring Your Own Pollen):');

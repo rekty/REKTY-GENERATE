@@ -21,9 +21,6 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 .btn-blue{background:linear-gradient(95deg,#6F5DFF 0%,#27D4CD 59.7%,#74FF7E 100%);border:none;color:#fff;box-shadow:0 0 18px rgba(111,93,255,.35);padding:0 18px}
 .btn-blue:hover{filter:brightness(1.1);box-shadow:0 0 24px rgba(111,93,255,.5)}
 .btn-blue:active{transform:scale(.98)}
-.btn-gen{background:linear-gradient(95deg,#22c55e,#16a34a);border:none;color:#fff;box-shadow:0 0 18px rgba(34,197,94,.35)}
-.btn-gen:hover{filter:brightness(1.08);box-shadow:0 0 24px rgba(34,197,94,.5)}
-.btn-gen:active{transform:scale(.98)}
 .btn-ghost{color:#a1a1aa;background:transparent;border:1px solid transparent}.btn-ghost:hover{background:#1c2128;color:#e8e8e8}
 .tab{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
 .tab:hover{color:#fff;background:#1c2128}.tab.sel{color:#fff;background:#1c2128}
@@ -355,6 +352,7 @@ input[type=range]{cursor:pointer}
             <span class="text-xs text-neutral-400">Negative</span>
           </label>
           <div class="flex items-center gap-2 flex-wrap justify-end">
+            <button id="btn-translate" class="text-xs text-[#6F5DFF] hover:underline font-medium flex items-center gap-1" title="Terjemahkan prompt ke bahasa Inggris"><i data-icon="bookmark-simple" class="w-3.5 h-3.5"></i>Translate</button>
             <button id="btn-enhance" class="text-xs text-[#6F5DFF] hover:underline font-medium flex items-center gap-1"><i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance</button>
             <span class="chip" id="chip-a1111">A1111</span>
             <span class="chip" id="chip-ella">Ella</span>
@@ -363,7 +361,6 @@ input[type=range]{cursor:pointer}
               <option value="2">2 images</option>
               <option value="4">4 images</option>
             </select>
-            <button id="btn-go2" class="btn btn-gen h-9 px-4 whitespace-nowrap"><i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">- 1.22</span></button>
           </div>
         </div>
         <div id="negwrap" class="hidden border-t bd px-4 py-3">
@@ -401,7 +398,7 @@ input[type=range]{cursor:pointer}
         <p class="text-sm">Hasil generate akan tampil di sini</p>
         <p class="text-xs text-neutral-700 mt-1">Isi prompt lalu tekan Generate</p>
       </div>
-      <div id="grid" class="grid grid-cols-1 gap-3"></div>
+      <div id="grid" class="flex flex-col items-center gap-3"></div>
     </div>
   </main>
 
@@ -804,18 +801,39 @@ $('adv-toggle').addEventListener('click',function(){$('adv-fields').classList.to
 $('dice').addEventListener('click',function(){$('seed').value=String(Math.floor(Math.random()*9999999999999999))});
 $('negcheck').addEventListener('change',function(e){$('negwrap').classList.toggle('hidden',!e.target.checked)});
 $('prompt').addEventListener('input',renderTriggers);
+/* Translate: semua bahasa -> Inggris (backend /api/translate, gratis) */
+$('btn-translate').addEventListener('click',function(){
+  var p=($('prompt').value||'').trim();
+  if(!p){ $('prompt').focus(); return; }
+  var b=$('btn-translate');
+  b.innerHTML='<i data-icon="circle-notch" class="w-3.5 h-3.5 animate-spin"></i>Translating...';
+  fetch('/api/translate?q='+encodeURIComponent(p)).then(function(r){ return r.json(); }).then(function(d){
+    if(d.ok&&d.text){ $('prompt').value=d.text; renderTriggers(); toast('Diterjemahkan ke Inggris ✓'); }
+    else toast(d.error||'Gagal menerjemahkan');
+  }).catch(function(){ toast('Gagal menerjemahkan'); }).finally(function(){
+    b.innerHTML='<i data-icon="bookmark-simple" class="w-3.5 h-3.5"></i>Translate';
+  });
+});
+/* Enhance/Refine prompt: coba LLM (backend /api/refine), fallback template lokal */
+function fallbackEnhance(p){
+  $('prompt').value=p
+    +'\n\nEnhance detail, lighting, composition, and atmosphere. '
+    +'Ultra-detailed, professional photography, sharp focus, cinematic lighting.';
+  renderTriggers();
+}
 $('btn-enhance').addEventListener('click',function(){
   var p=($('prompt').value||'').trim();
   if(!p){ $('prompt').focus(); return; }
   var b=$('btn-enhance');
-  b.innerHTML='<i data-icon="circle-notch" class="w-3.5 h-3.5 animate-spin"></i>Enhancing...';
-  setTimeout(function(){
-    $('prompt').value=p
-      +'\n\nEnhance detail, lighting, composition, and atmosphere. '
-      +'Ultra-detailed, professional photography, sharp focus, cinematic lighting.';
-    renderTriggers();
-    b.innerHTML='<i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance';
-  },900);
+  b.innerHTML='<i data-icon="circle-notch" class="w-3.5 h-3.5 animate-spin"></i>Refining...';
+  fetch('/api/refine',{method:'POST',headers:_apiHeaders({'Content-Type':'application/json'}),body:JSON.stringify({prompt:p})})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok&&d.text){ $('prompt').value=d.text; renderTriggers(); toast('Prompt di-refine ✓'); }
+      else { fallbackEnhance(p); toast('Refine offline — pakai template lokal'); }
+    })
+    .catch(function(){ fallbackEnhance(p); toast('Refine offline — pakai template lokal'); })
+    .finally(function(){ b.innerHTML='<i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance'; });
 });
 document.querySelectorAll('.chip').forEach(function(c){
   c.addEventListener('click',function(){c.classList.toggle('on')});
@@ -845,16 +863,10 @@ function closeLeft(){ $('overlay').classList.add('hidden'); if(window.innerWidth
 /* ===== image count (dropdown di prompt bar + tombol navbar) ===== */
 function applyNcol(){
   var sel=$('ncount'); if(sel) sel.value=String(state.ncol);
-  if(state.ncol>1){
-    // grid 2 kolom biasa
-    $('grid').className='grid grid-cols-2 gap-3';
-    $('grid').style.maxWidth=''; $('grid').style.margin='';
-  }else{
-    // 1 gambar besar di tengah (seperti Tensor.Art)
-    $('grid').className='grid grid-cols-1 gap-3';
-    $('grid').style.maxWidth='26rem'; $('grid').style.margin='0 auto';
-  }
-  $('ncollbl').textContent=state.ncol>1?2:1;
+  // Tampilan tengah selalu 1 gambar sesuai aspect ratio (seperti Tensor.Art).
+  // ncol hanya menentukan jumlah gambar per generate (imageCount).
+  $('ncollbl').textContent=String(state.ncol);
+  renderGrid();
 }
 $('ncol').addEventListener('click',function(){
   state.ncol = state.ncol===2?1:2;
@@ -867,14 +879,11 @@ $('ncount').addEventListener('change',function(){
 
 /* ===== generate (real API / demo fallback) ===== */
 $('btn-go').addEventListener('click',doGenerate);
-$('btn-go2').addEventListener('click',doGenerate);
 function setBusy(b){
-  ['btn-go','btn-go2'].forEach(function(id){
-    var el=$(id); if(!el) return;
-    el.disabled=b; el.style.opacity=b?'0.5':'1';
-    el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
-      :'<i data-icon="play" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">+$0.33</span>';
-  });
+  var el=$('btn-go'); if(!el) return;
+  el.disabled=b; el.style.opacity=b?'0.5':'1';
+  el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
+    :'<i data-icon="play" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal" id="price">+$0.33</span>';
 }
 function extractImages(data){
   if(!data) return [];
@@ -886,23 +895,46 @@ function extractImages(data){
 function persistResults(){
   try{ localStorage.setItem(RESULTS_KEY,JSON.stringify(state.results.slice(0,60))); }catch(e){}
 }
-function makeGridCard(r){
-  var g=document.createElement('div');
-  g.className='relative rounded-xl overflow-hidden border bd aspect-[4/5] bg-[#1c2128] cursor-pointer hover:border-[#3d444d]';
-  g.innerHTML='<img src="'+r.src+'" class="w-full h-full object-cover"/>'
-    +(r.demo?'<span class="absolute top-1.5 left-1.5 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300">DEMO</span>':'');
-  g.addEventListener('click',function(){ openLightbox(r); });
-  return g;
-}
+/* Tampilan tengah: 1 gambar sesuai aspect ratio (seperti Tensor.Art),
+   object-contain + centered + nav prev/next lewat riwayat. */
+var _viewIdx=0; // index ke state.results (0 = terbaru)
 function renderGrid(){
   var grid=$('grid'); grid.innerHTML='';
-  var arr=state.results.slice().reverse(); // hasil terbaru tampil duluan
-  arr.forEach(function(r){ grid.appendChild(makeGridCard(r)); });
-  $('empty').style.display = state.results.length>0 ? 'none' : '';
+  if(!state.results.length){ $('empty').style.display=''; return; }
+  $('empty').style.display='none';
+  if(_viewIdx>=state.results.length) _viewIdx=state.results.length-1;
+  var r=state.results[_viewIdx];
+  var wrap=document.createElement('div');
+  wrap.className='relative flex flex-col items-center w-full';
+  var img=document.createElement('img');
+  img.src=r.src;
+  img.className='max-w-full max-h-[calc(100vh-250px)] w-auto object-contain rounded-xl border bd bg-black/40 cursor-zoom-in';
+  img.addEventListener('click',function(){ openLightbox(r); });
+  wrap.appendChild(img);
+  if(r.demo){
+    var bd=document.createElement('span');
+    bd.className='absolute top-2 left-2 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300';
+    bd.textContent='DEMO'; wrap.appendChild(bd);
+  }
+  if(state.results.length>1){
+    var nav=document.createElement('div');
+    nav.className='flex items-center gap-3 text-xs text-neutral-400 mt-2';
+    var prv=document.createElement('button');
+    prv.className='w-7 h-7 rounded-lg border bd hover:text-white hover:border-[#6F5DFF] flex items-center justify-center'; prv.innerHTML='‹';
+    prv.addEventListener('click',function(){ _viewIdx=(_viewIdx+1)%state.results.length; renderGrid(); });
+    var nxt=document.createElement('button');
+    nxt.className='w-7 h-7 rounded-lg border bd hover:text-white hover:border-[#6F5DFF] flex items-center justify-center'; nxt.innerHTML='›';
+    nxt.addEventListener('click',function(){ _viewIdx=(_viewIdx-1+state.results.length)%state.results.length; renderGrid(); });
+    var cnt=document.createElement('span'); cnt.textContent=(_viewIdx+1)+' / '+state.results.length;
+    nav.appendChild(prv); nav.appendChild(cnt); nav.appendChild(nxt);
+    wrap.appendChild(nav);
+  }
+  grid.appendChild(wrap);
 }
 function addResult(r){
   state.results.unshift(r);
   if(state.results.length>60) state.results.length=60;
+  _viewIdx=0; // tampilkan hasil terbaru
   persistResults();
   renderGrid();
   renderRight();
@@ -933,10 +965,10 @@ function renderRight(){
       +'<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
       +'<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300">'+r.seed+'</span></div>'
       +'</div></div>';
-    d.querySelector('img').addEventListener('click',function(){ openLightbox(r); });
-    d.querySelector('.bg-black\\/40').addEventListener('click',function(){ openLightbox(r); });
+    d.querySelector('img').addEventListener('click',function(){ _viewIdx=i; renderGrid(); openLightbox(r); });
+    d.querySelector('.bg-black\\/40').addEventListener('click',function(){ _viewIdx=i; renderGrid(); openLightbox(r); });
     d.querySelector('button').addEventListener('click',function(){
-      state.results.splice(i,1); persistResults(); renderRight();
+      state.results.splice(i,1); persistResults(); renderGrid(); renderRight();
     });
     list.appendChild(d);
   });

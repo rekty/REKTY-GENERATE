@@ -25,6 +25,8 @@ const FAL_QUEUE = 'https://queue.fal.run';
 const FAL_MODEL = 'fal-ai/fast-sdxl';
 const POLLINATIONS_IMG = 'https://image.pollinations.ai/prompt/'; // legacy gratis (tanpa key)
 const GEN_POLLINATIONS = 'https://gen.pollinations.ai/image/';   // API baru (wajib key sk_*)
+const GEN_POLLINATIONS_CHAT = 'https://gen.pollinations.ai/v1/chat/completions'; // text LLM (refine prompt)
+const GTX_TRANSLATE = 'https://translate.googleapis.com/translate_a/single';     // terjemahan gratis (tanpa key)
 const ENTER_AUTH = 'https://enter.pollinations.ai';              // OAuth BYOP (Bring Your Own Pollen)
 const MAX_BODY = 4_000_000; // batas JSON payload yang diterima (chars)
 
@@ -843,6 +845,56 @@ export async function onRequest(context) {
       const sid = String(body.session || '');
       if (sid && env && env.IMAGES) await env.IMAGES.delete('oauth:' + sid).catch(() => {});
       return json({ ok: true });
+    }
+
+    // ---- terjemahan prompt (semua bahasa -> Inggris, gratis via Google gtx) ----
+    if (method === 'GET' && url.pathname === '/api/translate') {
+      const q = (url.searchParams.get('q') || '').trim();
+      if (!q) return json({ error: 'Parameter q kosong' }, 400);
+      const gtx = GTX_TRANSLATE + '?client=gtx&sl=auto&tl=en&dt=t&q=' + encodeURIComponent(q);
+      const res = await fetchWithTimeout(gtx, {}, 20000);
+      const txt = await res.text();
+      if (!res.ok) return json({ error: 'Layanan terjemahan tidak tersedia' }, 502);
+      try {
+        // format gtx: [[["terjemahan","asli",...],...], "en", ...]
+        const data = JSON.parse(txt);
+        const segs = (data && Array.isArray(data[0])) ? data[0] : [];
+        const text = segs.map(function (s) { return (s && s[0]) || ''; }).join('').trim();
+        if (!text) return json({ error: 'Terjemahan kosong' }, 502);
+        return json({ ok: true, text, detected: (data && data[2]) || '' });
+      } catch (e) {
+        return json({ error: 'Response terjemahan tidak valid' }, 502);
+      }
+    }
+
+    // ---- refine/expand prompt (Pollinations text LLM, pakai key BYOP/session) ----
+    if (method === 'POST' && url.pathname === '/api/refine') {
+      const body = safeJson(await request.text());
+      const prompt = String((body && body.prompt) || '').trim();
+      if (!prompt) return json({ error: 'Prompt kosong' }, 400);
+      const apiKey = await pickPollKey(env, request, body);
+      if (!apiKey) return json({ error: 'Perlu login Pollinations (BYOP) atau API key untuk Refine' }, 400);
+      const payload = {
+        model: 'openai',
+        messages: [
+          { role: 'system', content: 'You are an expert AI image prompt engineer. Rewrite and improve the given prompt for an AI image generator: keep the core subject/style, add useful details (lighting, composition, quality tags), fix grammar. Answer ONLY with the improved prompt in English, no explanations, no quotes.' },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: 220,
+      };
+      const res = await fetchWithTimeout(GEN_POLLINATIONS_CHAT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
+        body: JSON.stringify(payload),
+      }, 45000);
+      const j = safeJson(await res.text());
+      if (!res.ok || !j) {
+        const msg = (j && j.error && (j.error.message || j.error)) || 'Refine gagal (saldo pollen?)';
+        return json({ error: String(msg) }, 502);
+      }
+      const text = String((j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '').trim();
+      if (!text) return json({ error: 'Refine kosong' }, 502);
+      return json({ ok: true, text });
     }
 
     // ---- daftar model Pollinations (publik, tanpa auth) ----

@@ -5,9 +5,15 @@ tanpa build, siap di-deploy ke **Firebase Hosting** atau **Cloudflare Pages**.
 
 ## Fitur
 
-- **Generate gambar** dari prompt: kirim task → poll progress → hasil masuk grid
-  + riwayat (tersimpan di localStorage, metadata asli: task ID, kredit, ukuran,
-  seed, prompt)
+- **Generate gambar** dari prompt: kirim task → poll progress → hasil tampil
+  1 gambar besar di tengah sesuai aspect ratio (seperti Tensor.Art, bisa
+  navigasi prev/next) + riwayat (tersimpan di localStorage, metadata asli:
+  task ID, kredit, ukuran, seed, prompt)
+- **Translate prompt**: tombol **Translate** di prompt bar → terjemahkan prompt
+  bahasa apa pun ke Inggris (backend `/api/translate`, gratis via Google gtx)
+- **Refine prompt**: tombol **Enhance** → perluas/tingkatkan prompt pakai LLM
+  Pollinations (`/api/refine`, pakai pollen BYOP/key; fallback template lokal
+  kalau tanpa key)
 - **4 provider** — pilih di panel API:
   | Provider | Model | API key (env) |
   |---|---|---|
