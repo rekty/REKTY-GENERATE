@@ -343,8 +343,12 @@ input[type=range]{cursor:pointer}
 
       <!-- Prompt bar (Tensor.Art: di tengah atas, di atas grid gambar) -->
       <div id="promptbar" class="mb-4 rounded-2xl border bd bg-[#161b22] overflow-hidden">
-        <div class="flex items-start gap-2 px-4 pt-3">
-          <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-none text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
+        <div class="relative px-4 pt-3">
+          <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-none text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed pr-12" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
+          <div class="absolute top-3 right-3 flex items-center gap-0.5">
+            <button id="btn-translate" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Terjemahkan prompt ke bahasa Inggris (semua bahasa)"><i data-icon="translate" class="w-4 h-4"></i></button>
+            <button id="btn-enhance" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Prompt Enhance — perluas & perbaiki prompt dengan AI"><i data-icon="magic-wand" class="w-4 h-4"></i></button>
+          </div>
         </div>
         <div class="flex items-center justify-between gap-2 flex-wrap px-3 py-2 border-t bd">
           <label class="flex items-center gap-1.5 cursor-pointer select-none">
@@ -352,8 +356,6 @@ input[type=range]{cursor:pointer}
             <span class="text-xs text-neutral-400">Negative</span>
           </label>
           <div class="flex items-center gap-2 flex-wrap justify-end">
-            <button id="btn-translate" class="text-xs text-[#6F5DFF] hover:underline font-medium flex items-center gap-1" title="Terjemahkan prompt ke bahasa Inggris"><i data-icon="bookmark-simple" class="w-3.5 h-3.5"></i>Translate</button>
-            <button id="btn-enhance" class="text-xs text-[#6F5DFF] hover:underline font-medium flex items-center gap-1"><i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance</button>
             <span class="chip" id="chip-a1111">A1111</span>
             <span class="chip" id="chip-ella">Ella</span>
             <select id="ncount" class="inp w-[5.4rem] text-xs h-8" title="Jumlah gambar">
@@ -448,6 +450,33 @@ input[type=range]{cursor:pointer}
     <button id="lb-close" class="absolute top-2 right-2 z-10 w-9 h-9 flex items-center justify-center text-white hover:bg-white/10 rounded-lg text-xl">✕</button>
     <img id="lb-img" class="w-full max-h-[60vh] object-contain bg-black" alt=""/>
     <div id="lb-meta" class="p-4 space-y-1.5 text-xs text-neutral-400 overflow-y-auto max-h-[30vh]"></div>
+  </div>
+</div>
+
+<!-- ============ PROMPT ENHANCE (hasil refine, konfirmasi dulu) ============ -->
+<div id="enh-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/70">
+  <div class="w-full max-w-xl bg-[#161b22] border bd rounded-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b bd">
+      <span class="text-sm font-semibold flex items-center gap-1.5"><i data-icon="magic-wand" class="w-4 h-4 text-[#6F5DFF]"></i>Prompt Enhance</span>
+      <button id="enh-close" class="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg">✕</button>
+    </div>
+    <div class="p-4 space-y-3">
+      <div>
+        <div class="text-[11px] text-neutral-500 mb-1">Prompt asli</div>
+        <div id="enh-orig" class="text-xs text-neutral-400 bg-black/40 border bd rounded-lg p-3 max-h-24 overflow-y-auto leading-relaxed"></div>
+      </div>
+      <div>
+        <div class="text-[11px] text-neutral-500 mb-1">Hasil Enhance <span class="text-neutral-600">(bisa diedit)</span></div>
+        <textarea id="enh-text" rows="5" class="w-full bg-black/40 border bd rounded-lg p-3 text-xs text-neutral-100 outline-none resize-none focus:border-[#6F5DFF] leading-relaxed"></textarea>
+      </div>
+      <div class="flex items-center justify-between gap-2">
+        <button id="enh-regen" class="btn btn-ghost h-9 px-3 text-xs"><i data-icon="arrows-clockwise" class="w-3.5 h-3.5"></i>Generate lagi</button>
+        <div class="flex gap-2">
+          <button id="enh-cancel" class="btn btn-ghost h-9 px-4 text-xs">Batal</button>
+          <button id="enh-use" class="btn btn-blue h-9 px-4 text-xs">Pakai prompt ini</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -802,38 +831,63 @@ $('dice').addEventListener('click',function(){$('seed').value=String(Math.floor(
 $('negcheck').addEventListener('change',function(e){$('negwrap').classList.toggle('hidden',!e.target.checked)});
 $('prompt').addEventListener('input',renderTriggers);
 /* Translate: semua bahasa -> Inggris (backend /api/translate, gratis) */
+function setTranslateBusy(b){
+  var el=$('btn-translate');
+  el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>':'<i data-icon="translate" class="w-4 h-4"></i>';
+}
 $('btn-translate').addEventListener('click',function(){
   var p=($('prompt').value||'').trim();
   if(!p){ $('prompt').focus(); return; }
-  var b=$('btn-translate');
-  b.innerHTML='<i data-icon="circle-notch" class="w-3.5 h-3.5 animate-spin"></i>Translating...';
+  setTranslateBusy(true);
   fetch('/api/translate?q='+encodeURIComponent(p)).then(function(r){ return r.json(); }).then(function(d){
     if(d.ok&&d.text){ $('prompt').value=d.text; renderTriggers(); toast('Diterjemahkan ke Inggris ✓'); }
     else toast(d.error||'Gagal menerjemahkan');
-  }).catch(function(){ toast('Gagal menerjemahkan'); }).finally(function(){
-    b.innerHTML='<i data-icon="bookmark-simple" class="w-3.5 h-3.5"></i>Translate';
-  });
+  }).catch(function(){ toast('Gagal menerjemahkan'); }).finally(function(){ setTranslateBusy(false); });
 });
-/* Enhance/Refine prompt: coba LLM (backend /api/refine), fallback template lokal */
+/* Prompt Enhance (seperti Tensor.Art): hasil refine tampil di popup untuk
+   dikonfirmasi/diedit sebelum dipakai. Backend /api/refine (LLM Pollinations),
+   fallback template lokal kalau tanpa key. */
+var _enhOrig='';
 function fallbackEnhance(p){
-  $('prompt').value=p
+  return p
     +'\n\nEnhance detail, lighting, composition, and atmosphere. '
     +'Ultra-detailed, professional photography, sharp focus, cinematic lighting.';
-  renderTriggers();
 }
-$('btn-enhance').addEventListener('click',function(){
+function openEnhModal(p){
+  _enhOrig=p;
+  $('enh-orig').textContent=p;
+  $('enh-text').value='';
+  $('enh-modal').classList.remove('hidden'); $('enh-modal').classList.add('flex');
+}
+function closeEnhModal(){ $('enh-modal').classList.add('hidden'); $('enh-modal').classList.remove('flex'); }
+function doEnhance(){
   var p=($('prompt').value||'').trim();
   if(!p){ $('prompt').focus(); return; }
-  var b=$('btn-enhance');
-  b.innerHTML='<i data-icon="circle-notch" class="w-3.5 h-3.5 animate-spin"></i>Refining...';
+  openEnhModal(p);
+  $('enh-text').value='Menghasilkan prompt yang lebih baik...';
+  var b=$('enh-regen'); b.disabled=true; b.style.opacity='0.5';
   fetch('/api/refine',{method:'POST',headers:_apiHeaders({'Content-Type':'application/json'}),body:JSON.stringify({prompt:p})})
     .then(function(r){ return r.json(); })
     .then(function(d){
-      if(d.ok&&d.text){ $('prompt').value=d.text; renderTriggers(); toast('Prompt di-refine ✓'); }
-      else { fallbackEnhance(p); toast('Refine offline — pakai template lokal'); }
+      $('enh-text').value=(d.ok&&d.text)?d.text:fallbackEnhance(p);
+      if(!d.ok) toast('Refine offline — pakai template lokal');
     })
-    .catch(function(){ fallbackEnhance(p); toast('Refine offline — pakai template lokal'); })
-    .finally(function(){ b.innerHTML='<i data-icon="sparkle" class="w-3.5 h-3.5"></i>Enhance'; });
+    .catch(function(){ $('enh-text').value=fallbackEnhance(p); toast('Refine offline — pakai template lokal'); })
+    .finally(function(){ b.disabled=false; b.style.opacity=''; });
+}
+$('btn-enhance').addEventListener('click',doEnhance);
+$('enh-close').addEventListener('click',closeEnhModal);
+$('enh-cancel').addEventListener('click',closeEnhModal);
+$('enh-modal').addEventListener('click',function(e){ if(e.target===$('enh-modal')) closeEnhModal(); });
+$('enh-regen').addEventListener('click',function(){
+  $('prompt').value=($('enh-text').value||'').trim()||_enhOrig;
+  renderTriggers();
+  doEnhance();
+});
+$('enh-use').addEventListener('click',function(){
+  var v=($('enh-text').value||'').trim();
+  if(!v) return;
+  $('prompt').value=v; renderTriggers(); closeEnhModal(); toast('Prompt Enhance diterapkan ✓');
 });
 document.querySelectorAll('.chip').forEach(function(c){
   c.addEventListener('click',function(){c.classList.toggle('on')});
