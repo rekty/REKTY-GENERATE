@@ -539,10 +539,14 @@ var MODEL_LIBS = {
     { name:'Krea 2 Turbo', base:'fal.ai', arch:'Krea 2', thumb:'krea', badge:'KREA2', views:'1.1M', ver:'V2', model:'fal-ai/krea-2/turbo' },
   ],
   pollinations: [
-    { name:'Auto (model terbaik)', base:'Pollinations', arch:'Auto', thumb:'sana', badge:'GRATIS', views:'∞', ver:'V1', model:'' },
-    { name:'FLUX', base:'Pollinations', arch:'FLUX', thumb:'flux', badge:'GRATIS', views:'∞', ver:'V1', model:'flux' },
-    { name:'Turbo', base:'Pollinations', arch:'Turbo', thumb:'turbo', badge:'GRATIS', views:'∞', ver:'V1', model:'turbo' },
-    { name:'Sana', base:'Pollinations', arch:'Sana', thumb:'sana', badge:'GRATIS', views:'∞', ver:'V1', model:'sana' },
+    { name:'Z-Image Turbo', base:'Pollinations', arch:'Alibaba', thumb:'zimage', badge:'POLLI', views:'', ver:'V1', model:'zimage' },
+    { name:'Krea 2 Medium', base:'Pollinations', arch:'Krea', thumb:'krea', badge:'POLLI', views:'', ver:'V1', model:'krea' },
+    { name:'FLUX.1 Schnell', base:'Pollinations', arch:'Black Forest Labs', thumb:'flux', badge:'POLLI', views:'', ver:'V1', model:'flux' },
+    { name:'DreamShaper 8 LCM', base:'Pollinations', arch:'Lykon', thumb:'dream', badge:'POLLI', views:'', ver:'V1', model:'dreamshaper' },
+    { name:'GPT Image 2', base:'Pollinations', arch:'OpenAI', thumb:'gpt', badge:'POLLI', views:'', ver:'V1', model:'gpt-image-2' },
+    { name:'Seedream 5.0 Lite', base:'Pollinations', arch:'ByteDance', thumb:'seed', badge:'POLLI', views:'', ver:'V1', model:'seedream5' },
+    { name:'Qwen Image 3', base:'Pollinations', arch:'Qwen', thumb:'qwen', badge:'POLLI', views:'', ver:'V1', model:'qwen-image-3' },
+    { name:'Nano Banana 2', base:'Pollinations', arch:'Google', thumb:'nano', badge:'POLLI', views:'', ver:'V1', model:'nanobanana-2' },
   ],
 };
 var MODELS = MODEL_LIBS.tams; // daftar aktif mengikuti provider
@@ -1006,7 +1010,7 @@ function refreshPollinationsModels(){
     if(!d||!Array.isArray(d.models)||!d.models.length) return;
     var lib=d.models
       .filter(function(m){ return m.category==='image'&&m.name&&m.name.indexOf('byop/')!==0; })
-      .slice(0,18)
+      .slice(0,80)
       .map(function(m){ return { name:m.title||m.name, base:'Pollinations', arch:m.brand||'', thumb:String(m.name).replace(/[^a-z0-9]/gi,''), badge:'POLLI', views:'', ver:'V1', model:m.name }; });
     if(!lib.length) return;
     MODEL_LIBS.pollinations=lib;

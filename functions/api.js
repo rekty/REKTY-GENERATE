@@ -529,11 +529,16 @@ async function falGetJob(jobId, apiKey, model) {
  * MiB — gambar > 20 MiB dilewati). KV dipakai karena gratis tanpa billing
  * (R2 mewajibkan kartu saat aktivasi).
  */
+const CT_EXT = {
+  'image/png': 'png', 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/webp': 'webp',
+  'image/gif': 'gif', 'image/avif': 'avif', 'image/svg+xml': 'svg',
+};
+function extFromCt(ct) { return CT_EXT[String(ct).toLowerCase().split(';')[0]] || 'png'; }
+
 async function storeImageBuf(buf, ct, env) {
   if (!env || !env.IMAGES || !buf || !buf.byteLength) return null;
   if (buf.byteLength > 20 * 1024 * 1024) return null;
-  const ext = (ct.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').slice(0, 4) || 'png';
-  const name = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)) + '.' + ext;
+  const name = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)) + '.' + extFromCt(ct);
   try {
     await env.IMAGES.put(name, buf);
     return '/img/' + name;
@@ -586,7 +591,11 @@ async function pollinationsCreateJob(body, env, apiKey) {
 
   const res = await fetchWithTimeout(url.toString(), apiKey ? { headers: { Authorization: 'Bearer ' + apiKey } } : {}, 120000);
   if (!res.ok) {
-    throw new Error('Pollinations gagal (HTTP ' + res.status + '): ' + (await res.text()).slice(0, 300));
+    const txt = (await res.text()).slice(0, 300);
+    if (res.status === 402) {
+      throw new Error('Model ini berbayar — saldo pollen 0. Top up di enter.pollinations.ai atau pilih model gratis (zimage, flux, dreamshaper, klein).');
+    }
+    throw new Error('Pollinations gagal (HTTP ' + res.status + '): ' + txt);
   }
   const buf = await res.arrayBuffer();
   const ct = String(res.headers.get('content-type') || 'image/jpeg').split(';')[0] || 'image/jpeg';
@@ -725,7 +734,7 @@ export async function onRequest(context) {
       const buf = await env.IMAGES.get(name, { type: 'arrayBuffer' });
       if (buf === null || buf === undefined) return json({ error: 'Gambar tidak ditemukan' }, 404);
       const ext = name.split('.').pop().toLowerCase();
-      const ct = ({ png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif' })[ext] || 'image/png';
+      const ct = ({ png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif', svg: 'image/svg+xml' })[ext] || 'image/png';
       return new Response(buf, {
         status: 200,
         headers: { 'Content-Type': ct, 'Cache-Control': 'public, max-age=31536000, immutable', ...corsHeaders() },
