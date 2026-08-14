@@ -359,8 +359,8 @@ input[type=range]{cursor:pointer}
             <span class="chip" id="chip-a1111">A1111</span>
             <span class="chip" id="chip-ella">Ella</span>
             <select id="ncount" class="inp w-[5.4rem] text-xs h-8" title="Jumlah gambar">
-              <option value="1">1 image</option>
-              <option value="2" selected>2 images</option>
+              <option value="1" selected>1 image</option>
+              <option value="2">2 images</option>
               <option value="4">4 images</option>
             </select>
             <button id="btn-go2" class="btn btn-gen h-9 px-4 whitespace-nowrap"><i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">- 1.22</span></button>
@@ -401,7 +401,7 @@ input[type=range]{cursor:pointer}
         <p class="text-sm">Hasil generate akan tampil di sini</p>
         <p class="text-xs text-neutral-700 mt-1">Isi prompt lalu tekan Generate</p>
       </div>
-      <div id="grid" class="grid grid-cols-2 gap-3"></div>
+      <div id="grid" class="grid grid-cols-1 gap-3"></div>
     </div>
   </main>
 
@@ -485,7 +485,7 @@ input[type=range]{cursor:pointer}
 <script>
 const $ = id => document.getElementById(id);
 const S = 'https://picsum.photos/seed/';
-const state = { results:[], page:'text', aspect:'portrait', ncol:2, model:null };
+const state = { results:[], page:'text', aspect:'portrait', ncol:1, model:null };
 
 /* ===== LoRA — daftar asli per provider ===== */
 var LORA_LIBS = {
@@ -844,10 +844,17 @@ function closeLeft(){ $('overlay').classList.add('hidden'); if(window.innerWidth
 
 /* ===== image count (dropdown di prompt bar + tombol navbar) ===== */
 function applyNcol(){
-  var cols=state.ncol>1?2:1;
-  $('grid').className='grid grid-cols-'+cols+' gap-3';
-  $('ncollbl').textContent=cols;
   var sel=$('ncount'); if(sel) sel.value=String(state.ncol);
+  if(state.ncol>1){
+    // grid 2 kolom biasa
+    $('grid').className='grid grid-cols-2 gap-3';
+    $('grid').style.maxWidth=''; $('grid').style.margin='';
+  }else{
+    // 1 gambar besar di tengah (seperti Tensor.Art)
+    $('grid').className='grid grid-cols-1 gap-3';
+    $('grid').style.maxWidth='26rem'; $('grid').style.margin='0 auto';
+  }
+  $('ncollbl').textContent=state.ncol>1?2:1;
 }
 $('ncol').addEventListener('click',function(){
   state.ncol = state.ncol===2?1:2;
