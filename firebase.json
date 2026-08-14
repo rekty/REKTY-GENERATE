@@ -1,0 +1,27 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "**/.*",
+      "**/node_modules/**",
+      "functions*/**",
+      "firebase.json",
+      "DEPLOY.md",
+      "AGENTS.md",
+      "agent.md.txt"
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": {
+          "functionId": "api",
+          "region": "asia-southeast2",
+          "pinTag": true
+        }
+      }
+    ]
+  },
+  "functions": {
+    "source": "functions-firebase"
+  }
+}
