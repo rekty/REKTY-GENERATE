@@ -10,12 +10,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif;background:#181818;color:#e8e8e8;min-height:100vh}
+html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'Noto Sans',sans-serif;background:#0d1117;color:#e8e8e8;min-height:100vh}
 .hidebar::-webkit-scrollbar{display:none}.hidebar{scrollbar-width:none}
 ::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:4px}
-.bd{border-color:rgba(255,255,255,.12)}
-.inp{border:1px solid rgba(255,255,255,.16);border-radius:8px;background:#2a2a2a;color:#e8e8e8;padding:8px 11px;outline:none;font-size:13px;width:100%}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
+.bd{border-color:#30363d}
+.inp{border:1px solid #30363d;border-radius:8px;background:#1c2128;color:#e8e8e8;padding:8px 11px;outline:none;font-size:13px;width:100%}
 .inp:focus{border-color:#6F5DFF}
 .btn{border-radius:10px;font-weight:600;transition:.15s;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:13px}
 .btn-blue{background:linear-gradient(95deg,#6F5DFF 0%,#27D4CD 59.7%,#74FF7E 100%);border:none;color:#fff;box-shadow:0 0 18px rgba(111,93,255,.35);padding:0 18px}
@@ -24,46 +24,46 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 .btn-gen{background:linear-gradient(95deg,#22c55e,#16a34a);border:none;color:#fff;box-shadow:0 0 18px rgba(34,197,94,.35)}
 .btn-gen:hover{filter:brightness(1.08);box-shadow:0 0 24px rgba(34,197,94,.5)}
 .btn-gen:active{transform:scale(.98)}
-.btn-ghost{color:#a1a1aa;background:transparent;border:1px solid transparent}.btn-ghost:hover{background:#2a2a2a;color:#e8e8e8}
+.btn-ghost{color:#a1a1aa;background:transparent;border:1px solid transparent}.btn-ghost:hover{background:#1c2128;color:#e8e8e8}
 .tab{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
-.tab:hover{color:#fff;background:#2a2a2a}.tab.sel{color:#fff;background:#2a2a2a}
+.tab:hover{color:#fff;background:#1c2128}.tab.sel{color:#fff;background:#1c2128}
 .tab .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
 .tab.sel .dot{display:none}
 .tab.sel::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:20px;height:2px;border-radius:2px;background:linear-gradient(95deg,#6F5DFF,#27D4CD);position:absolute}
 .tab{position:relative}
-.slider{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:rgba(255,255,255,.14);outline:none;width:100%}
+.slider{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:#30363d;outline:none;width:100%}
 .slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;border:3px solid #6F5DFF;cursor:pointer;box-shadow:0 0 6px rgba(111,93,255,.4);transition:.12s}
 .slider::-webkit-slider-thumb:hover{transform:scale(1.1)}
-.lora-sl{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:rgba(255,255,255,.12);outline:none}
+.lora-sl{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:#30363d;outline:none}
 .lora-sl::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #6F5DFF;cursor:pointer}
-.lora-card{position:relative;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#2a2a2a;transition:.12s;padding:8px 10px 10px}
-.lora-card:hover{border-color:rgba(255,255,255,.24)}
-.lora-label{position:absolute;top:0;left:0;font-size:9px;color:#9a9aa2;background:#333;border:1px solid rgba(255,255,255,.1);padding:2px 6px;border-radius:6px;border-top-left-radius:10px;border-bottom-right-radius:6px;z-index:2}
+.lora-card{position:relative;border:1px solid #30363d;border-radius:10px;background:#1c2128;transition:.12s;padding:8px 10px 10px}
+.lora-card:hover{border-color:#3d444d}
+.lora-label{position:absolute;top:0;left:0;font-size:9px;color:#9a9aa2;background:#21262d;border:1px solid rgba(255,255,255,.1);padding:2px 6px;border-radius:6px;border-top-left-radius:10px;border-bottom-right-radius:6px;z-index:2}
 .lora-top{display:flex;align-items:center;gap:8px;margin-top:8px}
-.lora-thumb{width:34px;height:34px;border-radius:6px;border:1px solid rgba(255,255,255,.12);object-fit:cover;flex-shrink:0}
+.lora-thumb{width:34px;height:34px;border-radius:6px;border:1px solid #30363d;object-fit:cover;flex-shrink:0}
 .lora-name{font-size:12px;font-weight:600;color:#e8e8e8;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lora-icons{display:flex;align-items:center;gap:2px;flex-shrink:0}
 .lora-icon{width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#71717a;background:transparent;transition:.12s}
-.lora-icon:hover{background:rgba(255,255,255,.08);color:#fff}
+.lora-icon:hover{background:#21262d;color:#fff}
 .lora-icon.del:hover{background:rgba(239,68,68,.15);color:#ef4444}
 .lora-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
 .lora-slider-row{display:flex;align-items:center;gap:4px;margin-top:6px}
 .l-slider{position:relative;flex:1;height:16px;display:flex;align-items:center}
-.l-track{position:absolute;left:0;right:0;height:4px;border-radius:4px;background:rgba(255,255,255,.13)}
+.l-track{position:absolute;left:0;right:0;height:4px;border-radius:4px;background:#30363d}
 .l-fill{position:absolute;left:0;top:50%;transform:translateY(-50%);height:4px;border-radius:4px;background:linear-gradient(95deg,#6F5DFF,#27D4CD)}
 .l-handle{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #6F5DFF;box-shadow:0 1px 3px rgba(0,0,0,.4);pointer-events:none}
 .lora-sl{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
 .l-num{display:flex;align-items:center;gap:2px;flex-shrink:0}
-.lora-input{width:30px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#181818;color:#e8e8e8;font-size:12px;text-align:center;outline:none;padding:4px 0}
+.lora-input{width:30px;border:1px solid rgba(255,255,255,.15);border-radius:6px;background:#0d1117;color:#e8e8e8;font-size:12px;text-align:center;outline:none;padding:4px 0}
 .lora-input:focus{border-color:#6F5DFF}
 .lora-url-inp{font-size:11px;padding:6px 9px;margin-top:2px}
 .lora-btn{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#9a9aa2;background:transparent;border:none;transition:.12s}
 .lora-btn:hover{background:rgba(255,255,255,.1);color:#fff}
 .lora-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
-.tag{background:#2a2a2a;border:1px solid rgba(255,255,255,.12);color:#e0e0e0;display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:4px 8px;border-radius:6px}
-.ar{border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#2a2a2a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px;cursor:pointer;transition:.12s;min-width:0}
-.ar:hover{border-color:rgba(255,255,255,.3)}
-.ar.sel{border-color:#27D4CD;background:#222}
+.tag{background:#1c2128;border:1px solid #30363d;color:#e0e0e0;display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:4px 8px;border-radius:6px}
+.ar{border:1px solid #30363d;border-radius:10px;background:#1c2128;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px;cursor:pointer;transition:.12s;min-width:0}
+.ar:hover{border-color:#3d444d}
+.ar.sel{border-color:#27D4CD;background:#161b22}
 .ar.sel .ar-desc{color:#27D4CD}
 .ar-ico{width:24px;height:24px;display:flex;align-items:center;justify-content:center}
 .ar-ico svg{width:100%;height:100%}
@@ -71,23 +71,23 @@ html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe
 .ar-desc{font-size:9px;color:#9a9aa2;white-space:nowrap}
 .field{display:flex;flex-direction:column;gap:3px}
 .rtab{border:1px solid transparent;border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:transparent}
-.rtab:hover{color:#fff}.rtab.sel{background:#2a2a2a;color:#fff}
-.rcard{border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:#222}
-.chip{border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#2a2a2a;transition:.12s}
-.chip:hover{color:#fff}.chip.on{border-color:#6F5DFF;color:#fff;background:#222}
+.rtab:hover{color:#fff}.rtab.sel{background:#1c2128;color:#fff}
+.rcard{border:1px solid #30363d;border-radius:10px;overflow:hidden;background:#161b22}
+.chip{border:1px solid #30363d;border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#1c2128;transition:.12s}
+.chip:hover{color:#fff}.chip.on{border-color:#6F5DFF;color:#fff;background:#161b22}
 #toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
 @media (max-width:1023px){#rightPan.mobile-open{position:fixed;top:56px;right:0;bottom:0;left:auto;z-index:40;display:flex;width:min(21rem,92vw);box-shadow:-8px 0 30px rgba(0,0,0,.5)}}
 textarea{caret-color:#6F5DFF}
 input[type=checkbox]{width:14px;height:14px;cursor:pointer}
 input[type=range]{cursor:pointer}
 :focus-visible{outline:2px solid #6F5DFF;outline-offset:2px}
-.wvnum{border:1px solid rgba(255,255,255,.16);border-radius:6px;background:#2a2a2a;color:#e8e8e8;padding:3px 6px;width:64px;font-size:12px;text-align:right;outline:none}
+.wvnum{border:1px solid #30363d;border-radius:6px;background:#1c2128;color:#e8e8e8;padding:3px 6px;width:64px;font-size:12px;text-align:right;outline:none}
 .wvnum:focus{border-color:#27D4CD}
 .mtab{padding:8px 14px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
-.mtab:hover{color:#fff;background:#2a2a2a}.mtab.sel{color:#fff;background:#2a2a2a;border-bottom:2px solid #6F5DFF}
-.mchip{border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#2a2a2a;transition:.12s;white-space:nowrap}
+.mtab:hover{color:#fff;background:#1c2128}.mtab.sel{color:#fff;background:#1c2128;border-bottom:2px solid #6F5DFF}
+.mchip{border:1px solid #30363d;border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#1c2128;transition:.12s;white-space:nowrap}
 .mchip:hover{color:#fff}.mchip.on{border-color:#6F5DFF;color:#fff;background:rgba(111,93,255,.15)}
-.mcard{border:1px solid rgba(255,255,255,.12);border-radius:10px;overflow:hidden;background:#2a2a2a;transition:.15s}
+.mcard{border:1px solid #30363d;border-radius:10px;overflow:hidden;background:#1c2128;transition:.15s}
 .mcard:hover{border-color:rgba(111,93,255,.55);transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.35)}
 .mcard-img{position:relative;aspect-ratio:3/4;overflow:hidden}
 .mcard-img img{width:100%;height:100%;object-fit:cover;transition:.3s}
@@ -99,14 +99,14 @@ input[type=range]{cursor:pointer}
 .mcard-info{padding:8px}
 .mcard-name{font-size:12px;font-weight:600;color:#e8e8e8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mcard-meta{display:flex;align-items:center;justify-content:space-between;margin-top:6px}
-.mcard-ver{font-size:11px;color:#9a9aa2;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:4px;padding:2px 6px}
+.mcard-ver{font-size:11px;color:#9a9aa2;background:transparent;border:1px solid #30363d;border-radius:4px;padding:2px 6px}
 .mcard-sel{font-size:11px;border:1px solid #6F5DFF;color:#6F5DFF;background:transparent;border-radius:4px;padding:2px 10px;font-weight:600;cursor:pointer;transition:.12s}
 .mcard-sel:hover{background:#6F5DFF;color:#fff}
 </style>
 </head>
 <body>
 
-<header class="fixed top-0 left-0 right-0 z-40 h-14 bg-[#181818]/85 backdrop-blur border-b bd flex items-center px-2 sm:px-3 gap-2">
+<header class="fixed top-0 left-0 right-0 z-40 h-14 bg-[#0d1117]/85 backdrop-blur border-b bd flex items-center px-2 sm:px-3 gap-2">
   <button id="mmenu" class="lg:hidden text-neutral-400 p-1"><i data-icon="list" class="w-5 h-5"></i></button>
   <div class="w-6 h-6 shrink-0 hidden sm:flex items-center justify-center">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect width="24" height="24" rx="5" fill="url(#g)"/><path d="M7 12.5l3 3 7-7" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#6F5DFF"/><stop offset="1" stop-color="#6F5DFF"/></linearGradient></defs></svg>
@@ -132,20 +132,20 @@ input[type=range]{cursor:pointer}
 <div class="pt-14 flex h-[calc(100vh-56px)] overflow-hidden">
 
   <!-- LEFT PANEL -->
-  <aside id="leftpan" class="fixed lg:static z-40 inset-y-0 left-0 pt-14 lg:pt-0 w-[22rem] max-w-[88vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0 border-r bd overflow-y-auto hidebar bg-[#222]">
+  <aside id="leftpan" class="fixed lg:static z-40 inset-y-0 left-0 pt-14 lg:pt-0 w-[22rem] max-w-[88vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0 border-r bd overflow-y-auto hidebar bg-[#161b22]">
     <div class="p-4 space-y-4">
 
       <!-- Models (urutan seperti Tensor.Art: Models -> VAE -> Settings) -->
       <div class="space-y-3">
         <span class="text-sm font-semibold">Models</span>
-        <div id="model-card" class="relative border bd rounded-xl bg-[#2a2a2a] hover:border-[rgba(255,255,255,.24)] cursor-pointer p-3">
-          <span id="model-badge" class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#333] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
+        <div id="model-card" class="relative border bd rounded-xl bg-[#1c2128] hover:border-[#3d444d] cursor-pointer p-3">
+          <span id="model-badge" class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#21262d] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
           <div class="flex items-center gap-3 mt-2">
             <img id="model-thumb" src="https://picsum.photos/seed/zimage/64" class="w-16 h-16 rounded-lg object-cover shrink-0 border bd" alt="model"/>
             <div class="flex-1 min-w-0">
               <div id="model-name" class="font-semibold text-sm truncate">Z Image - base-bf16</div>
             </div>
-            <button id="model-info" class="w-6 h-6 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-[rgba(255,255,255,.08)] transition" title="Info">
+            <button id="model-info" class="w-6 h-6 flex items-center justify-center rounded text-neutral-500 hover:text-white hover:bg-[#21262d] transition" title="Info">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             </button>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-neutral-500 shrink-0"><polyline points="9 18 15 12 9 6"/></svg>
@@ -291,7 +291,7 @@ input[type=range]{cursor:pointer}
       </div>
 
       <!-- API Settings -->
-      <div class="border bd rounded-xl bg-[#2a2a2a] p-3 space-y-2">
+      <div class="border bd rounded-xl bg-[#1c2128] p-3 space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-sm font-semibold">API</span>
           <span id="api-status" class="text-[10px] text-neutral-500"></span>
@@ -341,11 +341,11 @@ input[type=range]{cursor:pointer}
   </aside>
 
   <!-- CENTER: image grid only -->
-  <main id="canvas" class="flex-1 overflow-y-auto hidebar bg-[#181818]">
+  <main id="canvas" class="flex-1 overflow-y-auto hidebar bg-[#0d1117]">
     <div class="p-4 max-w-3xl mx-auto">
 
       <!-- Prompt bar (Tensor.Art: di tengah atas, di atas grid gambar) -->
-      <div id="promptbar" class="mb-4 rounded-2xl border bd bg-[#1f1f1f] overflow-hidden">
+      <div id="promptbar" class="mb-4 rounded-2xl border bd bg-[#161b22] overflow-hidden">
         <div class="flex items-start gap-2 px-4 pt-3">
           <textarea id="prompt" rows="3" class="w-full bg-transparent border-0 outline-none resize-none text-[15px] text-neutral-100 placeholder-neutral-600 leading-relaxed" placeholder="Jelaskan apa yang ingin kamu buat..."></textarea>
         </div>
@@ -372,7 +372,7 @@ input[type=range]{cursor:pointer}
       </div>
 
       <!-- Img2Img upload -->
-      <div id="img2img-card" class="hidden mb-4 border bd rounded-xl bg-[#222] p-4">
+      <div id="img2img-card" class="hidden mb-4 border bd rounded-xl bg-[#161b22] p-4">
         <div class="flex items-center justify-between mb-2">
           <span class="text-sm font-semibold">Img2Img — gambar awal</span>
           <span id="i2i-clear" class="text-xs text-neutral-500 hover:text-white cursor-pointer">Hapus</span>
@@ -406,7 +406,7 @@ input[type=range]{cursor:pointer}
   </main>
 
   <!-- RIGHT PANEL -->
-  <aside id="rightPan" class="w-[21rem] shrink-0 border-l bd bg-[#222] hidden lg:flex flex-col">
+  <aside id="rightPan" class="w-[21rem] shrink-0 border-l bd bg-[#161b22] hidden lg:flex flex-col">
     <div class="flex items-center justify-between px-3 py-2 border-b bd">
       <span class="text-sm font-semibold">Generation History</span>
       <div class="flex gap-1">
@@ -430,12 +430,12 @@ input[type=range]{cursor:pointer}
 
 <!-- ============ PROGRESS OVERLAY ============ -->
 <div id="progoverlay" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4" style="top:56px">
-  <div class="w-full max-w-sm bg-[#222] border bd rounded-2xl p-5 space-y-3">
+  <div class="w-full max-w-sm bg-[#161b22] border bd rounded-2xl p-5 space-y-3">
     <div class="flex items-center justify-between">
       <span id="prog-title" class="text-sm font-semibold">Generating...</span>
       <button id="prog-cancel" class="text-neutral-500 hover:text-white text-lg leading-none" title="Batal">✕</button>
     </div>
-    <div class="relative h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+    <div class="relative h-2 bg-[#1c2128] rounded-full overflow-hidden">
       <div id="prog-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);transition:width .4s"></div>
     </div>
     <div class="flex items-center justify-between text-xs text-neutral-500">
@@ -447,7 +447,7 @@ input[type=range]{cursor:pointer}
 
 <!-- ============ LIGHTBOX ============ -->
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
-  <div class="relative max-w-3xl w-full bg-[#222] border bd rounded-2xl overflow-hidden">
+  <div class="relative max-w-3xl w-full bg-[#161b22] border bd rounded-2xl overflow-hidden">
     <button id="lb-close" class="absolute top-2 right-2 z-10 w-9 h-9 flex items-center justify-center text-white hover:bg-white/10 rounded-lg text-xl">✕</button>
     <img id="lb-img" class="w-full max-h-[60vh] object-contain bg-black" alt=""/>
     <div id="lb-meta" class="p-4 space-y-1.5 text-xs text-neutral-400 overflow-y-auto max-h-[30vh]"></div>
@@ -455,11 +455,11 @@ input[type=range]{cursor:pointer}
 </div>
 
 <!-- ============ TOAST ============ -->
-<div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#2a2a2a] border bd rounded-xl px-4 py-2.5 text-sm shadow-lg max-w-[85vw]"></div>
+<div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#1c2128] border bd rounded-xl px-4 py-2.5 text-sm shadow-lg max-w-[85vw]"></div>
 
 <!-- ============ SELECTOR MODAL ============ -->
 <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
-  <div class="w-full max-w-5xl bg-[#222] border bd rounded-2xl overflow-hidden">
+  <div class="w-full max-w-5xl bg-[#161b22] border bd rounded-2xl overflow-hidden">
     <div class="flex items-center justify-between px-4 pt-3 pb-2 border-b bd">
       <div id="modal-tabs" class="flex items-center gap-1">
         <button class="mtab sel" data-mtab="basic">Basic Model</button>
@@ -472,7 +472,7 @@ input[type=range]{cursor:pointer}
           <input id="msearch" class="inp pl-9 w-56 h-9" placeholder="Search..."/>
         </div>
         <button id="mfilters" class="btn btn-ghost h-9 px-3 border bd text-xs shrink-0"><i data-icon="sliders-horizontal" class="w-4 h-4"></i>Filters</button>
-        <button id="modal-close" class="w-9 h-9 flex items-center justify-center text-white hover:bg-[#2a2a2a] rounded-lg text-xl leading-none" title="Tutup">✕</button>
+        <button id="modal-close" class="w-9 h-9 flex items-center justify-center text-white hover:bg-[#1c2128] rounded-lg text-xl leading-none" title="Tutup">✕</button>
         <h3 id="modal-title" class="hidden font-semibold text-sm">Pilih Model</h3>
       </div>
     </div>
@@ -666,9 +666,9 @@ function openLoraInfo(l){
     +'<img src="'+S+l.thumb+'/140" class="w-28 h-28 rounded-lg object-cover shrink-0"/>'
     +'<div class="flex-1 min-w-0">'
     +'<div class="flex flex-wrap gap-1.5 mb-1">'
-    +'<span class="text-[10px] font-semibold bg-[#2a2a2a] border bd px-1.5 py-0.5 rounded text-neutral-400">LORA</span>'
+    +'<span class="text-[10px] font-semibold bg-[#1c2128] border bd px-1.5 py-0.5 rounded text-neutral-400">LORA</span>'
     +'<span class="text-[10px] font-semibold bg-[rgba(111,93,255,.15)] border border-[#6F5DFF] px-1.5 py-0.5 rounded text-[#6F5DFF]">'+l.badge+'</span>'
-    +'<span class="text-[10px] font-semibold bg-[#2a2a2a] border bd px-1.5 py-0.5 rounded text-neutral-400">Original</span>'
+    +'<span class="text-[10px] font-semibold bg-[#1c2128] border bd px-1.5 py-0.5 rounded text-neutral-400">Original</span>'
     +'</div>'
     +'<div class="text-sm font-semibold">'+l.name+'</div>'
     +'<div class="text-xs text-neutral-500 mt-0.5">Rekty AI</div>'
@@ -693,7 +693,7 @@ $('btn-addlora').addEventListener('click',openLoraModal);
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
 function renderLora(){
   var list = $('lora-list'); list.innerHTML='';
-  if(!LORA.length){ list.innerHTML='<div class="text-xs text-neutral-600 border border-dashed border-[rgba(255,255,255,.16)] rounded-lg p-3 text-center">Belum ada LoRA. Klik "Add LoRA".</div>'; renderTriggers(); return; }
+  if(!LORA.length){ list.innerHTML='<div class="text-xs text-neutral-600 border border-dashed border-[#30363d] rounded-lg p-3 text-center">Belum ada LoRA. Klik "Add LoRA".</div>'; renderTriggers(); return; }
   LORA.forEach(function(l,ri){
     var d=document.createElement('div');
     d.className='lora-card';
@@ -888,7 +888,7 @@ function persistResults(){
 }
 function makeGridCard(r){
   var g=document.createElement('div');
-  g.className='relative rounded-xl overflow-hidden border bd aspect-[4/5] bg-[#2a2a2a] cursor-pointer hover:border-[rgba(255,255,255,.24)]';
+  g.className='relative rounded-xl overflow-hidden border bd aspect-[4/5] bg-[#1c2128] cursor-pointer hover:border-[#3d444d]';
   g.innerHTML='<img src="'+r.src+'" class="w-full h-full object-cover"/>'
     +(r.demo?'<span class="absolute top-1.5 left-1.5 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300">DEMO</span>':'');
   g.addEventListener('click',function(){ openLightbox(r); });
