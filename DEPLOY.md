@@ -102,9 +102,21 @@ jadi tidak ada masalah CORS dan API key aman di server.
 
 ## 4. Deploy ke Firebase (Hosting + Cloud Functions)
 
+> **Penting — paket Spark (gratis) TIDAK bisa menjalankan Cloud Functions**
+> (wajib Blaze/pay-as-you-go). Di Spark hanya hosting statis yang jalan →
+> mode generate asli (`/api`) mati, hanya mode Demo yang berfungsi. Kalau
+> mau full gratis, pakai **Cloudflare Pages** (bagian 3 di atas): backend
+> `functions/api.js` sudah siap dan free tier-nya menyediakan fungsi.
+> Kalau tetap mau Firebase gratis untuk UI saja: pakai
+> `firebase-free.json` (tanpa rewrite fungsi):
+> ```bash
+> firebase deploy --config firebase-free.json --only hosting
+> ```
+
 Konfigurasi sudah ada di repo (`firebase.json` + `functions-firebase/`).
-Prasyarat: project Firebase dengan paket **Blaze** (Cloud Functions butuh
-pay-as-you-go), `npm i -g firebase-tools`, sudah `firebase login`.
+Prasyarat (mode penuh): project Firebase dengan paket **Blaze** (Cloud
+Functions butuh pay-as-you-go), `npm i -g firebase-tools`, sudah
+`firebase login`.
 
 1. Hubungkan folder ini ke project Firebase-mu:
    ```bash
