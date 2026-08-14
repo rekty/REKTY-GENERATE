@@ -1,0 +1,11 @@
+# Dikecualikan dari upload Cloudflare Pages (wrangler pages deploy)
+.git
+.gitignore
+.assetsignore
+node_modules
+functions-firebase
+scripts
+firebase.json
+firebase-free.json
+*.md
+agent.md.txt

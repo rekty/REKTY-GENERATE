@@ -89,11 +89,16 @@ Backend Cloudflare Pages Functions otomatis jalan dari folder `functions/`.
 
 **Cara B — CLI (wrangler):**
 ```bash
-npx wrangler pages deploy . --project-name rekty-generator
-npx wrangler pages secret put TENSORART_API_KEY    # token TAMS
-npx wrangler pages secret put REPLICATE_API_TOKEN  # token Replicate
-npx wrangler pages secret put FAL_API_KEY          # key fal.ai
+npx wrangler login                                  # login browser (sekali)
+npx wrangler pages project create rekty-generator --production-branch main
+npx wrangler pages deploy . --project-name rekty-generator --branch main
+npx wrangler pages secret put TENSORART_API_KEY --project-name rekty-generator    # token TAMS
+npx wrangler pages secret put REPLICATE_API_TOKEN --project-name rekty-generator  # token Replicate
+npx wrangler pages secret put FAL_API_KEY --project-name rekty-generator          # key fal.ai
 ```
+Upload otomatis mengecualikan `functions-firebase/`, `node_modules`, dan
+berkas lokal via `.assetsignore` — hanya `index.html` + `functions/api.js`
+(backend Pages Functions) yang ter-upload.
 
 Hasil: `https://<project>.pages.dev` — frontend + `/api/*` di origin yang sama,
 jadi tidak ada masalah CORS dan API key aman di server.
