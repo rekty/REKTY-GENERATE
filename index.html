@@ -57,6 +57,11 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 /* Fade/slide kartu hasil masuk galeri — mulus seperti Tensor.Art */
 @keyframes card-in{from{opacity:0;transform:translateY(18px) scale(.98)}to{opacity:1;transform:none}}
 .gcard-in{animation:card-in .5s cubic-bezier(.22,.9,.3,1)}
+/* Notifikasi kecil saat generate selesai (slide dari kanan) */
+@keyframes pop-in{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes pop-out{from{opacity:1;transform:none}to{opacity:0;transform:translateX(28px)}}
+.gpop-in{animation:pop-in .3s cubic-bezier(.22,.9,.3,1)}
+.gpop-out{animation:pop-out .25s ease forwards}
 .lora-sl::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #6F5DFF;cursor:pointer}
 .lora-card{position:relative;border:1px solid #30363d;border-radius:10px;background:#1c2128;transition:.12s;padding:8px 10px 10px}
 .lora-card:hover{border-color:#3d444d}
@@ -552,6 +557,14 @@ input[type=range]{cursor:pointer}
 
 <!-- ============ TOAST ============ -->
 <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#1c2128] border bd rounded-xl px-4 py-2.5 text-sm shadow-lg max-w-[85vw]"></div>
+<div id="done-pop" class="fixed top-20 right-4 z-50 hidden items-center gap-2.5 bg-[#1c2128] border bd rounded-xl pl-2 pr-2.5 py-2 text-sm shadow-xl cursor-pointer max-w-[300px]">
+  <img id="done-pop-img" class="w-9 h-9 rounded-lg object-cover border bd"/>
+  <div class="min-w-0">
+    <div class="text-xs font-medium text-emerald-400">✓ Generate selesai</div>
+    <div class="text-[10px] text-neutral-500 truncate" id="done-pop-sub">Klik untuk lihat hasil</div>
+  </div>
+  <button id="done-sound" class="text-neutral-400 hover:text-white shrink-0 text-base leading-none" title="Suara notifikasi: nyala/mati"></button>
+</div>
 
 <!-- ============ SELECTOR MODAL ============ -->
 <div id="modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4">
@@ -1124,7 +1137,7 @@ $('ncount').addEventListener('change',function(){
 });
 
 /* ===== generate (real API / demo fallback) ===== */
-$('btn-go').addEventListener('click',doGenerate);
+$('btn-go').addEventListener('click',function(){ ensureAudio(); doGenerate(); });
 function setBusy(b){
   var el=$('btn-go'); if(!el) return;
   el.disabled=b; el.style.opacity=b?'0.5':'1';
@@ -1642,6 +1655,54 @@ function toast(msg){
   _toastTimer=setTimeout(function(){ t.classList.add('hidden'); },3500);
 }
 
+/* --- notifikasi selesai generate (suara chime + popup kecil) --- */
+var _audioCtx=null, _soundOn=true, _donePopTimer=null;
+try{ _soundOn=localStorage.getItem('rekty.sound')!=='0'; }catch(e){}
+function ensureAudio(){ try{ if(!_audioCtx){ var AC=window.AudioContext||window.webkitAudioContext; if(AC) _audioCtx=new AC(); } if(_audioCtx&&_audioCtx.state==='suspended') _audioCtx.resume(); }catch(e){} }
+function playDoneChime(){
+  if(!_soundOn) return;
+  ensureAudio();
+  if(!_audioCtx) return;
+  try{
+    var t=_audioCtx.currentTime;
+    [[660,0],[880,0.16]].forEach(function(note){
+      var o=_audioCtx.createOscillator(), g=_audioCtx.createGain();
+      o.type='sine'; o.frequency.value=note[0];
+      g.gain.setValueAtTime(0.0001,t+note[1]);
+      g.gain.exponentialRampToValueAtTime(0.16,t+note[1]+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+note[1]+0.35);
+      o.connect(g); g.connect(_audioCtx.destination);
+      o.start(t+note[1]); o.stop(t+note[1]+0.4);
+    });
+  }catch(e){}
+}
+function notifyDone(srcs){
+  playDoneChime();
+  var pop=$('done-pop'); if(!pop) return;
+  var img=$('done-pop-img');
+  if(img&&srcs&&srcs.length) img.src=srcs[0];
+  var sub=$('done-pop-sub');
+  if(sub) sub.textContent=(srcs&&srcs.length>1)?(srcs.length+' gambar siap — klik untuk lihat'):'Klik untuk lihat hasil';
+  pop.classList.remove('hidden'); pop.classList.add('flex','gpop-in');
+  clearTimeout(_donePopTimer);
+  _donePopTimer=setTimeout(function(){ pop.classList.add('gpop-out'); setTimeout(function(){ pop.classList.add('hidden'); pop.classList.remove('flex','gpop-in','gpop-out'); },260); },4000);
+}
+$('done-pop').addEventListener('click',function(){
+  var mw=$('mainwrap'); if(mw) mw.scrollTo({top:0,behavior:'smooth'});
+  var pop=$('done-pop'); if(pop){ pop.classList.add('hidden'); pop.classList.remove('flex','gpop-in','gpop-out'); }
+});
+function syncSoundBtn(){
+  var b=$('done-sound'); if(b) b.textContent=_soundOn?'🔊':'🔇';
+}
+syncSoundBtn();
+$('done-sound').addEventListener('click',function(ev){
+  ev.stopPropagation();
+  _soundOn=!_soundOn;
+  try{ localStorage.setItem('rekty.sound',_soundOn?'1':'0'); }catch(e){}
+  syncSoundBtn();
+  if(_soundOn) playDoneChime(); // preview suara saat diaktifkan
+});
+
 /* --- progress overlay --- */
 var _pollStop=false;
 var _progTimer=null, _progPct=0;
@@ -1856,6 +1917,7 @@ function demoResults(par){
     }
     _demoPending=false;
     hideProgress();
+    notifyDone(state.results.length?[state.results[0].src]:[]);
   },700);
 }
 
@@ -1895,6 +1957,7 @@ async function doGenerate(){
         showProgDone(); // 100% sebelum gambar muncul
         await holdResultCard(); // tampilkan thumbnail hasil singkat di kartu
         imgs.forEach(function(src){ addResult(mkResult(src,par,taskId,r.credits)); });
+        notifyDone(imgs);
       }else{
         var imgs2=extractImages(r);
         if(!imgs2.length) throw new Error('Response tanpa gambar');
@@ -1902,6 +1965,7 @@ async function doGenerate(){
         showProgDone();
         await holdResultCard(); // tampilkan thumbnail hasil singkat di kartu
         imgs2.forEach(function(src){ addResult(mkResult(src,par,'',r.credits)); });
+        notifyDone(imgs2);
       }
     }
   }catch(e){
