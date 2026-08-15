@@ -32,6 +32,11 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .btn-turq{background:linear-gradient(135deg,#1FC7CE 0%,#2E7CF0 100%);border:none;color:#fff;box-shadow:0 0 16px rgba(31,199,206,.35);padding:0 16px}
 .btn-turq:hover{filter:brightness(1.1);box-shadow:0 0 22px rgba(31,199,206,.5)}
 .btn-turq:active{transform:scale(.98)}
+/* Shimmer di tombol Generate saat memproses (busy) — sama seperti bar Submitting */
+#btn-go{position:relative;overflow:hidden}
+#btn-go::after{content:'';position:absolute;top:0;bottom:0;left:-40%;width:40%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.5),transparent);opacity:0;animation:sc-shine 1.5s linear infinite;z-index:2;pointer-events:none}
+#btn-go[disabled]{animation:sc-glow 1.8s ease-in-out infinite}
+#btn-go[disabled]::after{opacity:1}
 .btn-ghost{color:#a1a1aa;background:transparent;border:1px solid transparent}.btn-ghost:hover{background:#1c2128;color:#e8e8e8}
 .tab{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;font-size:13px;color:#9a9aa2;cursor:pointer;font-weight:500;white-space:nowrap;transition:.12s}
 .tab:hover{color:#fff;background:#1c2128}.tab.sel{color:#fff;background:#1c2128}
