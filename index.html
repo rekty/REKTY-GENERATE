@@ -441,7 +441,7 @@ input[type=range]{cursor:pointer}
         </div>
         <div class="flex items-center justify-between text-xs text-neutral-500">
           <span id="sc-status">Mengirim task...</span>
-          <span class="flex items-center gap-3"><span id="sc-count">x1</span><span id="sc-size"></span></span>
+          <span class="flex items-center gap-3"><span id="sc-eta" class="text-neutral-600"></span><span id="sc-count">x1</span><span id="sc-size"></span></span>
         </div>
       </div>
       <div id="grid" class="space-y-3"></div>
@@ -1627,9 +1627,42 @@ function toast(msg){
 /* --- progress overlay --- */
 var _pollStop=false;
 var _progTimer=null, _progPct=0;
+var _progStart=0, _etaSpeed=0, _etaLastPct=0, _etaLastT=0, _etaMode='time';
+function resetEta(){
+  _progStart=Date.now(); _etaSpeed=0; _etaLastPct=0; _etaLastT=Date.now(); _etaMode='time';
+  if($('sc-eta')) $('sc-eta').textContent='';
+}
+/** Estimasi sisa waktu: dari kecepatan progress backend (real), atau perkiraan
+ *  waktu untuk Pollinations yang tidak memberi progress antara (fallback). */
+function updateEta(){
+  if(!_progStart) return;
+  var el=(Date.now()-_progStart)/1000;
+  var eta=0, label='';
+  if(_etaMode==='speed'&&_etaSpeed>0.05){
+    eta=(100-_progPct)/_etaSpeed; // sisa persen dibagi kecepatan (%/detik)
+  }else{
+    eta=Math.max(0,35-el); // fallback Pollinations: perkiraan total ~35 detik
+  }
+  if(eta<=0){ label='menyelesaikan...'; }
+  else if(eta>=60){ label='~'+Math.round(eta/60)+' menit tersisa'; }
+  else { label='~'+Math.max(1,Math.round(eta))+' detik tersisa'; }
+  $('sc-eta').textContent=label;
+}
 function showProgress(title,status,pct){
   // persen tidak pernah turun; pakai nilai terbesar (animasi vs backend)
-  _progPct=Math.max(_progPct,Math.min(100,pct||0));
+  var pctIn=pct||0;
+  // Ukur kecepatan nyata dari progress backend (hanya saat pct naik)
+  if(pctIn>_etaLastPct&&pctIn>0){
+    var now=Date.now();
+    var dt=(now-_etaLastT)/1000; _etaLastT=now;
+    if(dt>0.05&&_etaLastPct>0){
+      var sp=(pctIn-_etaLastPct)/dt;
+      _etaSpeed=_etaSpeed?(_etaSpeed*0.6+sp*0.4):sp;
+      _etaMode='speed';
+    }
+    _etaLastPct=pctIn;
+  } else if(pctIn>0){ _etaLastPct=pctIn; }
+  _progPct=Math.max(_progPct,Math.min(100,pctIn));
   $('prog-title').textContent=title;
   $('prog-status').textContent=status||'';
   $('prog-bar').style.width=Math.max(0,Math.min(100,_progPct))+'%';
@@ -1645,6 +1678,7 @@ function showProgress(title,status,pct){
 }
 function startProgAnim(){
   if(_progPct<5) _progPct=5;
+  if(!_progStart) _progStart=Date.now();
   if(_progTimer) clearInterval(_progTimer);
   _progTimer=setInterval(function(){
     // kurva melambat: naik cepat di awal, pelan menjelang 95% (<=95 supaya
@@ -1655,6 +1689,7 @@ function startProgAnim(){
     $('prog-pct').textContent=Math.round(_progPct)+'%';
     $('sc-bar').style.width=_progPct+'%';
     $('sc-pct')&&($('sc-pct').textContent=Math.round(_progPct)+'%');
+    updateEta();
   },250);
 }
 function stopProgAnim(){
@@ -1668,8 +1703,9 @@ function showProgDone(){
   $('sc-bar').style.width='100%';
   $('sc-pct')&&($('sc-pct').textContent='100%');
   $('sc-status').textContent='Selesai — menampilkan hasil...';
+  if($('sc-eta')) $('sc-eta').textContent='';
 }
-function hideProgress(){ stopProgAnim(); _progPct=0; $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); $('submitcard').classList.add('hidden'); }
+function hideProgress(){ stopProgAnim(); _progPct=0; _progStart=0; _etaSpeed=0; _etaLastPct=0; _etaMode='time'; $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); $('submitcard').classList.add('hidden'); }
 /** Isi info kartu Submitting: Task ID, ukuran (WxH), jumlah gambar (xN). */
 function setSubmitInfo(taskId,size,n){
   if(taskId) $('sc-task').textContent=taskId;
@@ -1743,6 +1779,7 @@ function mkResult(src,par,taskId,credits){
 var _demoPending=false;
 function demoResults(par){
   _demoPending=true;
+  resetEta();
   showProgress('Mode demo','Menyiapkan gambar simulasi...',15);
   setSubmitInfo('',par.params.width+'x'+par.params.height,state.ncol);
   setTimeout(function(){
@@ -1787,6 +1824,7 @@ async function doGenerate(){
       if(!buildApiKey()) toast('Belum ada API key — hasil simulasi. Isi API Key TAMS di panel kiri untuk generate asli.');
       else toast('Mode demo aktif — hasil simulasi.');
     }else{
+      resetEta();
       showProgress('Submitting','Mengirim task...',5);
       setSubmitInfo('',par.params.width+'x'+par.params.height,par.params.imageCount);
       startProgAnim(); // persen naik halus sampai ~95% selama menunggu
