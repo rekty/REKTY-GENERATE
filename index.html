@@ -364,6 +364,7 @@ input[type=range]{cursor:pointer}
             <button id="btn-translate" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Terjemahkan prompt ke bahasa Inggris (semua bahasa)"><i data-icon="translate" class="w-4 h-4"></i></button>
             <button id="btn-enhance" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Prompt Enhance — perluas & perbaiki prompt dengan AI"><i data-icon="magic-wand" class="w-4 h-4"></i></button>
           </div>
+          <button id="translate-badge" class="hidden absolute bottom-1.5 left-3 z-10 items-center gap-1.5 rounded-full border bd bg-[#1c2128]/95 px-2.5 py-1 text-[11px] font-medium text-neutral-200 hover:text-white hover:border-[#6F5DFF] shadow-lg cursor-pointer transition-colors" title="Terjemahkan prompt ke bahasa Inggris"><i data-icon="translate" class="w-3 h-3 text-[#27D4CD]"></i><span>Terjemahkan?</span></button>
         </div>
         <div class="flex items-center justify-between gap-2 flex-wrap px-3 py-2 border-t bd">
           <label class="flex items-center gap-1.5 cursor-pointer select-none">
@@ -901,7 +902,30 @@ $('etansd').addEventListener('input',function(e){$('ensd').textContent=e.target.
 $('adv-toggle').addEventListener('click',function(){$('adv-fields').classList.toggle('hidden')});
 $('dice').addEventListener('click',function(){$('seed').value=String(Math.floor(Math.random()*9999999999999999))});
 $('negcheck').addEventListener('change',function(e){$('negwrap').classList.toggle('hidden',!e.target.checked)});
-$('prompt').addEventListener('input',renderTriggers);
+$('prompt').addEventListener('input',function(){ renderTriggers(); checkTranslateBadge(); });
+/* Badge "Terjemahkan?" — deteksi otomatis prompt non-Inggris (seperti Tensor.Art) */
+var _trBadgeTimer=null;
+function showTranslateBadge(){ var b=$('translate-badge'); if(b) b.classList.remove('hidden'); }
+function hideTranslateBadge(){ var b=$('translate-badge'); if(b) b.classList.add('hidden'); }
+function hasNonEnglishLetters(s){
+  // buang emoji/simbol umum, lalu cek ada huruf non-ASCII (CJK, Arab, Cyrillic, aksen, dll)
+  var st=s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{20E3}\u{2190}-\u{21FF}\u{25A0}-\u{25FF}\u{2B50}\u{3000}-\u{303F}\u{1F1E6}-\u{1F1FF}]/gu,'');
+  return /[^\x00-\x7F]/.test(st);
+}
+function checkTranslateBadge(){
+  var p=($('prompt').value||'').trim();
+  if(p.length<6){ hideTranslateBadge(); clearTimeout(_trBadgeTimer); return; }
+  if(hasNonEnglishLetters(p)){ showTranslateBadge(); clearTimeout(_trBadgeTimer); return; }
+  // teks ASCII murni (mis. Indonesia/Melayu) — tanya backend Google (debounce)
+  clearTimeout(_trBadgeTimer);
+  _trBadgeTimer=setTimeout(function(){
+    fetch('/api/translate?q='+encodeURIComponent(p)).then(function(r){ return r.json(); }).then(function(d){
+      if(!d||!d.ok){ hideTranslateBadge(); return; }
+      if(d.detected&&d.detected!=='en') showTranslateBadge(); else hideTranslateBadge();
+    }).catch(function(){ hideTranslateBadge(); });
+  },700);
+}
+$('translate-badge').addEventListener('click',function(){ $('btn-translate').click(); });
 /* Translate: semua bahasa -> Inggris (backend /api/translate, gratis) */
 function setTranslateBusy(b){
   var el=$('btn-translate');
@@ -912,7 +936,7 @@ $('btn-translate').addEventListener('click',function(){
   if(!p){ $('prompt').focus(); return; }
   setTranslateBusy(true);
   fetch('/api/translate?q='+encodeURIComponent(p)).then(function(r){ return r.json(); }).then(function(d){
-    if(d.ok&&d.text){ $('prompt').value=d.text; renderTriggers(); toast('Diterjemahkan ke Inggris ✓'); }
+    if(d.ok&&d.text){ $('prompt').value=d.text; renderTriggers(); hideTranslateBadge(); toast('Diterjemahkan ke Inggris ✓'); }
     else toast(d.error||'Gagal menerjemahkan');
   }).catch(function(){ toast('Gagal menerjemahkan'); }).finally(function(){ setTranslateBusy(false); });
 });
@@ -959,7 +983,7 @@ $('enh-regen').addEventListener('click',function(){
 $('enh-use').addEventListener('click',function(){
   var v=($('enh-text').value||'').trim();
   if(!v) return;
-  $('prompt').value=v; renderTriggers(); closeEnhModal(); toast('Prompt Enhance diterapkan ✓');
+  $('prompt').value=v; renderTriggers(); checkTranslateBadge(); closeEnhModal(); toast('Prompt Enhance diterapkan ✓');
 });
 document.querySelectorAll('.chip').forEach(function(c){
   c.addEventListener('click',function(){c.classList.toggle('on')});
