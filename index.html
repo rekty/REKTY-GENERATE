@@ -478,17 +478,17 @@ input[type=range]{cursor:pointer}
 
 <!-- ============ LIGHTBOX (detail hasil, dibagi 2: KIRI gambar + tombol download, KANAN identifikasi) ============ -->
 <div id="lightbox" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80">
-  <div class="relative w-full max-w-4xl bg-[#161b22] border bd rounded-2xl overflow-hidden flex flex-col lg:flex-row max-h-[92vh]">
+  <div class="relative w-auto max-w-6xl bg-[#161b22] border bd rounded-2xl overflow-hidden flex flex-col lg:flex-row max-h-[92vh]">
     <button id="lb-close" class="absolute top-2 right-2 z-20 w-9 h-9 flex items-center justify-center text-white hover:bg-white/10 rounded-lg text-xl">✕</button>
-    <!-- KIRI: gambar (sama besar dengan kolom tulisan) -->
-    <div class="relative lg:w-1/2 min-w-0 bg-black flex items-center justify-center">
-      <img id="lb-img" class="max-w-full max-h-[46vh] lg:max-h-[92vh] object-contain" alt=""/>
+    <!-- KIRI: gambar sesuai aspect ratio asli (bukan kotak) -->
+    <div class="relative shrink-0">
+      <img id="lb-img" class="block max-h-[46vh] lg:max-h-[92vh] max-w-full lg:max-w-[62vw] w-auto h-auto object-contain" alt=""/>
       <button id="lb-dl" title="Download gambar" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-black/60 hover:bg-[#3b82f6] text-white flex items-center justify-center transition-colors">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
     </div>
-    <!-- KANAN: identifikasi (sama besar dengan gambar, scroll atas-bawah) -->
-    <div id="lb-meta" class="w-full lg:w-1/2 min-w-0 lg:border-l bd p-4 space-y-2.5 text-xs text-neutral-400 overflow-y-auto hidebar max-h-[46vh] lg:max-h-[92vh]"></div>
+    <!-- KANAN: identifikasi, mengikuti tinggi gambar (scroll bila lebih panjang) -->
+    <div id="lb-meta" class="w-full lg:w-[21rem] shrink-0 lg:border-l bd p-4 space-y-2.5 text-xs text-neutral-400 overflow-y-auto hidebar max-h-[46vh] lg:max-h-[92vh] lg:self-stretch"></div>
   </div>
 </div>
 
