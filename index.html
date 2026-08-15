@@ -2184,8 +2184,12 @@ handleOAuthCallback();
   var seen=false; try{ seen=localStorage.getItem('rekty.splashSeen')==='1'; }catch(e){}
   if(seen) return;
   s.classList.remove('hidden'); s.classList.add('flex','gsplash-in');
+  // Chime pembuka: jadwalkan nada sekarang (bisa tersuspensi karena autoplay),
+  // lalu resume saat klik Mulai (gesture) supaya pasti berbunyi.
+  playDoneChime();
   var start=$('splash-start');
   if(start) start.addEventListener('click',function(){
+    if(_audioCtx&&_audioCtx.state!=='running') ensureAudio(); // resume -> nada pembuka berbunyi
     try{ localStorage.setItem('rekty.splashSeen','1'); }catch(e){}
     s.classList.add('gsplash-out');
     setTimeout(function(){ s.classList.add('hidden'); s.classList.remove('flex','gsplash-in','gsplash-out'); },450);
