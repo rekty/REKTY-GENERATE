@@ -363,10 +363,14 @@ input[type=range]{cursor:pointer}
           <button id="translate-badge" class="hidden absolute bottom-1.5 left-3 z-10 items-center gap-1.5 rounded-full border bd bg-[#1c2128]/95 px-2.5 py-1 text-[11px] font-medium text-neutral-200 hover:text-white hover:border-[#6F5DFF] shadow-lg cursor-pointer transition-colors" title="Terjemahkan prompt ke bahasa Inggris"><i data-icon="translate" class="w-3 h-3 text-[#27D4CD]"></i><span>Terjemahkan?</span></button>
         </div>
         <div class="flex items-center justify-between gap-2 flex-wrap px-3 py-2 border-t bd">
-          <label class="flex items-center gap-1.5 cursor-pointer select-none">
-            <input id="negcheck" type="checkbox" class="accent-[#6F5DFF]"/>
-            <span class="text-xs text-neutral-400">Negative</span>
-          </label>
+          <div class="flex items-center gap-1">
+            <label class="flex items-center gap-1.5 cursor-pointer select-none">
+              <input id="negcheck" type="checkbox" class="accent-[#6F5DFF]"/>
+              <span class="text-xs text-neutral-400">Negative</span>
+            </label>
+            <button id="btn-translate" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Terjemahkan prompt ke bahasa Inggris (semua bahasa)"><i data-icon="translate" class="w-4 h-4"></i></button>
+            <button id="btn-enhance" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Prompt Enhance — perluas & perbaiki prompt dengan AI"><i data-icon="magic-wand" class="w-4 h-4"></i></button>
+          </div>
           <div class="flex items-center gap-2 flex-wrap justify-end">
             <span class="chip" id="chip-a1111">A1111</span>
             <span class="chip" id="chip-ella">Ella</span>
@@ -383,10 +387,6 @@ input[type=range]{cursor:pointer}
         </div>
         <div id="negwrap" class="hidden border-t bd px-4 py-3">
           <textarea id="negprompt" rows="2" class="w-full bg-transparent border-0 outline-none resize-none text-[13px] text-neutral-100 placeholder-neutral-600" placeholder="Negative prompt..."></textarea>
-        </div>
-        <div class="flex items-center justify-end gap-0.5 px-3 pt-1 pb-1.5">
-          <button id="btn-translate" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Terjemahkan prompt ke bahasa Inggris (semua bahasa)"><i data-icon="translate" class="w-4 h-4"></i></button>
-          <button id="btn-enhance" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Prompt Enhance — perluas & perbaiki prompt dengan AI"><i data-icon="magic-wand" class="w-4 h-4"></i></button>
         </div>
       </div>
 
