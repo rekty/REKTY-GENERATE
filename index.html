@@ -157,8 +157,18 @@ input[type=range]{cursor:pointer}
 
 <header class="fixed top-0 left-0 right-0 z-40 h-14 bg-[#0d1117]/85 backdrop-blur border-b bd flex items-center px-2 sm:px-3 gap-2">
   <button id="mmenu" class="lg:hidden text-neutral-400 p-1"><i data-icon="list" class="w-5 h-5"></i></button>
-  <div class="w-6 h-6 shrink-0 hidden sm:flex items-center justify-center">
-    <svg width="22" height="22" viewBox="0 0 24 24"><rect width="24" height="24" rx="5" fill="#3b82f6"/><text x="12" y="16.8" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" fill="#fff">R</text></svg>
+  <div class="w-7 h-7 shrink-0 hidden sm:flex items-center justify-center">
+    <svg width="28" height="28" viewBox="0 0 64 64">
+      <defs>
+        <linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1FC7CE"/><stop offset="1" stop-color="#2E7CF0"/></linearGradient>
+        <linearGradient id="hglass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.3)"/><stop offset="1" stop-color="rgba(255,255,255,.02)"/></linearGradient>
+        <filter id="hglow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect x="3" y="3" width="58" height="58" rx="15" fill="#101722" opacity=".94"/>
+      <rect x="3" y="3" width="58" height="58" rx="15" fill="url(#hglass)"/>
+      <rect x="3" y="3" width="58" height="58" rx="15" fill="none" stroke="url(#hg)" stroke-width="3"/>
+      <path d="M19 21 L32 45 L45 21" fill="none" stroke="url(#hg)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#hglow)"/>
+    </svg>
   </div>
   <div class="flex items-center gap-0.5 hidebar overflow-x-auto flex-1">
     <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span>Text2Img</div>
