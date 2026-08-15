@@ -37,6 +37,16 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .glass-brand::before{content:'';position:absolute;top:-2px;bottom:-2px;left:-30%;width:30%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.45),transparent);animation:sc-shine 2.6s linear infinite;pointer-events:none}
 .brand-spark{font-size:10px;color:#2E7CF0;text-shadow:0 0 8px rgba(46,124,240,.9)}
 .brand-txt{font-size:9px;font-weight:800;letter-spacing:.14em;background:linear-gradient(135deg,#1FC7CE,#2E7CF0);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* Splash screen (pertama kali dibuka) */
+#splash{background:radial-gradient(1200px 600px at 50% -10%,rgba(46,124,240,.2),transparent 60%),radial-gradient(900px 520px at 82% 112%,rgba(31,199,206,.16),transparent 55%),#0d1117}
+.splash-logo{filter:drop-shadow(0 0 26px rgba(31,199,206,.45));animation:splash-float 3.2s ease-in-out infinite}
+@keyframes splash-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.splash-title{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:900;letter-spacing:.16em;background:linear-gradient(135deg,#1FC7CE,#2E7CF0);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center}
+.splash-sub{font-size:12px;color:#8b949e;letter-spacing:.3em;text-transform:uppercase;text-align:center}
+@keyframes splash-in{from{opacity:0}to{opacity:1}}
+@keyframes splash-out{from{opacity:1}to{opacity:0}}
+.gsplash-in{animation:splash-in .4s ease}
+.gsplash-out{animation:splash-out .45s ease forwards}
 .btn-turq:hover{filter:brightness(1.1);box-shadow:0 0 22px rgba(31,199,206,.5)}
 .btn-turq:active{transform:scale(.98)}
 /* Shimmer di tombol Generate saat memproses (busy) — sama seperti bar Submitting */
@@ -582,6 +592,26 @@ input[type=range]{cursor:pointer}
     <div class="text-[10px] text-neutral-500 truncate" id="done-pop-sub">Klik untuk lihat hasil</div>
   </div>
   <button id="done-sound" class="text-neutral-400 hover:text-white shrink-0 text-base leading-none" title="Suara notifikasi: nyala/mati"></button>
+</div>
+
+<!-- ============ SPLASH (pertama kali dibuka) ============ -->
+<div id="splash" class="fixed inset-0 z-[100] hidden flex-col items-center justify-center gap-5 px-6">
+  <div class="splash-logo">
+    <svg viewBox="0 0 64 64" width="86" height="86">
+      <defs>
+        <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1FC7CE"/><stop offset="1" stop-color="#2E7CF0"/></linearGradient>
+        <linearGradient id="sglass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(255,255,255,.3)"/><stop offset=".5" stop-color="rgba(255,255,255,.06)"/><stop offset="1" stop-color="rgba(255,255,255,.02)"/></linearGradient>
+        <filter id="sglow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <rect x="3" y="3" width="58" height="58" rx="15" fill="#101722" opacity=".94"/>
+      <rect x="3" y="3" width="58" height="58" rx="15" fill="url(#sglass)"/>
+      <rect x="3" y="3" width="58" height="58" rx="15" fill="none" stroke="url(#sg)" stroke-width="3"/>
+      <path d="M19 21 L32 45 L45 21" fill="none" stroke="url(#sg)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#sglow)"/>
+    </svg>
+  </div>
+  <h1 class="splash-title">VISUAL AI ARTWORK</h1>
+  <p class="splash-sub">AI Artwork Generator</p>
+  <button id="splash-start" class="btn btn-turq h-10 px-9 text-sm font-semibold">Mulai ✦</button>
 </div>
 
 <!-- ============ SELECTOR MODAL ============ -->
@@ -2136,6 +2166,20 @@ updWH();
 applyNcol();
 loadSettings(); applySettingsUI();
 handleOAuthCallback();
+
+/* ---- Splash 'VISUAL AI ARTWORK' hanya saat pertama kali dibuka ---- */
+(function(){
+  var s=$('splash'); if(!s) return;
+  var seen=false; try{ seen=localStorage.getItem('rekty.splashSeen')==='1'; }catch(e){}
+  if(seen) return;
+  s.classList.remove('hidden'); s.classList.add('flex','gsplash-in');
+  var start=$('splash-start');
+  if(start) start.addEventListener('click',function(){
+    try{ localStorage.setItem('rekty.splashSeen','1'); }catch(e){}
+    s.classList.add('gsplash-out');
+    setTimeout(function(){ s.classList.add('hidden'); s.classList.remove('flex','gsplash-in','gsplash-out'); },450);
+  });
+})();
 try{
   var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
   if(Array.isArray(saved)) state.results=saved;
