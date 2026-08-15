@@ -1102,7 +1102,8 @@ function makeGalleryRow(r,i){
   img.className='block mx-auto max-w-full max-h-[80vh] w-auto h-auto object-contain';
   img.addEventListener('click',function(){ _viewIdx=i; renderGrid(); renderDetail(); openLightbox(r); });
   // setelah gambar dimuat, tinggi kartu berubah -> re-sinkron posisi panel Detail
-  if(!img.complete){ var rs=function(){ renderDetail(); }; img.addEventListener('load',rs); img.addEventListener('error',rs); }
+  var rs=function(){ renderDetail(); };
+  if(img.complete){ setTimeout(rs, 60); } else { img.addEventListener('load',rs); img.addEventListener('error',rs); }
   row.appendChild(img);
   if(r.demo){
     var bd=document.createElement('span');
@@ -1197,7 +1198,12 @@ function renderDetail(){
     var hdr=rp.querySelector('#rptitle')?rp.querySelector('#rptitle').parentElement:null;
     var detTop=(hdr?hdr.getBoundingClientRect().bottom:rp.getBoundingClientRect().top)-mw.getBoundingClientRect().top+mw.scrollTop;
     el.style.marginTop=Math.max(0,cardTop-detTop)+'px';
-  } else { el.style.minHeight=''; el.style.marginTop=''; }
+    // Kotak panel kanan (aside) direntangkan sampai dasar kartu aktif, supaya
+    // background panel terlihat satu kartu utuh dengan gambar di tengah.
+    var rpTop=rp.getBoundingClientRect().top-mw.getBoundingClientRect().top+mw.scrollTop;
+    var cardBottom=cardTop+card.offsetHeight;
+    rp.style.height=Math.max(0, cardBottom-rpTop)+'px';
+  } else { el.style.minHeight=''; el.style.marginTop=''; if(rp) rp.style.height=''; }
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
