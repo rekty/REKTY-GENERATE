@@ -30,6 +30,11 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .btn-blue:active{transform:scale(.98)}
 /* Tombol Generate seperti Tensor.Art: turquoise-blue */
 .btn-turq{background:linear-gradient(135deg,#1FC7CE 0%,#2E7CF0 100%);border:none;color:#fff;box-shadow:0 0 16px rgba(31,199,206,.35);padding:0 16px}
+/* Badge brand glass-morphism di header (warna gradien seperti tombol Generate) */
+.glass-brand{position:relative;display:flex;align-items:center;gap:6px;padding:0 12px;height:28px;border-radius:9999px;white-space:nowrap;background:linear-gradient(135deg,rgba(31,199,206,.14),rgba(46,124,240,.14));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(31,199,206,.4);box-shadow:0 0 14px rgba(31,199,206,.28),inset 0 1px 0 rgba(255,255,255,.18);overflow:hidden}
+.glass-brand::before{content:'';position:absolute;top:-2px;bottom:-2px;left:-30%;width:30%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.45),transparent);animation:sc-shine 2.6s linear infinite;pointer-events:none}
+.brand-spark{font-size:10px;color:#2E7CF0;text-shadow:0 0 8px rgba(46,124,240,.9)}
+.brand-txt{font-size:9px;font-weight:800;letter-spacing:.14em;background:linear-gradient(135deg,#1FC7CE,#2E7CF0);-webkit-background-clip:text;background-clip:text;color:transparent}
 .btn-turq:hover{filter:brightness(1.1);box-shadow:0 0 22px rgba(31,199,206,.5)}
 .btn-turq:active{transform:scale(.98)}
 /* Shimmer di tombol Generate saat memproses (busy) — sama seperti bar Submitting */
@@ -148,6 +153,7 @@ input[type=range]{cursor:pointer}
     <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span>Edit</div>
     <div class="tab" data-tab="video"><span class="dot" style="background:#ef4444"></span>Video</div>
     <div class="tab" data-tab="prime"><span class="dot" style="background:#3b82f6"></span>Prime</div>
+    <div class="glass-brand hidden md:flex shrink-0 ml-1"><span class="brand-spark">✦</span><span class="brand-txt">VISUAL AI ARTWORK GENERATOR</span></div>
   </div>
   <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
     <button id="ncol" class="text-neutral-400 hover:text-white p-1.5 hidden sm:flex items-center gap-1 text-xs" title="Jumlah kolom"><i data-icon="squares-four" class="w-4 h-4"></i><span id="ncollbl">2</span></button>
