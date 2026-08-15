@@ -80,8 +80,9 @@ def inject(wf: dict, prompt: str, size: str, seed: int, steps: int, cfg: float,
             node["inputs"]["sampler_name"] = sampler
         if node.get("inputs", {}).get("scheduler") is not None:
             node["inputs"]["scheduler"] = scheduler
-    # LoRA
-    for _nid, node in find_nodes(wf, "LoraLoader"):
+    # LoRA (LoraLoader biasa maupun LoraLoaderModelOnly untuk UNET-only)
+    lora_nodes = find_nodes(wf, "LoraLoader") + find_nodes(wf, "LoraLoaderModelOnly")
+    for _nid, node in lora_nodes:
         node["inputs"]["lora_name"] = lora_name
     return wf
 

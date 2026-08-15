@@ -18,6 +18,26 @@ cloudflared (Cloudflare Tunnel) → https://nama.trycloudflare.com (publik)
 Daftarkan di Pollinations (allowlist + my-models di enter.pollinations.ai)
 ```
 
+## 0. Jalan cepat GRATIS: Google Colab
+
+Tidak punya VPS? Buka **`selfhost/rekty_colab.ipynb`** di
+[colab.research.google.com](https://colab.research.google.com) (Runtime ->
+**Change runtime type -> GPU T4**, lalu Run all). Notebook otomatis:
+
+1. Install ComfyUI
+2. Download Krea 2 Turbo fp8 (13 GB) + Qwen3-VL-4B text encoder + VAE + **LoRA REKTY ANJANY**
+   *(atau checkpoint-mu sendiri — tempel URL HuggingFace di `CHECKPOINT_URL`)*
+3. Bangun workflow Krea 2 + LoRA (node: UNETLoader -> LoraLoaderModelOnly ->
+   CLIPLoader krea2 -> KSampler er_sde/simple -> VAEDecode)
+4. Jalankan `gateway.py` (OpenAI-compatible)
+5. Expose lewat **Cloudflare Tunnel** -> mencetak URL publik
+
+Lalu pakai URL itu seperti bagian 6 di bawah. Catatan: sesi Colab gratis mati
+otomatis (~90 mnt idle / ~12 jam) — URL ikut mati, jalankan ulang notebook.
+
+> Notebook di-generate dari `gateway.py` lewat `scripts/build_colab.py`.
+> Kalau `gateway.py` berubah, jalankan ulang: `python scripts/build_colab.py`
+
 ## 1. Siapkan VPS GPU
 
 Pilih salah satu (terjangkau → mahal):
@@ -51,6 +71,8 @@ cd selfhost
 pip install -r requirements.txt
 python gateway.py          # http://0.0.0.0:8000
 ```
+
+*(Di Colab, gateway dijalankan otomatis oleh notebook — lihat bagian 0.)*
 
 Tes lokal:
 ```bash
