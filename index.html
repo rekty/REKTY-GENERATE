@@ -945,6 +945,13 @@ $('btn-translate').addEventListener('click',function(){
    fallback template lokal kalau tanpa key. */
 var _enhOrig='';
 function fallbackEnhance(p){
+  var segs=p.split(',').map(function(s){return s.trim()}).filter(Boolean);
+  var tagLike=segs.length>=3 && segs.every(function(s){return s.length<=28});
+  if(tagLike){
+    // input gaya tag WD14/booru: perluas jadi prompt alami
+    return 'A highly detailed image: '+segs.join(', ')
+      +', natural soft lighting, shallow depth of field, sharp focus, vibrant colors, ultra-detailed, masterpiece, best quality';
+  }
   return p
     +'\n\nEnhance detail, lighting, composition, and atmosphere. '
     +'Ultra-detailed, professional photography, sharp focus, cinematic lighting.';
