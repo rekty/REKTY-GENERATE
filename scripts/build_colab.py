@@ -1,9 +1,12 @@
 """
 scripts/build_colab.py — Bangun selfhost/rekty_colab.ipynb (reproducible).
 
-Notebook Colab berisi gateway.py (selfhost/gateway.py) yang disisipkan sebagai
-base64 agar tidak perlu mengandalkan repo GitHub (yang privat). Jalankan ulang
-script ini setiap kali gateway.py berubah:
+Notebook berjalan di Google Colab ATAU Kaggle (deteksi otomatis):
+- Colab  -> /content
+- Kaggle -> /kaggle/working (baca checkpoint dari dataset input bila DATASET_SLUG diisi)
+
+Gateway.py disisipkan sebagai base64 agar tidak bergantung pada repo GitHub
+(yang privat). Jalankan ulang setiap kali gateway.py berubah:
 
     python scripts/build_colab.py
 
@@ -29,7 +32,7 @@ def cell(kind: str, lines: list[str]) -> dict:
     return {
         "cell_type": kind,
         "metadata": {},
-        **({"source": lines} if kind == "markdown" else {"execution_count": None, "outputs": [], "source": lines}),
+        **( {"source": lines} if kind == "markdown" else {"execution_count": None, "outputs": [], "source": lines} ),
     }
 
 
@@ -46,8 +49,14 @@ CONFIG = code(
     "#  KONFIGURASI  -  ubah sesuai kebutuhan, lalu jalankan sel ini",
     "# ============================================================",
     "",
-    "# CHECKPOINT: default = checkpoint-mu sendiri (Krea2_by_Rekty_Quantize_00001_) di HuggingFace.",
-    "# Kalau mau pakai Krea 2 Turbo resmi, kosongkan CHECKPOINT_URL (\"\").",
+    "# Di KAGGLE: kalau checkpoint-mu terpasang sebagai dataset input, isi nama",
+    "# dataset-nya di sini (lihat panel Input, mis. rektyanjany/krea2-by-rekty).",
+    "# Notebook otomatis membaca file dari /kaggle/input/<DATASET_SLUG>/",
+    'DATASET_SLUG = ""',
+    'CKPT_FILENAME = "Krea2_by_Rekty_Quantize_00001_.safetensors"',
+    "",
+    "# CHECKPOINT via URL (dipakai kalau bukan dari dataset Kaggle):",
+    "# default = file REKTY di HuggingFace; kosongkan untuk Krea 2 Turbo resmi.",
     'CHECKPOINT_URL = "https://huggingface.co/rekty1988/KREA2_BY_REKTY/resolve/main/Krea2_by_Rekty_Quantize_00001_.safetensors"',
     "",
     "# LoRA REKTY ANJANY-mu (sudah publik di HuggingFace - dipakai otomatis)",
@@ -64,7 +73,7 @@ CONFIG = code(
     'SAMPLER, SCHEDULER = "er_sde", "simple"',
     'MODEL_ID = "rekty1988/anjany"',
     "",
-    'print("Konfigurasi siap. CHECKPOINT :", CHECKPOINT_URL or "Krea 2 Turbo resmi")',
+    'print("Konfigurasi siap. DATASET_SLUG :", DATASET_SLUG or "(kosong - pakai URL)")',
 )
 
 GPU_CHECK = code(
@@ -73,9 +82,12 @@ GPU_CHECK = code(
 )
 
 INSTALL = code(
-    "# 2) Install ComfyUI (sekali saja)",
-    'import os',
-    'COMFY = "/content/ComfyUI"',
+    "# 2) Deteksi platform + install ComfyUI (sekali saja)",
+    "import os",
+    'IS_KAGGLE = os.path.exists("/kaggle")',
+    'WORK = "/kaggle/working" if IS_KAGGLE else "/content"',
+    'COMFY = WORK + "/ComfyUI"',
+    'print("Platform :", "Kaggle" if IS_KAGGLE else "Colab", "| WORK :", WORK)',
     'if not os.path.exists(COMFY + "/main.py"):',
     "    !git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git {COMFY}",
     "    !pip install -q -r {COMFY}/requirements.txt",
@@ -83,38 +95,55 @@ INSTALL = code(
 )
 
 DOWNLOAD = code(
-    "# 3) Download semua model (~19 GB total, sekitar 5-15 menit)",
-    "import os, urllib.request",
-    "",
-    "CKPT_URL = CHECKPOINT_URL or OFFICIAL_CKPT_URL",
-    'ckpt_name = os.path.basename(CKPT_URL).split("?")[0]',
-    "CKPT_DEST = COMFY + \"/models/diffusion_models/\" + ckpt_name",
+    "# 3) Siapkan model - urutan: dataset Kaggle -> URL HF -> Krea 2 Turbo resmi",
+    "import os, urllib.request, glob",
     "",
     "def dl(url, dest):",
     "    if os.path.exists(dest) and os.path.getsize(dest) > 1_000_000:",
     '        print("sudah ada :", os.path.basename(dest))',
-    "        return",
+    "        return True",
     '    print("Download  :", os.path.basename(dest))',
     "    urllib.request.urlretrieve(url, dest)",
     '    print("  selesai :", round(os.path.getsize(dest) / 2**30, 2), "GB")',
+    "    return True",
     "",
-    "# Checkpoint: coba file-mu dulu; kalau gagal, otomatis pakai Krea 2 Turbo resmi",
-    "try:",
-    "    dl(CKPT_URL, CKPT_DEST)",
-    "except Exception as e:",
-    '    print("Gagal download checkpoint-mu:", e)',
-    '    print("-> Fallback ke Krea 2 Turbo resmi (publik)")',
-    "    CKPT_URL = OFFICIAL_CKPT_URL",
-    '    ckpt_name = os.path.basename(CKPT_URL).split("?")[0]',
-    "    CKPT_DEST = COMFY + \"/models/diffusion_models/\" + ckpt_name",
-    "    dl(CKPT_URL, CKPT_DEST)",
+    "# --- (a) Checkpoint dari dataset Kaggle (kalau ada) ---",
+    "got = None",
+    "if IS_KAGGLE and DATASET_SLUG:",
+    '    hits = glob.glob("/kaggle/input/" + DATASET_SLUG + "/**/" + CKPT_FILENAME, recursive=True)',
+    "    if hits:",
+    "        got = hits[0]",
+    '        print("Checkpoint dari dataset Kaggle :", got)',
     "",
+    "# --- (b) Checkpoint dari URL HF (file-mu dulu, lalu resmi) ---",
+    "if got is None:",
+    "    for url in [CHECKPOINT_URL, OFFICIAL_CKPT_URL]:",
+    "        if not url:",
+    "            continue",
+    '        name = os.path.basename(url).split("?")[0]',
+    '        dest = COMFY + "/models/diffusion_models/" + name',
+    "        try:",
+    "            if dl(url, dest):",
+    "                got = dest",
+    "                break",
+    "        except Exception as e:",
+    '            print("Gagal download", name, ":", e)',
+    '            print("-> coba alternatif...")',
+    "",
+    "assert got is not None, \"Tidak ada checkpoint yang bisa dipakai!\"",
+    "ckpt_name = os.path.basename(got)",
+    "CKPT_DEST = got",
+    "",
+    "# --- (c) Text encoder + VAE + LoRA (dari HuggingFace, publik) ---",
     "for url, dest in [",
     "    (TE_URL,   COMFY + \"/models/text_encoders/qwen3vl_4b_fp8_scaled.safetensors\"),",
     "    (VAE_URL,  COMFY + \"/models/vae/qwen_image_vae.safetensors\"),",
     "    (LORA_URL, COMFY + \"/models/loras/rekty anjany.safetensors\"),",
     "]:",
-    "    dl(url, dest)",
+    "    try:",
+    "        dl(url, dest)",
+    "    except Exception as e:",
+    '        print("Gagal download", os.path.basename(dest), ":", e)',
     "",
     "print()",
     'print("SEMUA MODEL SIAP. Checkpoint :", ckpt_name)',
@@ -137,7 +166,7 @@ WORKFLOW = code(
     '  "10": {"class_type": "SaveImage",           "inputs": {"filename_prefix": "rekty", "images": ["8", 0]}},',
     "}",
     "",
-    'with open("/content/workflow_api.json", "w") as f:',
+    'with open(WORK + "/workflow_api.json", "w") as f:',
     "    json.dump(workflow, f)",
     'print("workflow_api.json siap -", ckpt_name)',
 )
@@ -146,7 +175,7 @@ START_COMFY = code(
     "# 5) Jalankan ComfyUI di background + tunggu sampai siap",
     "import subprocess, sys, time, urllib.request",
     "",
-    'log = open("/content/comfy.log", "w")',
+    'log = open(WORK + "/comfy.log", "w")',
     "proc = subprocess.Popen(",
     '    [sys.executable, "main.py", "--listen", "127.0.0.1", "--port", "8188", "--disable-auto-launch"],',
     "    cwd=COMFY, stdout=log, stderr=subprocess.STDOUT)",
@@ -165,8 +194,8 @@ START_COMFY = code(
     "if ok:",
     '    print("ComfyUI SIAP di port 8188 (pid", proc.pid, ")")',
     "else:",
-    '    print("Belum siap - lihat /content/comfy.log :")',
-    '    print(open("/content/comfy.log").read()[-2000:])',
+    '    print("Belum siap - lihat", WORK + "/comfy.log :")',
+    '    print(open(WORK + "/comfy.log").read()[-2000:])',
 )
 
 GATEWAY = code(
@@ -175,15 +204,15 @@ GATEWAY = code(
     "",
     'GATEWAY_B64 = "%s"' % b64_gateway(),
     "",
-    'open("/content/gateway.py", "w").write(base64.b64decode(GATEWAY_B64).decode("utf-8"))',
+    'open(WORK + "/gateway.py", "w").write(base64.b64decode(GATEWAY_B64).decode("utf-8"))',
     "!pip install -q fastapi uvicorn requests",
     "",
     "env = dict(os.environ,",
-    '           WORKFLOW_FILE="/content/workflow_api.json",',
+    '           WORKFLOW_FILE=WORK + "/workflow_api.json",',
     '           LORA_NAME="rekty anjany.safetensors")',
     "",
-    'glog = open("/content/gateway.log", "w")',
-    "gproc = subprocess.Popen([sys.executable, \"/content/gateway.py\"],",
+    'glog = open(WORK + "/gateway.log", "w")',
+    "gproc = subprocess.Popen([sys.executable, WORK + \"/gateway.py\"],",
     "                         stdout=glog, stderr=subprocess.STDOUT, env=env)",
     "",
     "ok = False",
@@ -200,8 +229,8 @@ GATEWAY = code(
     "if ok:",
     '    print("GATEWAY SIAP di port 8000 (pid", gproc.pid, ")")',
     "else:",
-    '    print("Belum siap - lihat /content/gateway.log :")',
-    '    print(open("/content/gateway.log").read()[-2000:])',
+    '    print("Belum siap - lihat", WORK + "/gateway.log :")',
+    '    print(open(WORK + "/gateway.log").read()[-2000:])',
 )
 
 TUNNEL = code(
@@ -211,7 +240,7 @@ TUNNEL = code(
     "",
     "import re, subprocess, time",
     "",
-    'tlog = open("/content/tunnel.log", "w")',
+    'tlog = open(WORK + "/tunnel.log", "w")',
     "tproc = subprocess.Popen(",
     '    ["cloudflared", "tunnel", "--url", "http://127.0.0.1:8000", "--no-autoupdate"],',
     "    stdout=tlog, stderr=subprocess.STDOUT)",
@@ -219,7 +248,7 @@ TUNNEL = code(
     "url = None",
     "for _ in range(60):",
     "    time.sleep(2)",
-    '    txt = open("/content/tunnel.log").read()',
+    '    txt = open(WORK + "/tunnel.log").read()',
     '    m = re.search(r"https://[-a-z0-9]+\\.trycloudflare\\.com", txt)',
     "    if m:",
     "        url = m.group(0)",
@@ -227,7 +256,7 @@ TUNNEL = code(
     "",
     "print()",
     'print("============================================================")',
-    'print("  ENDPOINT PUBLIK KAMU :", url or "(belum dapat - lihat /content/tunnel.log)")',
+    'print("  ENDPOINT PUBLIK KAMU :", url or "(belum dapat - lihat " + WORK + "/tunnel.log)")',
     'print("============================================================")',
     "if url:",
     '    print("Tes cepat  :")',
@@ -247,14 +276,15 @@ NOTEBOOK = {
     },
     "cells": [
         md(
-            "# REKTY \u2014 Krea 2 + LoRA REKTY ANJANY di Google Colab (gratis)\n"
+            "# REKTY \u2014 Krea 2 + LoRA REKTY ANJANY di Colab / Kaggle (gratis)\n"
             "\n"
-            "Jalankan **base model Krea 2 + LoRA REKTY ANJANY-mu** di GPU gratis Colab, lalu publikasikan "
-            "lewat Cloudflare Tunnel sebagai endpoint **OpenAI-compatible** (`/v1/images/generations`) \u2014 "
+            "Jalankan **base model Krea 2 + LoRA REKTY ANJANY-mu** di GPU gratis "
+            "(Google Colab **atau** Kaggle), lalu publikasikan lewat Cloudflare Tunnel "
+            "sebagai endpoint **OpenAI-compatible** (`/v1/images/generations`) \u2014 "
             "siap didaftarkan ke Pollinations sebagai community model.\n"
             "\n"
             "```\n"
-            "[Colab T4 GPU]  ComfyUI (Krea 2 + LoRA REKTY ANJANY)\n"
+            "[GPU gratis]  ComfyUI (Krea 2 + LoRA REKTY ANJANY)\n"
             "      |  /prompt + /history\n"
             "      v\n"
             "gateway.py  ->  POST /v1/images/generations  (format OpenAI)\n"
@@ -263,16 +293,22 @@ NOTEBOOK = {
             "cloudflared  ->  https://xxxx.trycloudflare.com  (URL publik)\n"
             "```\n"
             "\n"
-            "**Cara pakai:** jalankan semua sel dari atas ke bawah (Runtime -> Run all), tunggu sampai "
-            "muncul URL `https://xxx.trycloudflare.com`, lalu pakai URL itu di Pollinations / app REKTY. "
-            "Total download ~19 GB (sekali saja)."
+            "**Cara pakai:** jalankan semua sel dari atas ke bawah (Runtime -> Run all), "
+            "tunggu sampai muncul URL `https://xxx.trycloudflare.com`, lalu pakai URL itu "
+            "di Pollinations / app REKTY. Total download ~19 GB (sekali saja)."
         ),
         md(
             "## \u2699\ufe0f KONFIGURASI\n"
             "\n"
-            "Jalankan sel berikut, lalu pilih di **Runtime -> Change runtime type**:\n"
-            "- **Hardware accelerator: GPU** (T4 \u2014 gratis, cukup untuk Krea 2 fp8)\n"
-            "- Runtime -> **Run all** (atau jalankan sel satu per satu)"
+            "Jalankan sel berikut, lalu pilih platform:\n"
+            "\n"
+            "**Google Colab** \u2014 Runtime -> Change runtime type -> **GPU T4**\n"
+            "\n"
+            "**Kaggle** \u2014 di Settings notebook: **Accelerator = GPU** (T4/P100) dan "
+            "**Internet = On**; kalau checkpoint-mu terpasang sebagai dataset input, "
+            "isi `DATASET_SLUG` di sel KONFIGURASI (lihat panel Input).\n"
+            "\n"
+            "Lalu Runtime -> **Run all** (atau jalankan sel satu per satu)."
         ),
         CONFIG,
         GPU_CHECK,
@@ -300,12 +336,13 @@ NOTEBOOK = {
             "   - Endpoint   : `https://xxx.trycloudflare.com/v1`\n"
             "4. Model muncul di katalog Pollinations \u2192 otomatis terlihat di **dropdown model Pollinations** di aplikasi REKTY.\n"
             "\n"
-            "### \u26a0\ufe0f Penting (batas Colab gratis)\n"
-            "- Sesi Colab gratis **mati otomatis**: idle ~90 menit atau maksimal ~12 jam. Saat mati, URL ikut mati "
+            "### \u26a0\ufe0f Penting (batas gratis)\n"
+            "- Sesi Colab/Kaggle gratis **mati otomatis** (idle ~90 mnt / maks ~12 jam). Saat mati, URL ikut mati "
             "\u2014 jalankan ulang semua sel (model tersimpan di disk, download tidak perlu diulang).\n"
+            "- Kaggle: kuota ~30 jam/minggu; wajib verifikasi HP untuk GPU.\n"
             "- Untuk **24/7** (syarat Pollinations community model) butuh VPS GPU berbayar \u2014 lihat `selfhost/README.md`.\n"
-            "- Mau pakai **checkpoint-mu sendiri** (`Krea2_by_Rekty_Quantize_00001_`)? Upload dulu ke HuggingFace "
-            "(public), tempel URL-nya di sel KONFIGURASI (`CHECKPOINT_URL`), lalu jalankan ulang dari sel download."
+            "- Checkpoint sumber: dataset Kaggle (isi `DATASET_SLUG`) -> URL HF-mu (`CHECKPOINT_URL`) -> "
+            "otomatis jatuh ke **Krea 2 Turbo resmi** bila gagal."
         ),
     ],
 }
