@@ -907,6 +907,13 @@ $('cfg').addEventListener('input',function(e){$('cfv').textContent=e.target.valu
 $('clipskip').addEventListener('input',function(e){$('csv').textContent=e.target.value});
 $('etansd').addEventListener('input',function(e){$('ensd').textContent=e.target.value});
 $('adv-toggle').addEventListener('click',function(){$('adv-fields').classList.toggle('hidden')});
+/** Ambil seed: nilai field, atau buat acak (int32) DAN isi balik field agar
+ *  seed yang benar-benar dipakai selalu terlihat di UI & tersimpan di hasil. */
+function makeSeed(){
+  var v=($('seed').value||'').trim();
+  if(!v){ v=String(1+Math.floor(Math.random()*2147483646)); $('seed').value=v; }
+  return v;
+}
 $('dice').addEventListener('click',function(){$('seed').value=String(1+Math.floor(Math.random()*2147483646))});
 $('negcheck').addEventListener('change',function(e){$('negwrap').classList.toggle('hidden',!e.target.checked)});
 $('prompt').addEventListener('input',function(){ renderTriggers(); checkTranslateBadge(); });
@@ -1310,7 +1317,7 @@ function buildPayload(){
       images:i2iDataUrl?[i2iDataUrl]:[],
       denoisingStrength:parseFloat($('i2i-ds').value)||0.5,
       cfgScale:parseFloat($('cfg').value),
-      seed:($('seed').value||'').trim()||String(1+Math.floor(Math.random()*2147483646)),
+      seed:makeSeed(),
       clipSkip:parseInt($('clipskip').value),
       etaNoiseSeedDelta:parseInt($('etansd').value),
       v1Clip:false,
