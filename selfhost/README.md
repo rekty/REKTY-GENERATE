@@ -18,6 +18,18 @@ cloudflared (Cloudflare Tunnel) → https://nama.trycloudflare.com (publik)
 Daftarkan di Pollinations (allowlist + my-models di enter.pollinations.ai)
 ```
 
+## Lisensi
+
+Model **Krea 2** (RAW & Turbo) dirilis oleh Krea.ai di bawah
+**Krea 2 Community License Agreement v.1** (22 Juni 2026). Teks resmi
+lengkap tersedia di **`KREA2_LICENSE.md`** (folder ini) — diambil dari
+`Comfy-Org/Krea-2/LICENSE.pdf`.
+
+Checkpoint `Krea2_by_Rekty_Quantize_00001_.safetensors` adalah turunan
+(quantize + merge LoRA) dari `krea2_turbo_fp8_scaled.safetensors`, jadi
+penggunaannya tunduk pada lisensi komunitas yang sama. Baca ketentuannya
+sebelum penggunaan komersial.
+
 ## 0. Jalan cepat GRATIS: Google Colab
 
 Tidak punya VPS? Buka **`selfhost/rekty_colab.ipynb`** di
