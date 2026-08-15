@@ -439,6 +439,8 @@ input[type=range]{cursor:pointer}
         <div class="relative h-2 bg-[#1c2128] rounded-full overflow-hidden">
           <div id="sc-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);box-shadow:0 0 12px rgba(111,93,255,.55);transition:width .4s"></div>
         </div>
+        <!-- Mini-preview per gambar (x2/x4): kotak kecil + bar progress masing-masing -->
+        <div id="sc-thumbs" class="hidden flex items-center gap-2"></div>
         <div class="flex items-center justify-between text-xs text-neutral-500">
           <span id="sc-status">Mengirim task...</span>
           <span class="flex items-center gap-3"><span id="sc-eta" class="text-neutral-600"></span><span id="sc-count">x1</span><span id="sc-size"></span></span>
@@ -1672,6 +1674,7 @@ function showProgress(title,status,pct){
   $('sc-status').textContent=status||'';
   $('sc-bar').style.width=Math.max(0,Math.min(100,_progPct))+'%';
   $('sc-pct')&&($('sc-pct').textContent=Math.round(_progPct)+'%');
+  updateSubmitThumbs(_progPct);
   $('submitcard').classList.remove('hidden');
   // Modal lama tidak dipakai lagi — kartu di output menggantikannya.
   $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex');
@@ -1689,6 +1692,7 @@ function startProgAnim(){
     $('prog-pct').textContent=Math.round(_progPct)+'%';
     $('sc-bar').style.width=_progPct+'%';
     $('sc-pct')&&($('sc-pct').textContent=Math.round(_progPct)+'%');
+    updateSubmitThumbs(_progPct);
     updateEta();
   },250);
 }
@@ -1710,7 +1714,42 @@ function hideProgress(){ stopProgAnim(); _progPct=0; _progStart=0; _etaSpeed=0; 
 function setSubmitInfo(taskId,size,n){
   if(taskId) $('sc-task').textContent=taskId;
   if(size) $('sc-size').textContent=size;
-  if(n!=null) $('sc-count').textContent='x'+n;
+  if(n!=null){ $('sc-count').textContent='x'+n; initSubmitThumbs(n); }
+}
+/** Buat kotak mini-preview per gambar (hanya saat n>1, seperti Tensor.Art). */
+function initSubmitThumbs(n){
+  var t=$('sc-thumbs'); if(!t) return;
+  t.innerHTML='';
+  if(!n||n<=1){ t.classList.add('hidden'); return; }
+  t.classList.remove('hidden');
+  for(var i=0;i<n;i++){
+    var d=document.createElement('div');
+    d.className='relative w-14 h-14 rounded-lg overflow-hidden bg-[#1c2128] border bd shrink-0';
+    d.innerHTML='<div class="absolute inset-0 flex items-center justify-center text-[10px] text-neutral-600 font-medium">'+(i+1)+'</div>'
+      +'<div class="sc-tfill absolute bottom-0 left-0 h-[3px] rounded-r" style="background:linear-gradient(90deg,#6F5DFF,#27D4CD);width:0%;transition:width .3s"></div>';
+    t.appendChild(d);
+  }
+}
+/** Update bar per gambar berdasarkan progress global: tiap gambar mendapat
+ *  jatah 100/n persen — gambar 1 selesai dulu, lalu 2, dst. */
+function updateSubmitThumbs(pct){
+  var t=$('sc-thumbs'); if(!t||t.classList.contains('hidden')) return;
+  var n=t.children.length; if(!n) return;
+  for(var i=0;i<n;i++){
+    var share=100/n, done=Math.max(0,Math.min(100,(pct-(i*share))/share*100));
+    var f=t.children[i].querySelector('.sc-tfill');
+    if(f) f.style.width=done+'%';
+  }
+}
+/** Isi thumbnail asli saat gambar selesai. */
+function fillSubmitThumbs(imgs){
+  var t=$('sc-thumbs'); if(!t||t.classList.contains('hidden')) return;
+  (imgs||[]).forEach(function(src,i){
+    if(i<t.children.length){
+      var d=t.children[i];
+      d.innerHTML='<img src="'+src+'" class="w-full h-full object-cover"/>';
+    }
+  });
 }
 /** Batalkan task yang sedang berjalan dari kartu Submitting. */
 function cancelGenerate(){
@@ -1833,11 +1872,13 @@ async function doGenerate(){
       if(taskId){
         setSubmitInfo(taskId);
         var imgs=await pollTask(taskId,function(st,pct){ showProgress('Generating...',st,pct); });
+        fillSubmitThumbs(imgs);
         showProgDone(); // 100% sebelum gambar muncul
         imgs.forEach(function(src){ addResult(mkResult(src,par,taskId,r.credits)); });
       }else{
         var imgs2=extractImages(r);
         if(!imgs2.length) throw new Error('Response tanpa gambar');
+        fillSubmitThumbs(imgs2);
         showProgDone();
         imgs2.forEach(function(src){ addResult(mkResult(src,par,'',r.credits)); });
       }
