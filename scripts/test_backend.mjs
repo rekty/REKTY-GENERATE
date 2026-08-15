@@ -249,6 +249,25 @@ globalThis.fetch = async (url, opts) => {
     return new Response(new Uint8Array([255, 216, 255, 224, 1, 2, 3]), { headers: { 'content-type': 'image/jpeg' } });
   }
 
+  // --- Self-Host gateway OpenAI-compatible (ComfyUI + LoRA) ---
+  if (u.includes('/v1/images/generations') && u.includes('selfhost.test')) {
+    assert.strictEqual(method, 'POST', 'selfhost pakai POST');
+    const b = JSON.parse(bodyText);
+    assert.strictEqual(b.model, 'rekty1988/anjany', 'selfhost model default rekty1988/anjany');
+    assert.strictEqual(b.size, '768x1152', 'selfhost size WxH');
+    assert.strictEqual(b.prompt, 'seorang wanita di taman bunga', 'selfhost prompt diteruskan');
+    assert.ok(b.sampler, 'selfhost sampler ada');
+    assert.ok(b.scheduler, 'selfhost scheduler ada');
+    assert.ok(b.negative_prompt, 'selfhost negative_prompt ada');
+    const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    return jsonResp({ created: 123, data: [{ b64_json: PNG }, { b64_json: PNG }] });
+  }
+
+  // --- Self-Host health ---
+  if (u === 'https://selfhost.test/health') {
+    return jsonResp({ ok: true, comfy: 'http://127.0.0.1:8188' });
+  }
+
   throw new Error('fetch tak tertangani: ' + method + ' ' + u);
 };
 
@@ -502,6 +521,43 @@ console.log('Pollinations (gratis, tanpa API key):');
   assert.strictEqual(g2.status, 200);
   assert.ok(String(g2.data.images[0]).startsWith('https://image.pollinations.ai/'), 'tanpa KV pakai URL langsung');
   ok('generate tanpa key & tanpa KV -> URL pollinations langsung');
+}
+
+console.log('Self-Host (gateway ComfyUI + LoRA):');
+{
+  const p = webPayload('selfhost', 'rekty1988/anjany');
+  p.selfhostUrl = 'https://selfhost.test';
+  const g = await run('/api/generate', p, { IMAGES });
+  assert.strictEqual(g.status, 200);
+  assert.ok(String(g.data.taskId).startsWith('selfhost:'), 'taskId selfhost');
+  assert.ok(Array.isArray(g.data.images) && g.data.images.length === 2, '2 gambar dari n=2');
+  assert.ok(g.data.images[0].startsWith('/img/'), 'gambar selfhost diarsip ke /img/');
+  ok('generate selfhost -> taskId selfhost:... + 2 gambar /img/ (tanpa key)');
+
+  const t = await run('/api/task?id=' + encodeURIComponent(g.data.taskId), null, { IMAGES });
+  assert.strictEqual(t.data.status, 'SUCCESS');
+  assert.deepStrictEqual(t.data.images, g.data.images);
+  ok('task selfhost -> SUCCESS + gambar sama');
+
+  // tanpa URL endpoint -> 400
+  const p2 = webPayload('selfhost', 'rekty1988/anjany');
+  p2.selfhostUrl = '';
+  const bad = await run('/api/generate', p2, {});
+  assert.strictEqual(bad.status, 500);
+  assert.ok(String(bad.data.error).includes('endpoint self-host'), 'error menyebut endpoint self-host');
+  ok('generate selfhost tanpa URL -> error jelas');
+
+  // /api/archive: simpan base64 -> /img/
+  const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const arc = await run('/api/archive', { images: [{ b64: PNG }] }, { IMAGES });
+  assert.strictEqual(arc.status, 200);
+  assert.ok(Array.isArray(arc.data.images) && arc.data.images.length === 1);
+  assert.ok(arc.data.images[0].startsWith('/img/'), 'archive -> /img/');
+  ok('/api/archive -> gambar tersimpan permanen');
+
+  const arcBad = await run('/api/archive', { images: [] }, {});
+  assert.strictEqual(arcBad.status, 400);
+  ok('/api/archive kosong -> 400');
 }
 
 console.log('Translate + Refine prompt:');

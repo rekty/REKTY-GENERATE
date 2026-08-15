@@ -29,6 +29,7 @@ import urllib.parse
 
 import requests
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 # ---------------- konfigurasi ----------------
@@ -42,6 +43,17 @@ API_TOKEN = os.environ.get("GATEWAY_TOKEN", "")   # opsional: kasih token sendir
 MODEL_NAMES = ["rekty1988/anjany", "krea2", "anjany", "rekty"]
 
 app = FastAPI(title="REKTY ComfyUI Gateway (OpenAI-compatible)")
+
+# CORS terbuka: endpoint publik — dipanggil langsung dari browser
+# (app REKTY di https://rekty-generator.pages.dev) untuk generate tanpa
+# melewati proxy (menghindari batas timeout subrequest Cloudflare Workers).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 
 def load_workflow() -> dict:

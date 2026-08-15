@@ -125,12 +125,13 @@ function toSeed(seed) {
   return 0; // random
 }
 
-const PROVIDERS = ['tams', 'replicate', 'fal', 'pollinations'];
+const PROVIDERS = ['tams', 'replicate', 'fal', 'pollinations', 'selfhost'];
 const PROVIDER_ENV = {
   tams: 'TENSORART_API_KEY',
   replicate: 'REPLICATE_API_TOKEN',
   fal: 'FAL_API_KEY',
   pollinations: 'POLLINATIONS_API_KEY', // opsional — gratis tanpa key, sk_* untuk API baru
+  selfhost: 'SELFHOST_BASE_URL',        // opsional — URL endpoint ComfyUI-mu (tanpa /v1)
 };
 
 function pickApiKey(env, request, body, provider) {
@@ -627,6 +628,98 @@ async function archiveImages(urls, env) {
   return out;
 }
 
+/* --------------------------- Self-Host (ComfyUI gateway) --------------------------- */
+
+/** Deteksi tipe gambar dari magic bytes. */
+function sniffImageCt(buf) {
+  try {
+    const b = new Uint8Array(buf);
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'image/png';
+    if (b[0] === 0xff && b[1] === 0xd8) return 'image/jpeg';
+    if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46) return 'image/webp';
+    if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return 'image/gif';
+  } catch { /* ignore */ }
+  return 'image/png';
+}
+
+/** Decode base64 (string) ke ArrayBuffer. */
+function b64ToBuf(b64) {
+  const bin = atob(String(b64).replace(/\s/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+/**
+ * Generate via gateway OpenAI-compatible self-host (ComfyUI + LoRA-mu).
+ * CATATAN: di Worker ini fetch sinkron terbatas ~90-100 detik, sedangkan
+ * generate bisa ±2 menit — jalur UTAMA dari browser adalah panggilan langsung
+ * ke endpoint (lihat selfhostGenerate di frontend). Jalur ini tetap ada sebagai
+ * fallback; kalau timeout, pakai jalur langsung.
+ */
+async function selfhostCreateJob(body, env) {
+  const params = body.params || body;
+  const base = String((env && env.SELFHOST_BASE_URL) || body.selfhostUrl || body.endpoint || '').trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//.test(base)) {
+    throw new Error('URL endpoint self-host belum diatur. Isi di Pengaturan -> Endpoint Self-Host, atau set env SELFHOST_BASE_URL.');
+  }
+  const width = clampInt(params.width, 64, 2048, 832);
+  const height = clampInt(params.height, 64, 2048, 1536);
+  const seed = toSeed(params.seed);
+  const payload = {
+    model: String(params.model || 'rekty1988/anjany'),
+    prompt: String(params.prompt || '').slice(0, 1500),
+    size: width + 'x' + height,
+    n: Math.max(1, parseInt(params.imageCount, 10) || 1),
+    steps: Math.max(1, parseInt(params.steps, 10) || 8),
+    cfg: parseFloat(params.cfgScale) >= 0 ? parseFloat(params.cfgScale) : 1.0,
+    sampler: String(params.ksamplerName || 'er_sde'),
+    scheduler: String(params.schedule || 'simple'),
+    negative_prompt: String(params.negativePrompt || 'low quality, worst quality').slice(0, 500),
+  };
+  if (seed > 0) payload.seed = seed;
+
+  const res = await fetchWithTimeout(base + '/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }, 170000);
+  const txt = await res.text();
+  if (!res.ok) {
+    let msg = txt.slice(0, 300);
+    try { msg = (JSON.parse(txt).error && (JSON.parse(txt).error.message || msg)) || msg; } catch { /* keep */ }
+    throw new Error('Self-Host gagal (HTTP ' + res.status + '): ' + msg);
+  }
+  let d = null;
+  try { d = JSON.parse(txt); } catch { /* ignore */ }
+  const list = (d && Array.isArray(d.data)) ? d.data : [];
+  if (!list.length) throw new Error('Endpoint self-host balas tanpa gambar');
+
+  const urls = [];
+  for (const it of list) {
+    const b64 = String(it.b64_json || it.b64 || '').trim();
+    if (!b64) { urls.push(null); continue; }
+    try {
+      const buf = b64ToBuf(b64);
+      urls.push((await storeImageBuf(buf, sniffImageCt(buf), env)) || null);
+    } catch { urls.push(null); }
+  }
+  const images = urls.filter(Boolean);
+  const taskId = 'selfhost:' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2));
+  if (env && env.IMAGES) {
+    await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images })).catch(() => {});
+  }
+  return { taskId, images };
+}
+
+async function selfhostGetTask(jobId, env) {
+  if (!env || !env.IMAGES) return { status: 'RUNNING', progress: 0 };
+  const raw = await env.IMAGES.get('task:selfhost:' + jobId, { type: 'text' }).catch(() => null);
+  if (!raw) return { status: 'RUNNING', progress: 0 };
+  const rec = safeJson(raw);
+  return rec || { status: 'FAILED', error: 'Task tidak dikenal' };
+}
+
 /* --------------------------- Pollinations --------------------------- */
 
 /**
@@ -711,6 +804,7 @@ export async function onRequest(context) {
           replicate: !!(env && env.REPLICATE_API_TOKEN),
           fal: !!(env && env.FAL_API_KEY),
           pollinations: true, // gratis, tanpa key
+          selfhost: true,     // pakai URL endpoint (bukan API key)
         },
         byop: !!(env && env.POLLINATIONS_APP_KEY), // OAuth BYOP siap
         tams: TAMS_BASE,
@@ -881,8 +975,8 @@ export async function onRequest(context) {
       const apiKey = provider === 'pollinations'
         ? await pickPollKey(env, request, body)
         : pickApiKey(env, request, body, provider);
-      // Pollinations gratis tanpa API key — semua provider lain wajib key.
-      if (!apiKey && provider !== 'pollinations') {
+      // Pollinations & self-host gratis tanpa API key — provider lain wajib key.
+      if (!apiKey && provider !== 'pollinations' && provider !== 'selfhost') {
         return json({
           error: 'API key ' + provider + ' belum diatur. Isi di Pengaturan -> API Key, atau set env ' + (PROVIDER_ENV[provider] || 'TENSORART_API_KEY') + ' saat deploy.',
         }, 401);
@@ -895,6 +989,7 @@ export async function onRequest(context) {
         // Sinkron langsung: generate sekarang, balas hasil (tidak lewat antrian).
         r = await pollinationsCreateJob(body, env, apiKey);
       }
+      else if (provider === 'selfhost') r = await selfhostCreateJob(body, env);
       else r = await tamsCreateJob(body, apiKey);
       return json({ ok: true, provider, ...r });
     }
@@ -910,6 +1005,7 @@ export async function onRequest(context) {
       let jobId = rawId;
       let falModel = FAL_MODEL;
       if (rawId.startsWith('replicate:')) { provider = 'replicate'; jobId = rawId.slice(11); }
+      else if (rawId.startsWith('selfhost:')) { provider = 'selfhost'; jobId = rawId.slice(9); }
       else if (rawId.startsWith('pollinations:')) { provider = 'pollinations'; jobId = rawId.slice(13); }
       else if (rawId.startsWith('fal:')) {
         provider = 'fal';
@@ -922,7 +1018,7 @@ export async function onRequest(context) {
       const apiKey = provider === 'pollinations'
         ? await pickPollKey(env, request, {})
         : pickApiKey(env, request, {}, provider);
-      if (!apiKey && provider !== 'pollinations') {
+      if (!apiKey && provider !== 'pollinations' && provider !== 'selfhost') {
         return json({ error: 'API key ' + provider + ' belum diatur' }, 401);
       }
 
@@ -930,6 +1026,7 @@ export async function onRequest(context) {
       if (provider === 'replicate') r = await replicateGetJob(jobId, apiKey);
       else if (provider === 'fal') r = await falGetJob(jobId, apiKey, falModel);
       else if (provider === 'pollinations') r = await pollinationsGetTask(jobId, env);
+      else if (provider === 'selfhost') r = await selfhostGetTask(jobId, env);
       else r = await tamsGetJob(jobId, apiKey);
 
       // Arsipkan gambar hasil ke R2 supaya URL-nya permanen (tidak kedaluwarsa).
@@ -937,6 +1034,27 @@ export async function onRequest(context) {
         r.images = await archiveImages(r.images, env);
       }
       return json({ ok: true, provider, ...r });
+    }
+
+    // ---- arsip gambar base64 (hasil generate langsung provider selfhost) ----
+    if (method === 'POST' && url.pathname === '/api/archive') {
+      if ((request.headers.get('content-length') || 0) > MAX_BODY) {
+        return json({ error: 'Payload terlalu besar' }, 413);
+      }
+      const body = safeJson(await request.text());
+      if (!body) return json({ error: 'JSON tidak valid' }, 400);
+      const items = Array.isArray(body.images) ? body.images : [];
+      if (!items.length) return json({ error: 'Field images wajib diisi (array base64)' }, 400);
+      const out = [];
+      for (const it of items) {
+        const b64 = String((it && (it.b64 || it.b64_json)) || '').trim();
+        if (!b64) { out.push(null); continue; }
+        try {
+          const buf = b64ToBuf(b64);
+          out.push((await storeImageBuf(buf, sniffImageCt(buf), env)) || null);
+        } catch { out.push(null); }
+      }
+      return json({ ok: true, images: out });
     }
 
     // ---- sajikan gambar arsip (URL permanen /img/<nama>) ----

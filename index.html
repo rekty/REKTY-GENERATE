@@ -372,6 +372,7 @@ input[type=range]{cursor:pointer}
             <option value="replicate">Replicate (SDXL)</option>
             <option value="fal">fal.ai (fast-sdxl)</option>
             <option value="pollinations">Pollinations (GRATIS, tanpa key)</option>
+            <option value="selfhost">Self-Host (Krea 2 + LoRA-mu)</option>
           </select>
         </div>
         <div class="field" id="apikey-field">
@@ -384,6 +385,12 @@ input[type=range]{cursor:pointer}
           <button id="byop-login" class="btn btn-ghost w-full h-8 border bd text-xs justify-center">Login dengan Pollinations (BYOP)</button>
           <div id="byop-status" class="hidden text-[10px] text-neutral-500 mt-1"></div>
           <button id="byop-logout" class="hidden btn btn-ghost w-full h-8 border bd text-xs justify-center mt-1">Logout</button>
+        </div>
+        <!-- Self-Host: URL endpoint ComfyUI gateway (trycloudflare) -->
+        <div class="field hidden" id="selfhost-row">
+          <label class="text-[11px] text-neutral-500">Endpoint Self-Host</label>
+          <input id="selfhost-url" type="text" class="inp text-xs" placeholder="https://xxx.trycloudflare.com" autocomplete="off"/>
+          <p class="text-[10px] text-neutral-600 mt-1">Paste URL dari output notebook Kaggle/Colab (tanpa /v1). Tanpa API key — model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.</p>
         </div>
         <div id="api-hint" class="text-[10px] text-neutral-600"></div>
         <div class="field">
@@ -727,6 +734,7 @@ var LORA_LIBS = {
     { name:'REKTY ANJANY (Krea 2, siap pakai)', base:'Krea 2', model:'fal-ai/krea-2/turbo/lora', tags:['anjany','krea2','rekty'], thumb:'anjany', badge:'REKTY', views:'', ver:'V1', needUrl:true, defaultUrl:'https://huggingface.co/rekty1988/REKTY_ANJANY/resolve/main/rekty%20anjany.safetensors' },
   ],
   pollinations: [], // LoRA tidak didukung — gratis, model bawaan saja
+  selfhost: [], // LoRA sudah di-inject di gateway (Krea 2 + REKTY ANJANY)
 };
 var LORA_LIB = LORA_LIBS.tams; // daftar aktif mengikuti provider
 const LORA = [];
@@ -764,6 +772,12 @@ var MODEL_LIBS = {
     { name:'Stable Diffusion 3.5 Large', base:'fal.ai', arch:'SD 3.5', thumb:'sd35', badge:'SD 3.5', views:'900K', ver:'V1', model:'fal-ai/stable-diffusion-v35-large' },
     { name:'Playground v2.5', base:'fal.ai', arch:'SDXL', thumb:'play', badge:'PLAY', views:'700K', ver:'V2.5', model:'fal-ai/playground/v2.5' },
     { name:'Krea 2 Turbo', base:'fal.ai', arch:'Krea 2', thumb:'krea', badge:'KREA2', views:'1.1M', ver:'V2', model:'fal-ai/krea-2/turbo' },
+  ],
+  selfhost: [
+    { name:'REKTY ANJANY (Krea 2 + LoRA-mu)', base:'Self-Host', arch:'Krea 2', thumb:'anjany', badge:'LOKAL', views:'', ver:'V1', model:'rekty1988/anjany' },
+    { name:'Krea 2 Turbo', base:'Self-Host', arch:'Krea 2', thumb:'krea', badge:'LOKAL', views:'', ver:'V1', model:'krea2' },
+    { name:'Anjany', base:'Self-Host', arch:'Krea 2', thumb:'anjany', badge:'LOKAL', views:'', ver:'V1', model:'anjany' },
+    { name:'Rekty', base:'Self-Host', arch:'Krea 2', thumb:'krea', badge:'LOKAL', views:'', ver:'V1', model:'rekty' },
   ],
   pollinations: [
     { name:'Agnes Image 2.0 Flash', base:'Pollinations', arch:'Catniti AI', thumb:'Catnitiagnesimage20flash', badge:'FREE', views:'', ver:'V1', model:'Catniti/agnes-image-2.0-flash' },
@@ -1484,7 +1498,7 @@ function buildPayload(){
  * atau mode demo (picsum) kalau backend/API key belum aktif.
  * ========================================================== */
 var SETTINGS_KEY='rekty.settings', RESULTS_KEY='rekty.results';
-var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', seed:'',
+var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', selfhostUrl:'', seed:'',
   prompt:'', negPrompt:'', negCheck:false, steps:10, cfg:1, sampler:'euler', sched:'normal',
   vae:'automatic', width:768, height:1152, aspect:'portrait', clipSkip:2, ensd:31337,
   upscale:2, ncol:1, page:'text', modeA1111:false, modeElla:false, modelName:'',
@@ -1493,7 +1507,8 @@ var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
   fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
-  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Gratis tanpa key (model otomatis). Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' }
+  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Gratis tanpa key (model otomatis). Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' },
+  selfhost:{ label:'Endpoint Self-Host (URL trycloudflare)', hint:'Tanpa API key. Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.' }
 };
 
 function loadSettings(){
@@ -1501,7 +1516,7 @@ function loadSettings(){
     var s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
     if(s&&typeof s==='object'){
       settings.mode=s.mode||'auto'; settings.provider=s.provider||'tams'; settings.apiKey=s.apiKey||'';
-      settings.pollSession=s.pollSession||''; settings.seed=String(s.seed||'').trim();
+      settings.pollSession=s.pollSession||''; settings.selfhostUrl=String(s.selfhostUrl||'').trim(); settings.seed=String(s.seed||'').trim();
       settings.prompt=String(s.prompt||''); settings.negPrompt=String(s.negPrompt||'');
       settings.negCheck=!!s.negCheck; settings.steps=parseInt(s.steps)||10; settings.cfg=parseFloat(s.cfg)||1;
       settings.sampler=s.sampler||'euler'; settings.sched=s.sched||'normal'; settings.vae=s.vae||'automatic';
@@ -1530,6 +1545,7 @@ function collectUI(){
   settings.modeA1111=!!state.modeA1111; settings.modeElla=!!state.modeElla;
   settings.modelName=state.model?state.model.name:'';
   settings.loras=LORA.map(function(l){ return { name:l.name, w:l.w, loraUrl:l.loraUrl||'' }; });
+  settings.selfhostUrl=$('selfhost-url').value.trim();
   settings.denoise=parseFloat($('i2i-ds').value); if(settings.denoise==null) settings.denoise=0.5;
   settings.animDur=parseFloat($('animdur').value)||0.5;
   if(!settings.seed||!$('seed').value) settings.seed=$('seed').value;
@@ -1595,8 +1611,11 @@ function updateProviderUI(){
   $('apikey-label').textContent=info.label;
   $('api-hint').textContent=info.hint;
   var isPoll=settings.provider==='pollinations';
-  $('apikey-field').classList.toggle('hidden',isPoll);
+  var isSelf=settings.provider==='selfhost';
+  $('apikey-field').classList.toggle('hidden',isPoll||isSelf);
   $('byop-row').classList.toggle('hidden',!isPoll);
+  $('selfhost-row').classList.toggle('hidden',!isSelf);
+  if(isSelf) $('selfhost-url').value=settings.selfhostUrl;
   if(isPoll) refreshOAuthStatus();
   updateApiStatus();
   // Ganti daftar model sesuai provider aktif.
@@ -1632,6 +1651,11 @@ function updateApiStatus(){
     el.style.color=settings.pollSession?'#27D4CD':'#9a9aa2';
     return;
   }
+  if(settings.provider==='selfhost'){
+    el.textContent='Self-Host'+(settings.selfhostUrl?' · endpoint':' · belum di-set');
+    el.style.color=settings.selfhostUrl?'#27D4CD':'#9a9aa2';
+    return;
+  }
   var name=settings.provider==='tams'?'TAMS':(settings.provider==='replicate'?'Replicate':'fal.ai');
   el.textContent=name+(settings.apiKey?' · key':' · tanpa key');
   el.style.color=settings.apiKey?'#27D4CD':'#9a9aa2';
@@ -1641,10 +1665,23 @@ $('apiprovider').addEventListener('change',function(){
 });
 $('api-save').addEventListener('click',function(){
   settings.mode=$('apimode').value; settings.apiKey=$('apikey').value.trim();
+  if(settings.provider==='selfhost') settings.selfhostUrl=$('selfhost-url').value.trim();
   saveSettings(); updateProviderUI(); toast('Pengaturan API disimpan');
 });
 $('api-test').addEventListener('click',async function(){
   var b=$('api-test'); b.disabled=true; b.textContent='Tes...';
+  if(settings.provider==='selfhost'){
+    var url=(settings.selfhostUrl||'').trim().replace(/\/+$/,'');
+    if(!url){ toast('Isi dulu URL endpoint self-host'); b.disabled=false; b.textContent='Tes'; return; }
+    try{
+      var r=await fetch(url+'/health');
+      var d=await r.json().catch(function(){return null;});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      toast('Self-Host OK · '+(d&&d.comfy?'ComfyUI terhubung':'endpoint hidup')+' · '+(d&&d.lora?'LoRA: '+d.lora:'LoRA REKTY ANJANY aktif'));
+    }catch(e){ toast('Endpoint tidak terjangkau ('+e.message+'). Pastikan sesi Kaggle masih jalan & URL benar.'); }
+    b.disabled=false; b.textContent='Tes';
+    return;
+  }
   if(settings.provider==='pollinations'){
     try{
       var r=await fetch('/api/health');
@@ -1982,6 +2019,50 @@ async function pollTask(taskId,onProg){
   throw new Error('Timeout menunggu hasil generate');
 }
 
+/* --- Self-Host: generate langsung ke gateway ComfyUI (browser -> endpoint) --- */
+async function selfhostGenerate(par){
+  var url=(settings.selfhostUrl||'').trim().replace(/\/+$/,'');
+  if(!url) throw new Error('URL endpoint self-host belum diatur — isi di Pengaturan -> Endpoint Self-Host');
+  var m=state.model||{};
+  var body={
+    model: m.model||'rekty1988/anjany',
+    prompt: par.params.prompt,
+    size: par.params.width+'x'+par.params.height,
+    n: Math.max(1,parseInt(par.params.imageCount,10)||1),
+    steps: Math.max(1,parseInt(par.params.steps,10)||8),
+    cfg: parseFloat(par.params.cfgScale)>=0?parseFloat(par.params.cfgScale):1.0,
+    sampler: par.params.ksamplerName||'er_sde',
+    scheduler: par.params.schedule||'simple',
+    negative_prompt: par.params.negativePrompt||'low quality, worst quality'
+  };
+  var seed=parseInt(par.params.seed,10);
+  if(seed>0) body.seed=seed;
+  var ctrl=new AbortController();
+  var timer=setTimeout(function(){ ctrl.abort(); },300000); // maks 5 menit
+  var res;
+  try{
+    res=await fetch(url+'/v1/images/generations',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+  }catch(e){
+    clearTimeout(timer);
+    if(e&&e.name==='AbortError') throw new Error('Timeout 5 menit — endpoint tidak membalas');
+    throw new Error('Tidak bisa hubungi endpoint self-host ('+e.message+'). Pastikan sesi Kaggle masih jalan & URL benar.');
+  }
+  clearTimeout(timer);
+  var d=await res.json().catch(function(){return null;});
+  if(!res.ok) throw new Error((d&&d.error&&(d.error.message||JSON.stringify(d.error)))||('HTTP '+res.status));
+  var list=(d&&Array.isArray(d.data))?d.data:[];
+  if(!list.length) throw new Error('Endpoint self-host balas tanpa gambar');
+  var b64s=list.map(function(x){ return x.b64_json||x.b64; }).filter(Boolean);
+  // Arsip permanen ke KV backend -> URL /img/... (riwayat tetap ada walau sesi mati)
+  var out=[];
+  try{
+    var arc=await fetch('/api/archive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:b64s.map(function(b){return {b64:b};})})}).then(function(r){return r.json();}).catch(function(){return null;});
+    if(arc&&Array.isArray(arc.images)) out=arc.images.filter(Boolean);
+  }catch(e){}
+  if(!out.length) out=b64s.map(function(b){ return 'data:image/png;base64,'+b; }); // fallback data URL
+  return out;
+}
+
 /* --- hasil --- */
 function mkResult(src,par,taskId,credits){
   return {
@@ -2042,11 +2123,24 @@ async function doGenerate(){
     }catch(e){ hideProgress(); par.params.prompt=fallbackEnhance(par.params.prompt); }
   }
   try{
-    if(settings.mode==='demo'||(!buildApiKey()&&settings.provider!=='pollinations')){
+    if(settings.mode==='demo'||(!buildApiKey()&&settings.provider!=='pollinations'&&settings.provider!=='selfhost')){
       await new Promise(function(r){ setTimeout(r,300); });
       demoResults(par);
       if(!buildApiKey()) toast('Belum ada API key — hasil simulasi. Isi API Key TAMS di panel kiri untuk generate asli.');
       else toast('Mode demo aktif — hasil simulasi.');
+    }else if(settings.provider==='selfhost'){
+      // Self-Host: panggil langsung gateway ComfyUI-mu (browser -> endpoint),
+      // hindari timeout subrequest Worker (~90-100s) untuk generate ±2 menit.
+      resetEta();
+      showProgress('Submitting','Menghubungi endpoint self-host...',5);
+      setSubmitInfo('',par.params.width+'x'+par.params.height,par.params.imageCount);
+      startProgAnim();
+      var imgsSelf=await selfhostGenerate(par);
+      fillSubmitThumbs(imgsSelf);
+      showProgDone();
+      await holdResultCard();
+      imgsSelf.forEach(function(src){ addResult(mkResult(src,par,'','')); });
+      notifyDone(imgsSelf);
     }else{
       resetEta();
       showProgress('Submitting','Mengirim task...',5);
