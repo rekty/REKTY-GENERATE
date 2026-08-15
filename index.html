@@ -1668,6 +1668,27 @@ $('btn-history').addEventListener('click',function(){ $('rightPan').classList.to
   topBtn.addEventListener('click',function(){ mw.scrollTop=0; });
   updTopBtn();
 })();
+/* Panel kanan mengikuti gambar yang sedang dilihat (auto-follow saat scroll):
+   kartu paling dekat dengan garis baca ~25% dari atas area tampak jadi aktif,
+   sehingga panel kanan muncul untuk gambar kedua, ketiga, dst. */
+(function(){
+  var mw=$('mainwrap'); var grid=$('grid');
+  if(!mw||!grid) return;
+  var timer=null;
+  function follow(){
+    if(!grid.children.length){ return; }
+    var anchor=mw.scrollTop+mw.clientHeight*0.25;
+    var best=0,bestD=Infinity;
+    for(var i=0;i<grid.children.length;i++){
+      var el=grid.children[i];
+      var top=el.getBoundingClientRect().top-mw.getBoundingClientRect().top+mw.scrollTop;
+      var d=Math.abs(top-anchor);
+      if(d<bestD){bestD=d;best=i;}
+    }
+    if(best!==_viewIdx){ _viewIdx=best; renderDetail(); }
+  }
+  mw.addEventListener('scroll',function(){ clearTimeout(timer); timer=setTimeout(follow,120); },{passive:true});
+})();
 window.addEventListener('resize',function(){ if($('rdetail').innerHTML) renderDetail(); });
 $('overlay').addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); });
 
