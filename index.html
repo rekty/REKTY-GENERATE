@@ -755,7 +755,7 @@ function openLoraModal(){
   }); };
   var onSel=function(l){
     LORA.push({ name:l.name, w:0.8, tags:l.tags, thumb:l.thumb, base:l.base, loraModel:l.model||'', needUrl:l.needUrl, loraUrl:'' });
-    renderLora(); closeModal();
+    renderLora(); closeModal(); collectUI();
   };
   renderMCat(function(){ renderCards(avail(), onSel); });
   renderCards(avail(), onSel);
@@ -824,7 +824,7 @@ function renderLora(){
       +'</div>';
     var sl=d.querySelector('.l-slider [data-ri="'+ri+'"]');
     var uInp=d.querySelector('[data-url="'+ri+'"]');
-    if(uInp){ uInp.addEventListener('input',function(e){ LORA[ri].loraUrl=e.target.value.trim(); }); }
+    if(uInp){ uInp.addEventListener('input',function(e){ LORA[ri].loraUrl=e.target.value.trim(); collectUI(); }); }
     sl.addEventListener('input',function(e){
       var v=parseFloat(e.target.value); if(isNaN(v))return;
       LORA[ri].w=v;
@@ -832,11 +832,11 @@ function renderLora(){
       d.querySelector('.l-fill').style.width=pct+'%';
       d.querySelector('.l-handle').style.left=pct+'%';
       d.querySelector('.lora-input').value=v.toFixed(1);
-      renderTriggers();
+      renderTriggers(); collectUI();
     });
-    d.querySelector('.l-num [data-inc="'+ri+'"]').addEventListener('click',function(){ setLW(ri,+(LORA[ri].w+0.1).toFixed(1)); renderLora(); });
-    d.querySelector('.l-num [data-dec="'+ri+'"]').addEventListener('click',function(){ setLW(ri,+(LORA[ri].w-0.1).toFixed(1)); renderLora(); });
-    d.querySelector('[data-del="'+ri+'"]').addEventListener('click',function(){ LORA.splice(ri,1); renderLora(); renderTriggers(); });
+    d.querySelector('.l-num [data-inc="'+ri+'"]').addEventListener('click',function(){ setLW(ri,+(LORA[ri].w+0.1).toFixed(1)); renderLora(); collectUI(); });
+    d.querySelector('.l-num [data-dec="'+ri+'"]').addEventListener('click',function(){ setLW(ri,+(LORA[ri].w-0.1).toFixed(1)); renderLora(); collectUI(); });
+    d.querySelector('[data-del="'+ri+'"]').addEventListener('click',function(){ LORA.splice(ri,1); renderLora(); renderTriggers(); collectUI(); });
     d.querySelector('[data-info="'+ri+'"]').addEventListener('click',function(){ openLoraInfo(l); });
     list.appendChild(d);
   });
@@ -1348,7 +1348,8 @@ var SETTINGS_KEY='rekty.settings', RESULTS_KEY='rekty.results';
 var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', seed:'',
   prompt:'', negPrompt:'', negCheck:false, steps:10, cfg:1, sampler:'euler', sched:'normal',
   vae:'automatic', width:768, height:1152, aspect:'portrait', clipSkip:2, ensd:31337,
-  upscale:2, ncol:1, page:'text', modeA1111:false, modeElla:false, modelName:'' };
+  upscale:2, ncol:1, page:'text', modeA1111:false, modeElla:false, modelName:'',
+  loras:[], denoise:0.5 };
 var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
@@ -1370,6 +1371,8 @@ function loadSettings(){
       settings.ensd=parseInt(s.ensd)!=null?parseInt(s.ensd):31337; settings.upscale=parseFloat(s.upscale)||2;
       settings.ncol=parseInt(s.ncol)||1; settings.page=s.page||'text';
       settings.modeA1111=!!s.modeA1111; settings.modeElla=!!s.modeElla; settings.modelName=String(s.modelName||'');
+      settings.denoise=parseFloat(s.denoise)!=null?parseFloat(s.denoise):0.5;
+      settings.loras=Array.isArray(s.loras)?s.loras.map(function(l){ return { name:String(l.name||''), w:parseFloat(l.w)!=null?parseFloat(l.w):0.8, loraUrl:String(l.loraUrl||'') }; }).filter(function(l){ return l.name; }):[];
     }
   }catch(e){}
 }
@@ -1386,6 +1389,8 @@ function collectUI(){
   settings.ncol=state.ncol||1; settings.page=state.page||'text';
   settings.modeA1111=!!state.modeA1111; settings.modeElla=!!state.modeElla;
   settings.modelName=state.model?state.model.name:'';
+  settings.loras=LORA.map(function(l){ return { name:l.name, w:l.w, loraUrl:l.loraUrl||'' }; });
+  settings.denoise=parseFloat($('i2i-ds').value); if(settings.denoise==null) settings.denoise=0.5;
   if(!settings.seed||!$('seed').value) settings.seed=$('seed').value;
   saveSettings();
 }
@@ -1408,6 +1413,7 @@ function applySettingsUI(){
   $('etansd').value=settings.ensd!=null?settings.ensd:31337; $('ensd').textContent=$('etansd').value;
   if(settings.upscale) $('upscale').value=settings.upscale;
   if(settings.ncol){ state.ncol=settings.ncol; }
+  $('i2i-ds').value=settings.denoise!=null?settings.denoise:0.5; $('i2i-dsv').textContent=parseFloat($('i2i-ds').value).toFixed(2);
   state.page=settings.page||'text';
   state.modeA1111=!!settings.modeA1111; state.modeElla=!!settings.modeElla;
   document.querySelectorAll('.chip').forEach(function(c){
@@ -1418,6 +1424,18 @@ function applySettingsUI(){
   // Restore model terakhir (jika ada di daftar provider aktif).
   if(settings.modelName&&MODELS&&MODELS.length){
     for(var i=0;i<MODELS.length;i++){ if(MODELS[i].name===settings.modelName){ setModel(MODELS[i]); break; } }
+  }
+  // Restore LoRA aktif (weight + URL) yang tersedia di daftar provider ini.
+  if(settings.loras&&settings.loras.length){
+    var keep=[];
+    settings.loras.forEach(function(sl){
+      var lib=LORA_LIB.filter(function(l){ return l.name===sl.name; })[0];
+      if(lib&&!LORA.some(function(x){ return x.name===lib.name; })){
+        LORA.push({ name:lib.name, w:sl.w, tags:lib.tags, thumb:lib.thumb, base:lib.base, loraModel:lib.model||'', needUrl:lib.needUrl, loraUrl:sl.loraUrl||'' });
+        keep.push(true);
+      }
+    });
+    renderLora();
   }
   applyNcol();
 }
@@ -1833,6 +1851,7 @@ document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click
 document.querySelectorAll('.chip').forEach(function(c){ c.addEventListener('click',collectUI); });
 $('dice').addEventListener('click',collectUI);
 $('api-save').addEventListener('click',collectUI);
+$('i2i-ds').addEventListener('input',collectUI);
 
 renderLora();
 setModel(MODELS[0]);
