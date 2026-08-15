@@ -43,6 +43,12 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;border:3px solid #6F5DFF;cursor:pointer;box-shadow:0 0 6px rgba(111,93,255,.4);transition:.12s}
 .slider::-webkit-slider-thumb:hover{transform:scale(1.1)}
 .lora-sl{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:#30363d;outline:none}
+/* Ripple/glow progress bar Submitting — hidup seperti Tensor.Art */
+#sc-bar{overflow:hidden}
+#sc-bar::after{content:'';position:absolute;top:0;bottom:0;left:-40%;width:40%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.55),transparent);animation:sc-shine 1.5s linear infinite;z-index:2}
+@keyframes sc-shine{from{left:-40%}to{left:100%}}
+#sc-bar{animation:sc-glow 1.8s ease-in-out infinite}
+@keyframes sc-glow{0%,100%{box-shadow:0 0 6px rgba(111,93,255,.45)}50%{box-shadow:0 0 16px rgba(39,212,205,.75)}}
 .lora-sl::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #6F5DFF;cursor:pointer}
 .lora-card{position:relative;border:1px solid #30363d;border-radius:10px;background:#1c2128;transition:.12s;padding:8px 10px 10px}
 .lora-card:hover{border-color:#3d444d}
