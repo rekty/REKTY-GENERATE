@@ -1152,16 +1152,15 @@ function renderDetail(){
   var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
   var expires=r.ts?new Date(r.ts+7*24*3600*1000).toLocaleString('id-ID'):'';
   var h='';
-  // model badge
+  // model badge (tanpa tombol tutup — panel kanan selalu ada seperti Tensor.Art)
   h+='<div class="flex items-center gap-2.5 border bd rounded-xl p-2.5 bg-[#1c2128]">'
     +'<img src="'+(r.src||'')+'" class="w-10 h-10 rounded-lg object-cover border bd"/>'
     +'<div class="min-w-0"><div class="text-xs font-medium truncate">'+(r.model||'Model')+'</div>'
     +'<div class="text-[10px] text-neutral-500">'+lbl+'</div></div>'
-    +'<button class="ml-auto w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-white" title="Tutup detail"><i data-icon="x" class="w-4 h-4"></i></button>'
     +'</div>';
-  // input prompt
+  // input prompt (ditampilkan penuh, scroll kalau terlalu panjang)
   h+='<div><div class="text-[11px] text-neutral-500 mb-1">Input</div>'
-    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-28 overflow-y-auto hidebar">'+(r.prompt||'-')+'</div></div>';
+    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-40 overflow-y-auto hidebar">'+(r.prompt||'-')+'</div></div>';
   // details
   h+='<div><div class="text-[11px] text-neutral-500 mb-1">Details</div>'
     +'<div class="space-y-1.5 text-[11px] text-neutral-400">'
@@ -1173,20 +1172,18 @@ function renderDetail(){
     +'</div></div>';
   // negative prompt
   h+='<div><div class="text-[11px] text-neutral-500 mb-1">Negative prompt</div>'
-    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-20 overflow-y-auto hidebar">'+(r.neg||'-')+'</div></div>';
-  // params
-  h+='<div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] text-neutral-400 border-t bd pt-2.5">'
-    +'<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
-    +'<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300 truncate">'+r.seed+'</span></div>'
-    +'<div class="flex justify-between"><span>Steps</span><span class="text-neutral-300">'+(r.steps!=null?r.steps:'-')+'</span></div>'
-    +'<div class="flex justify-between"><span>CFG scale</span><span class="text-neutral-300">'+(r.cfg!=null?r.cfg:'-')+'</span></div>'
-    +'<div class="flex justify-between"><span>Sampler</span><span class="text-neutral-300">'+(r.sampler||'-')+'</span></div>'
+    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-32 overflow-y-auto hidebar">'+(r.neg||'-')+'</div></div>';
+  // params (daftar vertikal satu kolom, persis Tensor.Art)
+  h+='<div class="space-y-1.5 text-[11px] text-neutral-400 border-t bd pt-2.5">'
+    +'<div class="flex justify-between gap-2"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Seed</span><span class="text-neutral-300 truncate" title="'+esc(r.seed)+'">'+r.seed+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Steps</span><span class="text-neutral-300">'+(r.steps!=null&&r.steps!==''?r.steps:'-')+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>CFG scale</span><span class="text-neutral-300">'+(r.cfg!=null&&r.cfg!==''?r.cfg:'-')+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Sampler</span><span class="text-neutral-300">'+(r.sampler||'-')+'</span></div>'
     +'</div>';
   el.innerHTML=h;
   var copyBtn=el.querySelector('button[title="Salin"]');
   if(copyBtn) copyBtn.addEventListener('click',function(){ copyText(r.taskId); });
-  var closeBtn=el.querySelector('button[title="Tutup detail"]');
-  if(closeBtn) closeBtn.addEventListener('click',function(){ $('rightPan').classList.add('hidden'); });
   // Panel Detail kanan mengikuti kartu galeri aktif: tinggi + posisi vertikal sejajar
   // (satu scroll container -> offset statis, tetap sejajar saat di-scroll)
   var grid=$('grid');
