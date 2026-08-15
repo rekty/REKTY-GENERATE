@@ -429,6 +429,20 @@ input[type=range]{cursor:pointer}
         <span class="text-neutral-600 p-1" title="List"><i data-icon="list" class="w-4 h-4"></i></span>
         <span class="text-neutral-600 p-1" title="Grid"><i data-icon="squares-four" class="w-4 h-4"></i></span>
       </div>
+      <!-- Kartu Submitting (seperti Tensor.Art): tampil di area output saat task berjalan -->
+      <div id="submitcard" class="hidden mb-3 border bd rounded-xl bg-[#1c2128] p-4 space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <span id="sc-title" class="text-sm font-semibold">Submitting</span>
+          <span id="sc-task" class="text-[11px] text-neutral-500 truncate" title="Task ID"></span>
+        </div>
+        <div class="relative h-2 bg-[#1c2128] rounded-full overflow-hidden">
+          <div id="sc-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);box-shadow:0 0 12px rgba(111,93,255,.55);transition:width .4s"></div>
+        </div>
+        <div class="flex items-center justify-between text-xs text-neutral-500">
+          <span id="sc-status">Mengirim task...</span>
+          <span class="flex items-center gap-3"><span id="sc-count">x1</span><span id="sc-size"></span></span>
+        </div>
+      </div>
       <div id="grid" class="space-y-3"></div>
     </div>
   </main>
@@ -1619,7 +1633,14 @@ function showProgress(title,status,pct){
   $('prog-status').textContent=status||'';
   $('prog-bar').style.width=Math.max(0,Math.min(100,_progPct))+'%';
   $('prog-pct').textContent=Math.round(_progPct)+'%';
-  $('progoverlay').classList.remove('hidden'); $('progoverlay').classList.add('flex');
+  // Kartu Submitting di area output (seperti Tensor.Art)
+  $('sc-title').textContent=title||'Submitting';
+  $('sc-status').textContent=status||'';
+  $('sc-bar').style.width=Math.max(0,Math.min(100,_progPct))+'%';
+  $('sc-pct')&&($('sc-pct').textContent=Math.round(_progPct)+'%');
+  $('submitcard').classList.remove('hidden');
+  // Modal lama tidak dipakai lagi — kartu di output menggantikannya.
+  $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex');
 }
 function startProgAnim(){
   if(_progPct<5) _progPct=5;
@@ -1631,6 +1652,8 @@ function startProgAnim(){
     if(_progPct>95) _progPct=95;
     $('prog-bar').style.width=_progPct+'%';
     $('prog-pct').textContent=Math.round(_progPct)+'%';
+    $('sc-bar').style.width=_progPct+'%';
+    $('sc-pct')&&($('sc-pct').textContent=Math.round(_progPct)+'%');
   },250);
 }
 function stopProgAnim(){
@@ -1641,8 +1664,17 @@ function showProgDone(){
   $('prog-bar').style.width='100%';
   $('prog-pct').textContent='100%';
   $('prog-status').textContent='Selesai — menampilkan hasil...';
+  $('sc-bar').style.width='100%';
+  $('sc-pct')&&($('sc-pct').textContent='100%');
+  $('sc-status').textContent='Selesai — menampilkan hasil...';
 }
-function hideProgress(){ stopProgAnim(); _progPct=0; $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); }
+function hideProgress(){ stopProgAnim(); _progPct=0; $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); $('submitcard').classList.add('hidden'); }
+/** Isi info kartu Submitting: Task ID, ukuran (WxH), jumlah gambar (xN). */
+function setSubmitInfo(taskId,size,n){
+  if(taskId) $('sc-task').textContent=taskId;
+  if(size) $('sc-size').textContent=size;
+  if(n!=null) $('sc-count').textContent='x'+n;
+}
 $('prog-cancel').addEventListener('click',function(){ _pollStop=true; toast('Membatalkan...'); });
 
 /* --- API client --- */
@@ -1699,8 +1731,11 @@ function mkResult(src,par,taskId,credits){
     ts:Date.now(), demo:false, page:state.page
   };
 }
+var _demoPending=false;
 function demoResults(par){
+  _demoPending=true;
   showProgress('Mode demo','Menyiapkan gambar simulasi...',15);
+  setSubmitInfo('',par.params.width+'x'+par.params.height,state.ncol);
   setTimeout(function(){
     for(var i=0;i<state.ncol;i++){
       var src=S+Math.floor(Math.random()*1e9)+'/512';
@@ -1715,6 +1750,7 @@ function demoResults(par){
         vae:par.params.sdVae||'',
         clip:par.params.clipSkip!=null?par.params.clipSkip:''});
     }
+    _demoPending=false;
     hideProgress();
   },700);
 }
@@ -1742,11 +1778,13 @@ async function doGenerate(){
       if(!buildApiKey()) toast('Belum ada API key — hasil simulasi. Isi API Key TAMS di panel kiri untuk generate asli.');
       else toast('Mode demo aktif — hasil simulasi.');
     }else{
-      showProgress('Mengirim ke TAMS...','Menyiapkan task...',5);
+      showProgress('Submitting','Mengirim task...',5);
+      setSubmitInfo('',par.params.width+'x'+par.params.height,par.params.imageCount);
       startProgAnim(); // persen naik halus sampai ~95% selama menunggu
       var r=await apiGenerate(par);
       var taskId=r.taskId||r.jobId;
       if(taskId){
+        setSubmitInfo(taskId);
         var imgs=await pollTask(taskId,function(st,pct){ showProgress('Generating...',st,pct); });
         showProgDone(); // 100% sebelum gambar muncul
         imgs.forEach(function(src){ addResult(mkResult(src,par,taskId,r.credits)); });
@@ -1765,7 +1803,8 @@ async function doGenerate(){
       toast('Gagal: '+e.message);
     }
   }finally{
-    hideProgress(); state.busy=false; setBusy(false);
+    if(!_demoPending) hideProgress(); // demo menutup sendiri di 700ms
+    state.busy=false; setBusy(false);
   }
 }
 
