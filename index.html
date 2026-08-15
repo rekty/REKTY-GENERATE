@@ -1345,7 +1345,10 @@ function buildPayload(){
  * atau mode demo (picsum) kalau backend/API key belum aktif.
  * ========================================================== */
 var SETTINGS_KEY='rekty.settings', RESULTS_KEY='rekty.results';
-var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', seed:'' };
+var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', seed:'',
+  prompt:'', negPrompt:'', negCheck:false, steps:10, cfg:1, sampler:'euler', sched:'normal',
+  vae:'automatic', width:768, height:1152, aspect:'portrait', clipSkip:2, ensd:31337,
+  upscale:2, ncol:1, page:'text', modeA1111:false, modeElla:false, modelName:'' };
 var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
@@ -1359,14 +1362,64 @@ function loadSettings(){
     if(s&&typeof s==='object'){
       settings.mode=s.mode||'auto'; settings.provider=s.provider||'tams'; settings.apiKey=s.apiKey||'';
       settings.pollSession=s.pollSession||''; settings.seed=String(s.seed||'').trim();
+      settings.prompt=String(s.prompt||''); settings.negPrompt=String(s.negPrompt||'');
+      settings.negCheck=!!s.negCheck; settings.steps=parseInt(s.steps)||10; settings.cfg=parseFloat(s.cfg)||1;
+      settings.sampler=s.sampler||'euler'; settings.sched=s.sched||'normal'; settings.vae=s.vae||'automatic';
+      settings.width=parseInt(s.width)||768; settings.height=parseInt(s.height)||1152;
+      settings.aspect=s.aspect||'portrait'; settings.clipSkip=parseInt(s.clipSkip)||2;
+      settings.ensd=parseInt(s.ensd)!=null?parseInt(s.ensd):31337; settings.upscale=parseFloat(s.upscale)||2;
+      settings.ncol=parseInt(s.ncol)||1; settings.page=s.page||'text';
+      settings.modeA1111=!!s.modeA1111; settings.modeElla=!!s.modeElla; settings.modelName=String(s.modelName||'');
     }
   }catch(e){}
 }
 function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings)); }catch(e){} }
+/** Baca semua kontrol panel kiri + prompt ke settings (localStorage). */
+function collectUI(){
+  settings.prompt=$('prompt').value;
+  settings.negPrompt=$('negprompt').value; settings.negCheck=$('negcheck').checked;
+  settings.steps=parseInt($('steps').value)||10; settings.cfg=parseFloat($('cfg').value)||1;
+  settings.sampler=$('sampler').value; settings.sched=$('sched').value; settings.vae=$('vae').value;
+  settings.width=parseInt($('width').value)||768; settings.height=parseInt($('height').value)||1152;
+  settings.aspect=state.aspect||'custom'; settings.clipSkip=parseInt($('clipskip').value)||2;
+  settings.ensd=parseInt($('etansd').value); settings.upscale=parseFloat($('upscale').value)||2;
+  settings.ncol=state.ncol||1; settings.page=state.page||'text';
+  settings.modeA1111=!!state.modeA1111; settings.modeElla=!!state.modeElla;
+  settings.modelName=state.model?state.model.name:'';
+  if(!settings.seed||!$('seed').value) settings.seed=$('seed').value;
+  saveSettings();
+}
 function applySettingsUI(){
   $('apimode').value=settings.mode; $('apikey').value=settings.apiKey;
   if(settings.seed) $('seed').value=settings.seed;
+  if(settings.prompt) $('prompt').value=settings.prompt;
+  if(settings.negPrompt!=null) $('negprompt').value=settings.negPrompt;
+  $('negcheck').checked=!!settings.negCheck;
+  $('negwrap').classList.toggle('hidden',!settings.negCheck);
+  if(settings.steps){ $('steps').value=settings.steps; $('sv').textContent=settings.steps; }
+  if(settings.cfg!=null){ $('cfg').value=settings.cfg; $('cfv').textContent=settings.cfg; }
+  if(settings.sampler) $('sampler').value=settings.sampler;
+  if(settings.sched) $('sched').value=settings.sched;
+  if(settings.vae) $('vae').value=settings.vae;
+  $('width').value=settings.width||768; $('height').value=settings.height||1152;
+  state.aspect=settings.aspect||'portrait'; setArActive(state.aspect);
+  updWH();
+  if(settings.clipSkip){ $('clipskip').value=settings.clipSkip; $('csv').textContent=settings.clipSkip; }
+  $('etansd').value=settings.ensd!=null?settings.ensd:31337; $('ensd').textContent=$('etansd').value;
+  if(settings.upscale) $('upscale').value=settings.upscale;
+  if(settings.ncol){ state.ncol=settings.ncol; }
+  state.page=settings.page||'text';
+  state.modeA1111=!!settings.modeA1111; state.modeElla=!!settings.modeElla;
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.classList.toggle('on',(c.id==='chip-a1111'&&state.modeA1111)||(c.id==='chip-ella'&&state.modeElla));
+  });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('sel', t.dataset.tab===state.page); });
   updateProviderUI();
+  // Restore model terakhir (jika ada di daftar provider aktif).
+  if(settings.modelName&&MODELS&&MODELS.length){
+    for(var i=0;i<MODELS.length;i++){ if(MODELS[i].name===settings.modelName){ setModel(MODELS[i]); break; } }
+  }
+  applyNcol();
 }
 function updateProviderUI(){
   var info=PROVIDER_INFO[settings.provider]||PROVIDER_INFO.tams;
@@ -1767,6 +1820,19 @@ $('btn-history').addEventListener('click',function(){ $('rightPan').classList.to
 })();
 window.addEventListener('resize',function(){ if($('rdetail').innerHTML) renderDetail(); });
 $('overlay').addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); });
+
+/* ---- auto-simpan semua pengaturan ke localStorage saat diubah ---- */
+['prompt','negprompt'].forEach(function(id){ $(id).addEventListener('input',collectUI); });
+$('negcheck').addEventListener('change',collectUI);
+['steps','cfg','clipskip','etansd','upscale','width','height'].forEach(function(id){ $(id).addEventListener('input',collectUI); });
+['sampler','sched','vae'].forEach(function(id){ $(id).addEventListener('change',collectUI); });
+['wv','hv'].forEach(function(id){ $(id).addEventListener('change',collectUI); });
+document.querySelectorAll('.ar').forEach(function(b){ b.addEventListener('click',collectUI); });
+$('ncount').addEventListener('change',collectUI);
+document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click',collectUI); });
+document.querySelectorAll('.chip').forEach(function(c){ c.addEventListener('click',collectUI); });
+$('dice').addEventListener('click',collectUI);
+$('api-save').addEventListener('click',collectUI);
 
 renderLora();
 setModel(MODELS[0]);
