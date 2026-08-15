@@ -1091,48 +1091,29 @@ function persistResults(){
   try{ localStorage.setItem(RESULTS_KEY,JSON.stringify(state.results.slice(0,60))); }catch(e){}
 }
 /* Tampilan tengah: galeri semua hasil menumpuk ke bawah (seperti Tensor.Art),
-   tiap baris = gambar + detail di kanannya. Scroll ke bawah muncul semua. */
+   tiap kartu = HANYA gambar (aspect ratio asli, di tengah). Semua detail
+   (Input, Task ID, Credits, Negative, params) ada di panel kanan. */
 var _viewIdx=0; // index ke state.results (0 = terbaru)
 function makeGalleryRow(r,i){
   var row=document.createElement('div');
-  row.className='flex gap-4 border bd rounded-2xl bg-[#161b22] p-3';
-  var imgWrap=document.createElement('div');
-  imgWrap.className='shrink-0 w-[42%] sm:w-[34%] self-stretch flex items-center justify-center bg-black/30 rounded-xl overflow-hidden';
+  row.className='relative border bd rounded-2xl bg-[#161b22] overflow-hidden cursor-zoom-in';
   var img=document.createElement('img');
   img.src=r.src;
-  img.className='w-full h-full max-h-[75vh] object-contain cursor-zoom-in';
-  img.addEventListener('click',function(){ openLightbox(r); });
+  img.className='block mx-auto max-w-full max-h-[80vh] w-auto h-auto object-contain';
+  img.addEventListener('click',function(){ _viewIdx=i; renderGrid(); renderDetail(); openLightbox(r); });
   // setelah gambar dimuat, tinggi kartu berubah -> re-sinkron posisi panel Detail
   if(!img.complete){ var rs=function(){ renderDetail(); }; img.addEventListener('load',rs); img.addEventListener('error',rs); }
-  imgWrap.appendChild(img);
+  row.appendChild(img);
   if(r.demo){
     var bd=document.createElement('span');
-    bd.className='absolute top-2 left-2 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300';
-    bd.textContent='DEMO'; imgWrap.appendChild(bd);
+    bd.className='absolute top-2 left-2 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300 z-10 pointer-events-none';
+    bd.textContent='DEMO'; row.appendChild(bd);
   }
-  row.appendChild(imgWrap);
-  var meta=document.createElement('div');
-  meta.className='flex-1 min-w-0 self-stretch text-xs space-y-1.5 text-neutral-400';
-  var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
-  var expires=r.ts?new Date(r.ts+7*24*3600*1000).toLocaleString('id-ID'):'';
-  var h='';
-  h+='<div class="flex items-center gap-1.5"><i data-icon="sparkle" class="w-3 h-3 text-violet-400"></i><span class="bg-violet-500/10 text-violet-300 px-1.5 py-px rounded text-[10px]">'+lbl+'</span>';
-  h+='<span class="text-[11px] text-neutral-500 truncate">'+(r.model||'')+'</span></div>';
-  h+='<div class="bg-black/40 rounded-lg p-2 text-[11px] text-neutral-300 leading-snug cursor-pointer hover:text-white" title="Lihat detail">'+(r.prompt||'').slice(0,160)+'</div>';
-  h+='<div class="space-y-1 text-[10px]">';
-  h+='<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300 truncate max-w-[65%]" title="'+esc(r.taskId)+'">'+esc(r.taskId||'-')+'</span></div>';
-  h+='<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+(r.credits||'-')+'</span></div>';
-  h+='<div class="flex justify-between"><span>Created</span><span class="text-neutral-300">'+fmtDateTime(r.ts)+'</span></div>';
-  h+='<div class="flex justify-between"><span>Expires</span><span class="text-neutral-300">'+expires+'</span></div>';
-  h+='<div class="flex justify-between"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>';
-  h+='<div class="flex justify-between"><span>Seed</span><span class="text-neutral-300">'+r.seed+'</span></div>';
-  h+='<div class="flex justify-between"><span>Steps</span><span class="text-neutral-300">'+(r.steps!=null&&r.steps!==''?r.steps:'-')+'</span></div>';
-  h+='<div class="flex justify-between"><span>CFG</span><span class="text-neutral-300">'+(r.cfg!=null&&r.cfg!==''?r.cfg:'-')+'</span></div>';
-  h+='<div class="flex justify-between"><span>Sampler</span><span class="text-neutral-300">'+(r.sampler||'-')+'</span></div>';
-  h+='</div>';
-  meta.innerHTML=h;
-  meta.querySelector('div[title="Lihat detail"]').addEventListener('click',function(){ _viewIdx=i; renderGrid(); renderDetail(); });
-  row.appendChild(meta);
+  // nama model kecil di pojok kiri bawah gambar (seperti Tensor.Art)
+  var mdl=document.createElement('span');
+  mdl.className='absolute bottom-2 left-2 text-[10px] bg-black/60 px-2 py-0.5 rounded text-neutral-300 z-10 pointer-events-none';
+  mdl.textContent=r.model||'';
+  row.appendChild(mdl);
   return row;
 }
 function renderGrid(){
