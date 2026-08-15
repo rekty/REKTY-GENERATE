@@ -2253,6 +2253,7 @@ $('overlay').addEventListener('click',function(){ $('rightPan').classList.remove
 
 /* ---- auto-simpan semua pengaturan ke localStorage saat diubah ---- */
 ['prompt','negprompt'].forEach(function(id){ $(id).addEventListener('input',collectUI); });
+$('selfhost-url').addEventListener('input',function(){ collectUI(); saveSettings(); });
 $('negcheck').addEventListener('change',collectUI);
 ['steps','cfg','clipskip','etansd','upscale','width','height'].forEach(function(id){ $(id).addEventListener('input',collectUI); });
 ['sampler','sched','vae'].forEach(function(id){ $(id).addEventListener('change',collectUI); });
