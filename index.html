@@ -434,6 +434,7 @@ input[type=range]{cursor:pointer}
         <div class="flex items-center justify-between gap-2">
           <span id="sc-title" class="text-sm font-semibold">Submitting</span>
           <span id="sc-task" class="text-[11px] text-neutral-500 truncate" title="Task ID"></span>
+          <button id="sc-cancel" class="shrink-0 w-6 h-6 flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/10 rounded-md text-sm" title="Batal">✕</button>
         </div>
         <div class="relative h-2 bg-[#1c2128] rounded-full overflow-hidden">
           <div id="sc-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);box-shadow:0 0 12px rgba(111,93,255,.55);transition:width .4s"></div>
@@ -1675,7 +1676,15 @@ function setSubmitInfo(taskId,size,n){
   if(size) $('sc-size').textContent=size;
   if(n!=null) $('sc-count').textContent='x'+n;
 }
-$('prog-cancel').addEventListener('click',function(){ _pollStop=true; toast('Membatalkan...'); });
+/** Batalkan task yang sedang berjalan dari kartu Submitting. */
+function cancelGenerate(){
+  _pollStop=true;
+  $('sc-title').textContent='Membatalkan...';
+  $('sc-status').textContent='Menghentikan task...';
+  toast('Membatalkan generate...');
+}
+$('prog-cancel').addEventListener('click',cancelGenerate);
+$('sc-cancel').addEventListener('click',function(e){ e.stopPropagation(); cancelGenerate(); });
 
 /* --- API client --- */
 function buildApiKey(){ return settings.apiKey||$('apikey').value.trim(); }
@@ -1796,7 +1805,9 @@ async function doGenerate(){
       }
     }
   }catch(e){
-    if(settings.mode==='auto'){
+    if(_pollStop&&e.message==='dibatalkan pengguna'){
+      toast('Generate dibatalkan');
+    }else if(settings.mode==='auto'){
       toast('Backend/API belum aktif ('+e.message+') — pakai simulasi demo');
       demoResults(par);
     }else{
