@@ -724,6 +724,7 @@ var LORA_LIBS = {
     { name:'FLUX LoRA', base:'FLUX', model:'fal-ai/flux-lora', tags:['flux-lora'], thumb:'fluxl', badge:'FLUX-LORA', views:'150K', ver:'V1', needUrl:true },
     { name:'SDXL + LoRA URL (fast-sdxl)', base:'SDXL', model:'fal-ai/fast-sdxl', tags:['lora'], thumb:'sdxll', badge:'SDXL-LORA', views:'120K', ver:'V1', needUrl:true },
     { name:'Krea 2 LoRA (turbo)', base:'Krea 2', model:'fal-ai/krea-2/turbo/lora', tags:['krea2'], thumb:'krea', badge:'KREA2-LORA', views:'66K', ver:'V1', needUrl:true },
+    { name:'REKTY ANJANY (Krea 2, siap pakai)', base:'Krea 2', model:'fal-ai/krea-2/turbo/lora', tags:['anjany','krea2','rekty'], thumb:'anjany', badge:'REKTY', views:'', ver:'V1', needUrl:true, defaultUrl:'https://huggingface.co/rekty1988/REKTY_ANJANY/resolve/main/rekty%20anjany.safetensors' },
   ],
   pollinations: [], // LoRA tidak didukung — gratis, model bawaan saja
 };
@@ -888,7 +889,7 @@ function openLoraModal(){
     return (!LORA.some(function(x){return x.name===l.name})) && (!arch || !l.base || l.base===arch);
   }); };
   var onSel=function(l){
-    LORA.push({ name:l.name, w:0.8, tags:l.tags, thumb:l.thumb, base:l.base, loraModel:l.model||'', needUrl:l.needUrl, loraUrl:'' });
+    LORA.push({ name:l.name, w:0.8, tags:l.tags, thumb:l.thumb, base:l.base, loraModel:l.model||'', needUrl:l.needUrl, loraUrl:l.defaultUrl||'' });
     renderLora(); closeModal(); collectUI();
   };
   renderMCat(function(){ renderCards(avail(), onSel); });
