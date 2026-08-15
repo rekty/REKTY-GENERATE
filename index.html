@@ -372,8 +372,8 @@ input[type=range]{cursor:pointer}
             <button id="btn-enhance" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Prompt Enhance — perluas & perbaiki prompt dengan AI"><i data-icon="magic-wand" class="w-4 h-4"></i></button>
           </div>
           <div class="flex items-center gap-2 flex-wrap justify-end">
-            <span class="chip" id="chip-a1111">A1111</span>
-            <span class="chip" id="chip-ella">Ella</span>
+            <span class="chip" id="chip-a1111" title="Mode A1111: saat ON sintaks bobot (kata:1.2) dipertahankan; saat OFF dibersihkan otomatis sebelum dikirim">A1111</span>
+            <span class="chip" id="chip-ella" title="Mode Ella: prompt otomatis diperluas ke bahasa alami (AI) saat Generate">Ella</span>
             <select id="ncount" class="inp w-[5.4rem] text-xs h-8" title="Jumlah gambar">
               <option value="1" selected>1 image</option>
               <option value="2">2 images</option>
@@ -543,7 +543,7 @@ input[type=range]{cursor:pointer}
 <script>
 const $ = id => document.getElementById(id);
 const S = 'https://picsum.photos/seed/';
-const state = { results:[], page:'text', aspect:'portrait', ncol:1, model:null };
+const state = { results:[], page:'text', aspect:'portrait', ncol:1, model:null, modeA1111:false, modeElla:false };
 
 /* ===== Ikon SVG — render <i data-icon="..."> (sebelumnya kosong/tidak terlihat) ===== */
 var ICON_SVG={
@@ -992,9 +992,32 @@ $('enh-use').addEventListener('click',function(){
   if(!v) return;
   $('prompt').value=v; renderTriggers(); checkTranslateBadge(); closeEnhModal(); toast('Prompt Enhance diterapkan ✓');
 });
+/* Chip A1111 & Ella = mode prompt nyata (saling eksklusif) */
 document.querySelectorAll('.chip').forEach(function(c){
-  c.addEventListener('click',function(){c.classList.toggle('on')});
+  c.addEventListener('click',function(){
+    if(c.id==='chip-a1111'||c.id==='chip-ella'){
+      var on=!c.classList.contains('on');
+      document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('on')});
+      if(on) c.classList.add('on');
+      state.modeA1111=!!(c.id==='chip-a1111'&&on);
+      state.modeElla=!!(c.id==='chip-ella'&&on);
+      toast(on?(c.id==='chip-a1111'?'Mode A1111 aktif — sintaks bobot (kata:1.2) dipertahankan':'Mode Ella aktif — prompt diperluas otomatis ke bahasa alami saat Generate')
+        :(c.id==='chip-a1111'?'Mode A1111 nonaktif — sintaks bobot dibersihkan otomatis':'Mode Ella nonaktif'));
+      return;
+    }
+    c.classList.toggle('on');
+  });
 });
+/* Bersihkan sintaks bobot A1111: (kata:1.2) / (kata) / [kata:0.8] / [kata] -> kata */
+function stripA1111(s){
+  var out=s, guard=0;
+  while(guard++<6){
+    var m=out.match(/\(([^()]*):[\d.]+\)|\[([^\[\]]*):[\d.]+\]|\(([^()]*)\)|\[([^\[\]]*)\]/);
+    if(!m) break;
+    out=out.replace(m[0],(m[1]||m[2]||m[3]||m[4]||'').trim());
+  }
+  return out.replace(/\s{2,}/g,' ').trim();
+}
 
 /* ===== tabs ===== */
 document.querySelectorAll('.tab').forEach(function(t){
@@ -1255,6 +1278,10 @@ $('lightbox').addEventListener('click',function(e){ if(e.target===$('lightbox'))
 function buildPayload(){
   var neg=$('negcheck').checked?$('negprompt').value:'';
   var m=state.model;
+  var rawPrompt=$('prompt').value;
+  // Mode A1111 OFF (default): bersihkan sintaks bobot (kata:1.2)/[kata] agar
+  // provider yang tidak support sintaks A1111 tetap paham prompt.
+  var prompt=(state.modeA1111||false)?rawPrompt:stripA1111(rawPrompt);
   return {
     params:{
       baseModel:{ modelId:m.modelId, modelFileId:m.modelFileId },
@@ -1263,7 +1290,7 @@ function buildPayload(){
       models:LORA.filter(function(l){return l.w>0}).map(function(l){return { name:l.name, weight:l.w, triggerWords:l.tags, loraModel:l.loraModel||'', loraUrl:l.loraUrl||'' } }),
       embeddingModels:[],
       sdVae:$('vae').value==='automatic'?'Automatic':$('vae').value,
-      prompt:$('prompt').value,
+      prompt:prompt,
       negativePrompt:neg,
       height:parseInt($('height').value),
       width:parseInt($('width').value),
@@ -1568,8 +1595,18 @@ async function doGenerate(){
   if(state.busy) return;
   var p=$('prompt').value.trim();
   if(!p){ openLeft(); $('prompt').focus(); toast('Isi prompt dulu'); return; }
-  var par=buildPayload();
   state.busy=true; setBusy(true); _pollStop=false;
+  var par=buildPayload();
+  // Mode Ella: perluas prompt ke bahasa alami (AI) sebelum dikirim
+  if(state.modeElla){
+    try{
+      showProgress('Mode Ella','Memperluas prompt ke bahasa alami...',20);
+      var rr=await fetch('/api/refine',{method:'POST',headers:_apiHeaders({'Content-Type':'application/json'}),body:JSON.stringify({prompt:par.params.prompt})}).then(function(r){return r.json()});
+      hideProgress();
+      if(rr&&rr.ok&&rr.text) par.params.prompt=rr.text;
+      else { par.params.prompt=fallbackEnhance(par.params.prompt); toast('Refine offline — pakai template lokal (Ella)'); }
+    }catch(e){ hideProgress(); par.params.prompt=fallbackEnhance(par.params.prompt); }
+  }
   try{
     if(settings.mode==='demo'||(!buildApiKey()&&settings.provider!=='pollinations')){
       await new Promise(function(r){ setTimeout(r,300); });
