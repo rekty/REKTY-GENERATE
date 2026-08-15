@@ -263,13 +263,13 @@ input[type=range]{cursor:pointer}
         </div>
         <div>
           <label class="text-xs flex justify-between items-center"><span>Width</span>
-            <input id="wv" type="number" min="256" max="1536" step="64" value="768" class="wvnum"/></label>
-          <input id="width" type="range" min="256" max="1536" step="64" value="768" class="slider mt-1"/>
+            <input id="wv" type="number" min="64" max="4096" value="768" class="wvnum"/></label>
+          <input id="width" type="range" min="64" max="4096" step="1" value="768" class="slider mt-1"/>
         </div>
         <div>
           <label class="text-xs flex justify-between items-center"><span>Height</span>
-            <input id="hv" type="number" min="256" max="1536" step="64" value="1152" class="wvnum"/></label>
-          <input id="height" type="range" min="256" max="1536" step="64" value="1152" class="slider mt-1"/>
+            <input id="hv" type="number" min="64" max="4096" value="1152" class="wvnum"/></label>
+          <input id="height" type="range" min="64" max="4096" step="1" value="1152" class="slider mt-1"/>
         </div>
         <div>
           <div class="flex items-center justify-between">
@@ -981,8 +981,8 @@ document.querySelectorAll('.ar').forEach(function(b){
 function updWH(){ $('wv').value=$('width').value; $('hv').value=$('height').value; }
 $('width').addEventListener('input',function(){ $('wv').value=$('width').value; state.aspect='custom'; setArActive('custom'); });
 $('height').addEventListener('input',function(){ $('hv').value=$('height').value; state.aspect='custom'; setArActive('custom'); });
-$('wv').addEventListener('change',function(){ var v=Math.max(256,Math.min(1536,parseInt($('wv').value)||768)); v=Math.round(v/64)*64; $('wv').value=v; $('width').value=v; state.aspect='custom'; setArActive('custom'); });
-$('hv').addEventListener('change',function(){ var v=Math.max(256,Math.min(1536,parseInt($('hv').value)||1152)); v=Math.round(v/64)*64; $('hv').value=v; $('height').value=v; state.aspect='custom'; setArActive('custom'); });
+$('wv').addEventListener('change',function(){ var v=Math.max(64,Math.min(4096,parseInt($('wv').value)||768)); $('wv').value=v; $('width').value=v; state.aspect='custom'; setArActive('custom'); });
+$('hv').addEventListener('change',function(){ var v=Math.max(64,Math.min(4096,parseInt($('hv').value)||1152)); $('hv').value=v; $('height').value=v; state.aspect='custom'; setArActive('custom'); });
 function setArActive(ar){
   document.querySelectorAll('.ar').forEach(function(x){x.classList.toggle('sel', x.dataset.ar===ar)});
   $('ar-label').textContent=AR_MAP[ar][0];
