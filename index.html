@@ -165,7 +165,7 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
   #mainwrap,#canvas,#canvas>div{display:contents}
   #promptbar{order:1}
   #leftpan{order:2;position:static;transform:none;width:100%;max-width:100%;height:auto;overflow:visible;border-right:0;padding-top:0;margin:0 .75rem}
-  #img2img-card{order:3;margin-left:.75rem;margin-right:.75rem}
+  #img2img-card{order:0;margin-left:.75rem;margin-right:.75rem;margin-top:.75rem}
   #tab-placeholder,#empty,#gfilter,#submitcard,#grid{order:4}
   #rightPan{order:5}
   #overlay{display:none!important}
@@ -544,14 +544,27 @@ input[type=range]{cursor:pointer}
         </div>
       </div>
 
-      <!-- Img2Img upload (ala Tensor.Art: preview penuh + denoising + ikuti ukuran asli) -->
+      <!-- Img2Img upload (ala Tensor.Art mobile: tool pills + drop zone + workspace/library) -->
       <div id="img2img-card" class="hidden mb-4 border bd rounded-xl bg-[#161b22] p-4">
         <div class="flex items-center justify-between mb-2">
           <span class="text-sm font-semibold">Img2Img — gambar awal</span>
           <span id="i2i-clear" class="text-xs text-neutral-500 hover:text-white cursor-pointer">Hapus</span>
         </div>
-        <div id="i2i-drop" class="border-2 border-dashed bd rounded-xl p-6 text-center cursor-pointer text-neutral-500 hover:border-[#6F5DFF] text-xs">
-          Klik atau seret gambar ke sini
+        <!-- Tool selector (ala Tensor.Art): Img2Img aktif, lainnya segera hadir -->
+        <div class="flex items-center gap-1.5 overflow-x-auto hidebar mb-3">
+          <span class="chip on shrink-0 i2i-tool" data-tool="img2img">Img2Img</span>
+          <span class="chip shrink-0 i2i-tool" data-tool="upscale">Upscale</span>
+          <span class="chip shrink-0 i2i-tool" data-tool="adetailer">ADetailer</span>
+          <span class="chip shrink-0 i2i-tool" data-tool="inpaint">Inpaint</span>
+          <span class="chip shrink-0 i2i-tool" data-tool="pix2pix">Pix2Pix</span>
+        </div>
+        <div id="i2i-drop" class="border-2 border-dashed bd rounded-xl p-5 text-center cursor-pointer text-neutral-400 hover:border-[#6F5DFF] text-xs">
+          <i data-icon="image-square" class="w-8 h-8 mx-auto mb-2 text-neutral-600"></i>
+          <p class="mb-2">Klik atau seret gambar ke sini</p>
+          <div class="flex items-center justify-center gap-2 flex-wrap">
+            <button id="i2i-ws" class="btn btn-ghost h-8 border bd text-[11px] px-3"><i data-icon="folder-open" class="w-3.5 h-3.5"></i>Select from workspace</button>
+            <button id="i2i-lib" class="btn btn-ghost h-8 border bd text-[11px] px-3"><i data-icon="images" class="w-3.5 h-3.5"></i>Library</button>
+          </div>
         </div>
         <input id="i2i-file" type="file" accept="image/*" class="hidden"/>
         <div id="i2i-preview" class="hidden mt-3">
@@ -559,7 +572,9 @@ input[type=range]{cursor:pointer}
           <div class="text-center text-[11px] text-neutral-500 mt-1.5"><span id="i2i-dims"></span></div>
         </div>
         <div class="mt-3">
-          <label class="text-xs flex justify-between"><span>Denoising Strength</span><span id="i2i-dsv" class="text-neutral-500">0.50</span></label>
+          <label class="text-xs flex justify-between items-center"><span>Denoising Strength</span>
+            <input id="i2i-dsv-inp" type="number" min="0" max="1" step="0.05" value="0.5" class="wvnum" title="Denoising Strength"/>
+          </label>
           <input id="i2i-ds" type="range" min="0" max="1" step="0.05" value="0.5" class="slider mt-1"/>
           <p class="text-[10px] text-neutral-600 mt-1">0.1 = hampir sama dengan aslinya · 1.0 = hasil baru total</p>
         </div>
@@ -734,6 +749,18 @@ input[type=range]{cursor:pointer}
     <button id="mv-close" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center hover:bg-black/60 border border-white/40 shadow-lg" title="Tutup"><i data-icon="x" class="w-4 h-4"></i></button>
     <img id="mv-img" class="relative z-10 max-w-full max-h-[72vh] w-auto h-auto object-contain" alt=""/>
     <button id="mv-dl" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-9 h-9 rounded-full bg-black/45 text-white flex items-center justify-center hover:bg-black/60 border border-white/40 shadow-lg" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>
+  </div>
+</div>
+
+<!-- ============ PICKER Img2Img (pakai hasil generate sebelumnya, ala Tensor.Art) ============ -->
+<div id="i2i-picker" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/70">
+  <div class="w-full max-w-md bg-[#161b22] border bd rounded-2xl p-4 max-h-[82vh] flex flex-col">
+    <div class="flex items-center justify-between mb-3">
+      <span class="text-sm font-semibold">Pilih gambar dari hasil generate</span>
+      <button id="i2i-pick-close" class="w-7 h-7 flex items-center justify-center text-neutral-500 hover:text-white text-lg leading-none" title="Tutup">✕</button>
+    </div>
+    <div id="i2i-pick-grid" class="grid grid-cols-3 gap-2 overflow-y-auto hidebar min-h-0"></div>
+    <p id="i2i-pick-empty" class="hidden text-xs text-neutral-500 text-center py-6">Belum ada hasil generate. Generate dulu atau upload manual.</p>
   </div>
 </div>
 
@@ -1919,7 +1946,7 @@ function applySettingsUI(){
   if(settings.upscale) $('upscale').value=settings.upscale;
   if(settings.ncol){ state.ncol=settings.ncol; }
   if(settings.ncols){ state.ncols=settings.ncols; }
-  $('i2i-ds').value=settings.denoise!=null?settings.denoise:0.5; $('i2i-dsv').textContent=parseFloat($('i2i-ds').value).toFixed(2);
+  $('i2i-ds').value=settings.denoise!=null?settings.denoise:0.5; if($('i2i-dsv-inp')) $('i2i-dsv-inp').value=parseFloat($('i2i-ds').value).toFixed(2);
   state.page=settings.page||'text';
   state.modeA1111=!!settings.modeA1111; state.modeElla=!!settings.modeElla;
   document.querySelectorAll('.chip').forEach(function(c){
@@ -2678,13 +2705,23 @@ async function doGenerate(){
   }
 }
 
-/* --- Img2Img (ala Tensor.Art: upload -> preview penuh + denoising + ikuti ukuran asli) --- */
+/* --- Img2Img (ala Tensor.Art: upload -> preview penuh + denoising + workspace/library) --- */
 var i2iDataUrl=null, i2iW=0, i2iH=0, i2iImgEl=null;
 $('i2i-drop').addEventListener('click',function(){ $('i2i-file').click(); });
 $('i2i-file').addEventListener('change',function(e){ handleI2iFile(e.target.files&&e.target.files[0]); });
 $('i2i-drop').addEventListener('dragover',function(e){ e.preventDefault(); });
 $('i2i-drop').addEventListener('drop',function(e){ e.preventDefault(); handleI2iFile(e.dataTransfer.files&&e.dataTransfer.files[0]); });
-$('i2i-ds').addEventListener('input',function(e){ $('i2i-dsv').textContent=parseFloat(e.target.value).toFixed(2); });
+/* Tool pills: Img2Img aktif; yang lain info "segera hadir" */
+document.querySelectorAll('.i2i-tool').forEach(function(t){
+  t.addEventListener('click',function(){
+    if(t.dataset.tool==='img2img') return;
+    toast('Tool '+t.textContent+' segera hadir — Img2Img aktif');
+  });
+});
+/* Denoising Strength: slider <-> kotak angka (ala Tensor.Art) */
+function syncDs(v){ v=Math.max(0,Math.min(1,parseFloat(v)||0.5)); $('i2i-ds').value=v; $('i2i-dsv-inp').value=v.toFixed(2); }
+$('i2i-ds').addEventListener('input',function(e){ syncDs(e.target.value); });
+$('i2i-dsv-inp').addEventListener('change',function(e){ syncDs(e.target.value); });
 $('i2i-clear').addEventListener('click',function(){
   i2iDataUrl=null; i2iW=0; i2iH=0; i2iImgEl=null;
   $('i2i-preview').classList.add('hidden'); $('i2i-img').src=''; $('i2i-drop').classList.remove('hidden');
@@ -2692,18 +2729,65 @@ $('i2i-clear').addEventListener('click',function(){
 function handleI2iFile(f){
   if(!f) return;
   var rd=new FileReader();
-  rd.onload=function(){
-    i2iDataUrl=rd.result;
-    // preload Image sekaligus baca ukuran asli (untuk "ikuti ukuran asli" + demo img2img)
-    var im=new Image();
-    im.onload=function(){
-      i2iW=im.naturalWidth||0; i2iH=im.naturalHeight||0; i2iImgEl=im;
-      var dm=$('i2i-dims'); if(dm) dm.textContent=(i2iW&&i2iH)?(i2iW+' × '+i2iH+' px'):'';
-    };
-    im.src=rd.result;
-    $('i2i-img').src=rd.result; $('i2i-preview').classList.remove('hidden'); $('i2i-drop').classList.add('hidden');
-  };
+  rd.onload=function(){ applyI2iData(rd.result); };
   rd.readAsDataURL(f);
+}
+/* Set gambar input (dataURL) + preview + baca ukuran asli. */
+function applyI2iData(dataUrl){
+  if(!dataUrl) return;
+  i2iDataUrl=dataUrl;
+  var im=new Image();
+  im.onload=function(){
+    i2iW=im.naturalWidth||0; i2iH=im.naturalHeight||0; i2iImgEl=im;
+    var dm=$('i2i-dims'); if(dm) dm.textContent=(i2iW&&i2iH)?(i2iW+' × '+i2iH+' px'):'';
+  };
+  im.src=dataUrl;
+  $('i2i-img').src=dataUrl; $('i2i-preview').classList.remove('hidden'); $('i2i-drop').classList.add('hidden');
+  closeI2iPicker();
+}
+/* Pick hasil generate sebelumnya sebagai gambar awal (ala Tensor.Art). */
+$('i2i-ws').addEventListener('click',function(e){ e.stopPropagation(); openI2iPicker(); });
+$('i2i-lib').addEventListener('click',function(e){ e.stopPropagation(); openI2iPicker(); });
+$('i2i-pick-close').addEventListener('click',closeI2iPicker);
+$('i2i-picker').addEventListener('click',function(e){ if(e.target===$('i2i-picker')) closeI2iPicker(); });
+function openI2iPicker(){
+  var grid=$('i2i-pick-grid'); grid.innerHTML='';
+  var arr=state.results.slice(0,24);
+  if(!arr.length){ $('i2i-pick-empty').classList.remove('hidden'); }
+  else { $('i2i-pick-empty').classList.add('hidden'); }
+  arr.forEach(function(r){
+    var it=document.createElement('button');
+    it.className='relative rounded-lg overflow-hidden border bd bg-[#1c2128] text-left';
+    it.innerHTML='<img src="'+r.src+'" class="w-full aspect-[3/4] object-cover"/>'
+      +'<span class="absolute bottom-1 left-1 right-1 text-[9px] text-neutral-300 truncate bg-black/60 rounded px-1 py-0.5">'+esc(r.model||'')+'</span>';
+    it.addEventListener('click',function(){ useAsI2iInput(r.src); });
+    grid.appendChild(it);
+  });
+  $('i2i-picker').classList.remove('hidden'); $('i2i-picker').classList.add('flex');
+}
+function closeI2iPicker(){ $('i2i-picker').classList.add('hidden'); $('i2i-picker').classList.remove('flex'); }
+/* Konversi src (URL/dataURL) hasil generate -> dataURL untuk input img2img. */
+function useAsI2iInput(src){
+  if(!src) return;
+  if(/^data:/i.test(src)){ applyI2iData(src); return; }
+  var im=new Image();
+  im.onload=function(){
+    try{
+      var c=document.createElement('canvas'); c.width=im.naturalWidth||256; c.height=im.naturalHeight||256;
+      c.getContext('2d').drawImage(im,0,0);
+      applyI2iData(c.toDataURL('image/jpeg',0.92));
+    }catch(e){
+      // CORS menolak canvas: coba lewat fetch->blob; kalau tetap gagal, beri tahu
+      fetch(src).then(function(r){ return r.blob(); }).then(function(b){
+        var rd=new FileReader();
+        rd.onload=function(){ applyI2iData(rd.result); };
+        rd.onerror=function(){ toast('Gambar tidak bisa dipakai (blokir CORS) — pilih yang lain'); };
+        rd.readAsDataURL(b);
+      }).catch(function(){ toast('Gambar tidak bisa dipakai (blokir CORS) — pilih yang lain'); });
+    }
+  };
+  im.onerror=function(){ toast('Gagal memuat gambar'); };
+  im.src=src;
 }
 /* Ukuran output mengikuti gambar asli (diklem 64-2048, pertahankan aspect ratio). */
 function i2iWH(){
