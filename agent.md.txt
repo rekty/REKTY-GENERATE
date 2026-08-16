@@ -1,0 +1,63 @@
+# Project Memory - WEB TENSOR ART KW
+
+## Project Goal
+Membangun web Tensor Art KW untuk generate image dengan UI mirip Tensor.Art.
+
+## Current Architecture
+
+Frontend:
+- index.html
+- CSS
+- JavaScript
+
+Backend:
+- API endpoint akan menangani generate request
+
+## Current UI Structure
+
+Topbar:
+- Text2Img
+- Img2Img
+- Edit
+- Video
+- Prime
+- Generate button
+
+Layout:
+3 kolom:
+
+Left:
+- Model card
+- LoRA cards
+- Trigger words
+- LoRA weight slider
+- ControlNet
+- VAE
+- Settings
+
+Center:
+- Prompt box
+- Negative prompt
+- A1111 option
+- Seed
+- Result grid
+
+Right:
+- History
+- Image/Video/Audio tabs
+- Metadata cards
+
+## Current Status
+
+- UI prototype sudah dibuat
+- Generate masih simulasi
+- sendRequest() perlu dihubungkan ke backend nyata
+- buildPayload() sudah dirancang
+
+## Rules
+
+Sebelum mengubah kode:
+1. Baca struktur project.
+2. Pertahankan fitur yang sudah ada.
+3. Jangan membuat ulang dari nol.
+4. Fokus melanjutkan implementasi terakhir.
