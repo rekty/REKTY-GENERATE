@@ -680,7 +680,7 @@ input[type=range]{cursor:pointer}
 </div>
 
 <!-- ============ MOBILE DISLIKE (ala Tensor.Art: Unliked works hidden + Dislike Reason) ============ -->
-<div id="mobdislike" class="lg:hidden fixed inset-0 z-[70] hidden items-center justify-center bg-[#0d1117]/80 p-5">
+<div id="mobdislike" class="fixed inset-0 z-[70] hidden items-center justify-center bg-[#0d1117]/80 p-5">
   <div class="w-full max-w-sm bg-[#161b22] border bd rounded-2xl overflow-hidden">
     <div class="p-5">
       <div class="text-lg font-bold text-white">Unliked works hidden</div>
@@ -1522,12 +1522,34 @@ function makeGalleryRow(r,i){
   mdl.className='absolute bottom-2 left-2 text-[10px] bg-black/60 px-2 py-0.5 rounded text-neutral-300 z-10 pointer-events-none';
   mdl.textContent=r.model||'';
   row.appendChild(mdl);
-  // tombol menu (View Detail / Delete) — tampil saat hover, seperti Tensor.Art
-  var mbtn=document.createElement('button');
-  mbtn.className='absolute top-2 right-2 w-7 h-7 rounded-full bg-black/55 hover:bg-[#21262d] hover:text-white text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20';
-  mbtn.innerHTML='<i data-icon="dots-three-vertical" class="w-4 h-4"></i>';
-  mbtn.addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, mbtn, function(){ removeResult(i); }); });
-  row.appendChild(mbtn);
+  // pill aksi (Bagikan/Download/Dislike) + menu — SAMA seperti versi mobile.
+  // hidden lg:flex = hanya tampil di desktop (mobile punya pill sendiri di tab Tasks).
+  var pill=document.createElement('div');
+  pill.className='hidden lg:flex absolute top-3 right-3 items-center gap-0.5 bg-[#1c2128]/90 backdrop-blur rounded-full px-1 py-1 z-30 border border-white/15 shadow-lg';
+  pill.innerHTML='<button class="tact" title="Bagikan ke Facebook"><i data-icon="paper-plane" class="w-4 h-4"></i></button>'
+    +'<button class="tact" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>'
+    +'<span class="w-px h-4 bg-white/30 mx-0.5"></span>'
+    +'<button class="tact'+(r.dislike?' on':'')+'" title="'+(r.dislike?'Batal dislike (kembalikan)':'Dislike')+'"><i data-icon="thumbs-down" class="w-4 h-4"></i></button>'
+    +'<span class="w-px h-4 bg-white/30 mx-0.5"></span>'
+    +'<button class="tact" title="Menu task"><i data-icon="dots-three-vertical" class="w-4 h-4"></i></button>';
+  row.appendChild(pill);
+  var pbtns=pill.querySelectorAll('button');
+  pbtns[0].addEventListener('click',function(e){ e.stopPropagation(); shareImage(r); });
+  pbtns[1].addEventListener('click',function(e){ e.stopPropagation(); dlImage(r.src); });
+  pbtns[2].addEventListener('click',function(e){ e.stopPropagation(); if(r.dislike){ undoDislike(r); } else { openDislike(r); } });
+  pbtns[3].addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, pbtns[3], function(){ removeResult(i); }); });
+  // dislike state: blur + overlay (sama seperti mobile)
+  if(r.dislike){
+    img.classList.add('blur-md','opacity-70');
+    var ov=document.createElement('div');
+    ov.className='absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[#0d1117]/85 z-10 cursor-pointer';
+    ov.innerHTML='<div class="text-sm font-semibold text-white">Unliked works hidden</div>'
+      +'<div class="text-[11px] text-neutral-400 max-w-[85%] text-center">'+esc(r.dislike)+'</div>'
+      +'<button class="tact mt-2 text-[11px] font-semibold text-white bg-[#21262d]/80 hover:bg-[#30363d] border border-white/20 rounded-full px-3 py-1">Kembalikan</button>';
+    ov.querySelector('button').addEventListener('click',function(e){ e.stopPropagation(); undoDislike(r); });
+    ov.addEventListener('click',function(){ openDislike(r); });
+    row.appendChild(ov);
+  }
   return row;
 }
 function renderGrid(){
@@ -2856,9 +2878,9 @@ function openDislike(r){ _dislikeTarget=r; var m=$('mobdislike'); if(m){ m.class
 function closeDislike(){ var m=$('mobdislike'); if(m){ m.classList.add('hidden'); m.classList.remove('flex'); } }
 function applyDislike(reason){
   var r=_dislikeTarget; if(!r||!reason) return;
-  r.dislike=reason; persistResults(); closeDislike(); renderMobTasks();
+  r.dislike=reason; persistResults(); closeDislike(); renderMobTasks(); renderGrid();
 }
-function undoDislike(r){ r.dislike=''; persistResults(); renderMobTasks(); }
+function undoDislike(r){ r.dislike=''; persistResults(); renderMobTasks(); renderGrid(); }
 (function(){
   var m=$('mobdislike'); if(!m) return;
   var close=$('dl-close'); if(close) close.addEventListener('click',closeDislike);
