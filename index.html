@@ -1240,29 +1240,71 @@ function checkTranslateBadge(){
   var p=($('prompt').value||'').trim();
   if(p.length<6){ hideTranslateBadge(); clearTimeout(_trBadgeTimer); return; }
   if(hasNonEnglishLetters(p)){ showTranslateBadge(); clearTimeout(_trBadgeTimer); return; }
-  // teks ASCII murni (mis. Indonesia/Melayu) — tanya backend Google (debounce)
+  if(looksEnglish(p)){ hideTranslateBadge(); clearTimeout(_trBadgeTimer); return; }
+  // teks ASCII murni (mis. Indonesia/Melayu) — tanya backend Google (debounce);
+  // kalau backend offline, tebak lokal (heuristik) supaya badge tetap muncul.
   clearTimeout(_trBadgeTimer);
   _trBadgeTimer=setTimeout(function(){
     fetch('/api/translate?q='+encodeURIComponent(p)).then(function(r){ return r.json(); }).then(function(d){
-      if(!d||!d.ok){ hideTranslateBadge(); return; }
+      if(!d||!d.ok){ showTranslateBadge(); return; }
       if(d.detected&&d.detected!=='en') showTranslateBadge(); else hideTranslateBadge();
-    }).catch(function(){ hideTranslateBadge(); });
+    }).catch(function(){ showTranslateBadge(); });
   },700);
 }
 $('translate-badge').addEventListener('click',function(){ $('btn-translate').click(); });
-/* Translate: semua bahasa -> Inggris (backend /api/translate, gratis) */
+/* Translate: semua bahasa -> Inggris (backend /api/translate, gratis via Google gtx).
+   Kalau backend offline/error, fallback ke API MyMemory (gratis, tanpa key, CORS aman).
+   INVARIANT: prompt TIDAK PERNAH diubah kecuali terjemahan benar-benar berhasil. */
 function setTranslateBusy(b){
   var el=$('btn-translate');
   el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>':'<i data-icon="translate" class="w-4 h-4"></i>';
 }
+var _EN_STOP=/\b(the|a|an|and|of|to|in|with|is|are|was|were|for|on|at|by|her|his|she|he|it|woman|man|girl|boy|portrait|photograph|image|beautiful|wearing)\b/i;
+function looksEnglish(s){
+  var words=(s.match(/[A-Za-z]+/g)||[]);
+  if(words.length<3) return false;
+  var en=0;
+  words.forEach(function(w){ if(_EN_STOP.test(w)) en++; });
+  return en/words.length>=0.3;
+}
+function guessLang(s){
+  if(/[\u3040-\u30FF]/.test(s)) return 'ja';
+  if(/[\uAC00-\uD7AF]/.test(s)) return 'ko';
+  if(/[\u4E00-\u9FFF]/.test(s)) return 'zh';
+  if(/[\u0600-\u06FF]/.test(s)) return 'ar';
+  if(/[\u0400-\u04FF]/.test(s)) return 'ru';
+  if(/[\u0900-\u097F]/.test(s)) return 'hi';
+  if(/[\u0E00-\u0E7F]/.test(s)) return 'th';
+  return 'id'; // ASCII non-Inggris — dominan Indonesia di app ini
+}
+function translateViaMemory(p, lang){
+  return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(p)+'&langpair='+encodeURIComponent(lang)+'|en')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var t=d&&d.responseData&&d.responseData.translatedText;
+      t=(t||'').trim();
+      if(!t || t.toLowerCase()===p.toLowerCase()) throw new Error('mymemory gagal');
+      return t;
+    });
+}
 $('btn-translate').addEventListener('click',function(){
   var p=($('prompt').value||'').trim();
   if(!p){ $('prompt').focus(); return; }
+  if(looksEnglish(p)){ toast('Prompt sudah dalam bahasa Inggris ✓'); return; }
   setTranslateBusy(true);
-  fetch('/api/translate?q='+encodeURIComponent(p)).then(function(r){ return r.json(); }).then(function(d){
-    if(d.ok&&d.text){ $('prompt').value=d.text; renderTriggers(); hideTranslateBadge(); toast('Diterjemahkan ke Inggris ✓'); }
-    else toast(d.error||'Gagal menerjemahkan');
-  }).catch(function(){ toast('Gagal menerjemahkan'); }).finally(function(){ setTranslateBusy(false); });
+  var done=function(t,fb){
+    $('prompt').value=t; renderTriggers(); hideTranslateBadge();
+    toast(fb?'Diterjemahkan via fallback offline ✓':'Diterjemahkan ke Inggris ✓');
+    setTranslateBusy(false);
+  };
+  var fail=function(){ toast('Terjemahan offline — prompt tidak diubah'); setTranslateBusy(false); };
+  fetch('/api/translate?q='+encodeURIComponent(p))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d&&d.ok&&d.text){ done(d.text,false); return; }
+      translateViaMemory(p, guessLang(p)).then(function(t){ done(t,true); }).catch(fail);
+    })
+    .catch(function(){ translateViaMemory(p, guessLang(p)).then(function(t){ done(t,true); }).catch(fail); });
 });
 /* Prompt Enhance (seperti Tensor.Art): hasil refine tampil di popup untuk
    dikonfirmasi/diedit sebelum dipakai. Backend /api/refine (LLM Pollinations),
