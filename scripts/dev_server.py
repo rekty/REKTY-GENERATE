@@ -80,6 +80,31 @@ def _job_state(task_id):
         return _jobs[task_id]
 
 
+def _demo_svg(w, h):
+    """Placeholder SVG rasio-tepat (tidak di-crop seperti picsum)."""
+    fs = max(14, min(w, h) * 0.06)
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'
+        '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+        '<stop offset="0" stop-color="#161b22"/><stop offset=".5" stop-color="#0d1117"/>'
+        '<stop offset="1" stop-color="#161b22"/></linearGradient></defs>'
+        '<rect width="%d" height="%d" fill="url(#g)"/>'
+        '<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" fill="none" stroke="rgba(111,93,255,.3)" stroke-width="%.0f"/>'
+        '<text x="%.0f" y="%.0f" fill="rgba(255,255,255,.85)" font-family="Inter, Arial, sans-serif" font-size="%.0f" font-weight="600" text-anchor="middle" dominant-baseline="middle">VISUAL AI ARTWORK</text>'
+        '<text x="%.0f" y="%.0f" fill="#6F5DFF" font-family="Inter, Arial, sans-serif" font-size="%.0f" font-weight="600" text-anchor="middle" dominant-baseline="middle">%d x %d</text>'
+        '<text x="%.0f" y="%.0f" fill="rgba(39,212,205,.85)" font-family="Inter, Arial, sans-serif" font-size="%.0f" font-weight="500" text-anchor="middle" dominant-baseline="middle">Mode Demo - simulasi</text>'
+        '</svg>'
+    ) % (
+        w, h, w, h, w, h,
+        w * 0.04, h * 0.04, w * 0.92, h * 0.92, max(2, w * 0.004),
+        w / 2, h / 2 - fs * 0.4, fs,
+        w / 2, h / 2 + fs * 0.7, fs * 0.75, w, h,
+        w / 2, h / 2 + fs * 1.6, fs * 0.55,
+    )
+    import base64
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
+
+
 def _mock_task(task_id):
     """Naikkan status bertahap: WAITING -> RUNNING -> SUCCESS."""
     st = _job_state(task_id)
@@ -91,14 +116,14 @@ def _mock_task(task_id):
         return {"ok": True, "status": "RUNNING", "progress": 15 + (n - 1) * 25}
     if n <= 4:
         return {"ok": True, "status": "RUNNING", "progress": 70}
+    size = st.get("size", (768, 1152))
+    cnt = st.get("count", 1)
     return {
         "ok": True,
         "status": "SUCCESS",
         "progress": 100,
         "credits": 1.22,
-        "images": [
-            f"https://picsum.photos/seed/{task_id}-{i}/512" for i in range(1, 3)
-        ],
+        "images": [_demo_svg(size[0], size[1]) for _ in range(cnt)],
     }
 
 
@@ -187,7 +212,14 @@ class Handler(BaseHTTPRequestHandler):
             print("==============================")
             provider = payload.get("provider", "tams") if isinstance(payload, dict) else "tams"
             task_id = f"{provider}-mock-" + str(int(time.time() * 1000))
-            _job_state(task_id)
+            st = _job_state(task_id)
+            try:
+                prm = payload.get("params", {}) if isinstance(payload, dict) else {}
+                st["size"] = (int(prm.get("width") or 768), int(prm.get("height") or 1152))
+                st["count"] = int(payload.get("imageCount") or 1)
+            except Exception:
+                st["size"] = (768, 1152)
+                st["count"] = 1
             return self._send(200, {"ok": True, "provider": provider, "taskId": task_id})
         self._send(404, {"error": "not found"})
 

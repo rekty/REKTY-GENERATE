@@ -121,7 +121,46 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .chip{border:1px solid #30363d;border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#1c2128;transition:.12s}
 .chip:hover{color:#fff}.chip.on{border-color:#6F5DFF;color:#fff;background:#161b22}
 #toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
-@media (max-width:1023px){#rightPan.mobile-open{position:fixed;top:56px;right:0;bottom:0;left:auto;z-index:40;display:flex;width:min(21rem,92vw);box-shadow:-8px 0 30px rgba(0,0,0,.5)}}
+/* ===== Mobile: tab Workspace|Tasks + Tasks view (ala Tensor.Art) ===== */
+.mobtab{display:inline-flex;align-items:center;height:36px;padding:0 10px;font-size:14px;font-weight:600;color:#9ca3af;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.12s}
+.mobtab:hover{color:#fff}
+.mobtab.sel{color:#27D4CD;border-bottom-color:#27D4CD}
+#mobtasks{display:none!important}
+.mfbtn{display:inline-flex;align-items:center;gap:4px;border:1px solid #30363d;border-radius:8px;padding:5px 10px;font-size:11px;color:#9ca3af;background:#1c2128;cursor:pointer;white-space:nowrap;transition:.12s}
+.mfbtn:hover{color:#fff;border-color:#3d444d}
+.mfbtn.sel{color:#fff;border-color:#3d444d;background:#21262d}
+.mficon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #30363d;border-radius:8px;color:#9ca3af;background:#1c2128;cursor:pointer;transition:.12s}
+.mficon:hover{color:#fff;border-color:#3d444d}
+.tact{width:32px;height:32px;display:flex;align-items:center;justify-content:center;color:#fff;border-radius:9999px;transition:.12s}
+.tact:hover{background:rgba(255,255,255,.18)}
+#progoverlay{top:56px}
+@media (max-width:1023px){
+  #rightPan.mobile-open{position:fixed;top:56px;right:0;bottom:0;left:auto;z-index:40;display:flex;width:min(21rem,92vw);box-shadow:-8px 0 30px rgba(0,0,0,.5)}
+  /* Mobile ala Tensor.Art: satu kolom scroll, urutan prompt -> Models/VAE/Settings -> hasil */
+  #appshell{display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;height:auto;min-height:calc(100vh - 56px);padding-bottom:5rem}
+  #mainwrap,#canvas,#canvas>div{display:contents}
+  #promptbar{order:1}
+  #leftpan{order:2;position:static;transform:none;width:100%;max-width:100%;height:auto;overflow:visible;border-right:0;padding-top:0;margin:0 .75rem}
+  #img2img-card{order:3;margin-left:.75rem;margin-right:.75rem}
+  #tab-placeholder,#empty,#gfilter,#submitcard,#grid{order:4}
+  #rightPan{order:5}
+  #overlay{display:none!important}
+  #mobbar{display:flex}
+  #balpill{display:inline-flex}
+  /* Tab Workspace | Tasks ala Tensor.Art */
+  #mobnav{display:flex}
+  #appshell{padding-top:6rem;min-height:calc(100vh - 6rem)}
+  #rightPan.mobile-open{top:96px}
+  #progoverlay{top:96px}
+  /* Workspace: hanya form, hasil pindah ke tab Tasks */
+  #empty,#gfilter,#grid{display:none!important}
+  #mobtasks{order:6;padding-bottom:4rem}
+  /* Tasks: form disembunyikan, tampil daftar task */
+  body.mob-tasks #promptbar,body.mob-tasks #leftpan,body.mob-tasks #img2img-card,body.mob-tasks #tab-placeholder,body.mob-tasks #rightPan,body.mob-tasks #mobbar,body.mob-tasks #btn-history{display:none!important}
+  body.mob-tasks #mobtasks{display:flex!important}
+  /* Tombol Generate tunggal di bottom bar; sembunyikan yang di prompt bar */
+  #promptbar #btn-go,#promptbar #ncount{display:none}
+}
 textarea{caret-color:#6F5DFF}
 input[type=checkbox]{width:14px;height:14px;cursor:pointer}
 input[type=range]{cursor:pointer}
@@ -157,6 +196,11 @@ input[type=range]{cursor:pointer}
 
 <header class="fixed top-0 left-0 right-0 z-40 h-14 bg-[#0d1117]/85 backdrop-blur border-b bd flex items-center px-2 sm:px-3 gap-2">
   <button id="mmenu" class="lg:hidden text-neutral-400 p-1"><i data-icon="list" class="w-5 h-5"></i></button>
+  <!-- Mobile: tab Workspace | Tasks (ala Tensor.Art) -->
+  <div id="mobnavtabs" class="lg:hidden flex items-center gap-0.5">
+    <button id="tab-workspace" class="mobtab sel">Workspace</button>
+    <button id="tab-tasks" class="mobtab">Tasks</button>
+  </div>
   <div class="w-7 h-7 shrink-0 hidden sm:flex items-center justify-center">
     <svg width="28" height="28" viewBox="0 0 64 64">
       <defs>
@@ -170,7 +214,7 @@ input[type=range]{cursor:pointer}
       <path d="M19 21 L32 45 L45 21" fill="none" stroke="url(#hg)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#hglow)"/>
     </svg>
   </div>
-  <div class="flex items-center gap-0.5 hidebar overflow-x-auto flex-1">
+  <div class="flex items-center gap-0.5 hidebar overflow-x-auto flex-1 max-lg:hidden">
     <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span>Text2Img</div>
     <div class="tab" data-tab="img"><span class="dot" style="background:#22c55e"></span>Img2Img</div>
     <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span>Edit</div>
@@ -179,13 +223,23 @@ input[type=range]{cursor:pointer}
     <div class="glass-brand hidden md:flex shrink-0 ml-1"><span class="brand-spark">✦</span><span class="brand-txt">VISUAL AI ARTWORK GENERATOR</span></div>
   </div>
   <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
+    <span id="balpill" class="hidden items-center gap-1 rounded-full border bd bg-[#1c2128] px-2.5 h-7 text-xs text-neutral-300" title="Saldo Pollinations"><i data-icon="lightning" class="w-3 h-3 text-[#27D4CD]"></i><span id="balpill-txt">-</span></span>
     <button id="ncol" class="text-neutral-400 hover:text-white p-1.5 hidden sm:flex items-center gap-1 text-xs" title="Jumlah kolom"><i data-icon="squares-four" class="w-4 h-4"></i><span id="ncollbl">2</span></button>
   </div>
 </header>
 
+<!-- Mobile baris ke-2: mode tabs (ala Tensor.Art) -->
+<div id="mobnav" class="lg:hidden fixed top-14 left-0 right-0 z-40 h-10 bg-[#0d1117]/90 backdrop-blur border-b bd flex items-center px-2 gap-0.5 overflow-x-auto hidebar">
+  <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span>Text2Img</div>
+  <div class="tab" data-tab="img"><span class="dot" style="background:#22c55e"></span>Img2Img</div>
+  <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span>Edit</div>
+  <div class="tab" data-tab="video"><span class="dot" style="background:#ef4444"></span>Video</div>
+  <div class="tab" data-tab="prime"><span class="dot" style="background:#3b82f6"></span>Prime</div>
+</div>
+
 <div id="overlay" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden"></div>
 
-<div class="pt-14 flex h-[calc(100vh-56px)] overflow-hidden">
+<div id="appshell" class="pt-14 flex h-[calc(100vh-56px)] overflow-hidden">
 
   <!-- LEFT PANEL -->
   <aside id="leftpan" class="fixed lg:static z-40 inset-y-0 left-0 pt-14 lg:pt-0 w-[22rem] max-w-[88vw] -translate-x-full lg:translate-x-0 transition-transform duration-200 shrink-0 border-r bd overflow-y-auto bg-[#161b22]">
@@ -413,6 +467,9 @@ input[type=range]{cursor:pointer}
         <button class="btn btn-ghost w-full h-9 justify-between"><span>Presets</span><i data-icon="bookmark-simple" class="w-4 h-4"></i></button>
         <button class="btn btn-ghost w-full h-9 justify-between"><span>Reset</span><i data-icon="key" class="w-4 h-4"></i></button>
       </div>
+
+      <!-- Footer (seperti Tensor.Art) -->
+      <div class="pt-3 pb-1 text-center text-[10px] text-neutral-600">Computing Services provided by <span class="text-neutral-400">TAMS</span></div>
     </div>
   </aside>
 
@@ -513,6 +570,19 @@ input[type=range]{cursor:pointer}
       </div>
       <div id="grid" class="space-y-3"></div>
     </div>
+      <!-- Mobile Tasks (ala Tensor.Art): hasil generate tampil di tab Tasks -->
+      <div id="mobtasks" class="flex-col">
+        <div class="flex items-center gap-1.5 px-3 py-2 border-b bd bg-[#0d1117]/85 text-xs">
+          <button class="mfbtn sel" data-f="all">All<i data-icon="caret-down" class="w-3 h-3"></i></button>
+          <button class="mfbtn" data-f="list">List<i data-icon="caret-down" class="w-3 h-3"></i></button>
+          <button class="mfbtn" data-f="date">Date<i data-icon="caret-down" class="w-3 h-3"></i></button>
+          <span class="flex-1"></span>
+          <button id="mob-reload" class="mficon" title="Reload"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></button>
+          <button id="mob-manage" class="mficon" title="Manage"><i data-icon="squares-four" class="w-4 h-4"></i></button>
+        </div>
+        <p id="mobtasks-empty" class="hidden text-center text-neutral-600 text-sm py-20 px-4">Belum ada task — buat gambar di tab Workspace.</p>
+        <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
+      </div>
   </main>
 
   <!-- RIGHT PANEL -->
@@ -536,13 +606,25 @@ input[type=range]{cursor:pointer}
 </div>
 
 <!-- Mobile history toggle -->
-<button id="btn-history" class="lg:hidden fixed bottom-4 right-4 z-30 btn btn-blue h-11 px-4"><i data-icon="clock-counter-clockwise" class="w-4 h-4"></i> Riwayat</button>
+<button id="btn-history" class="lg:hidden fixed bottom-20 right-4 z-30 btn btn-blue h-11 px-4"><i data-icon="clock-counter-clockwise" class="w-4 h-4"></i> Riwayat</button>
+
+<!-- Bottom action bar (mobile, seperti Tensor.Art: 1 image + Generate besar) -->
+<div id="mobbar" class="hidden lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t bd bg-[#0d1117]/95 backdrop-blur px-3 py-2 flex items-center gap-2">
+  <select id="mobcount" class="inp h-10 text-sm w-[6.5rem] shrink-0" title="Jumlah gambar">
+    <option value="1" selected>1 image</option>
+    <option value="2">2 images</option>
+    <option value="4">4 images</option>
+  </select>
+  <button id="mobgo" class="btn btn-turq flex-1 h-11 text-sm whitespace-nowrap">
+    <i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">- <span id="mobprice">1.22</span></span>
+  </button>
+</div>
 
 <!-- Floating TOP: lompat balik ke atas saat sudah scroll jauh ke bawah -->
 <button id="btn-top" title="Kembali ke atas"><i data-icon="arrow-up" class="w-4 h-4"></i></button>
 
 <!-- ============ PROGRESS OVERLAY ============ -->
-<div id="progoverlay" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4" style="top:56px">
+<div id="progoverlay" class="hidden fixed inset-0 z-30 flex items-center justify-center bg-black/50 p-4">
   <div class="w-full max-w-sm bg-[#161b22] border bd rounded-2xl p-5 space-y-3">
     <div class="flex items-center justify-between">
       <span id="prog-title" class="text-sm font-semibold">Generating...</span>
@@ -555,6 +637,36 @@ input[type=range]{cursor:pointer}
       <span id="prog-status">Mengirim task...</span>
       <span id="prog-pct">0%</span>
     </div>
+  </div>
+</div>
+
+<!-- ============ MOBILE TASK DETAIL (ala Tensor.Art: Input + Details) ============ -->
+<div id="mobdetail" class="lg:hidden fixed inset-0 z-50 hidden flex-col bg-[#0d1117]">
+  <div class="flex items-center gap-1 px-2 h-12 border-b bd shrink-0">
+    <button id="md-back" class="w-9 h-9 flex items-center justify-center text-neutral-400 hover:text-white rounded-lg" title="Kembali"><i data-icon="x" class="w-5 h-5"></i></button>
+    <span id="md-title" class="flex-1 text-sm font-semibold truncate">Text to Image</span>
+    <button id="md-dl" class="w-9 h-9 flex items-center justify-center text-neutral-400 hover:text-white rounded-lg" title="Download"><i data-icon="download" class="w-5 h-5"></i></button>
+    <button id="md-more" class="w-9 h-9 flex items-center justify-center text-neutral-400 hover:text-white rounded-lg" title="Menu"><i data-icon="dots-three-vertical" class="w-5 h-5"></i></button>
+  </div>
+  <div id="md-body" class="flex-1 overflow-y-auto hidebar p-4 space-y-4"></div>
+</div>
+
+<!-- ============ MOBILE IMAGE VIEWER (ala Tensor.Art: gambar aspect ratio + download di bawah) ============ -->
+<div id="mobview" class="lg:hidden fixed inset-0 z-50 hidden flex-col bg-black/90">
+  <div class="flex-1 relative flex items-center justify-center bg-[#0d1117]">
+    <div id="mv-loading" class="absolute inset-0 flex items-center justify-center"><i data-icon="circle-notch" class="w-8 h-8 animate-spin text-neutral-500"></i></div>
+    <button id="mv-close" class="absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-[#30363d] text-white flex items-center justify-center hover:bg-[#3d444d] border border-white/50 shadow-lg" title="Tutup"><i data-icon="x" class="w-5 h-5"></i></button>
+    <img id="mv-img" class="relative z-10 max-w-full max-h-[86vh] w-auto h-auto object-contain" alt=""/>
+    <button id="mv-dl" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-12 h-12 rounded-full bg-[#30363d] text-white flex items-center justify-center hover:bg-[#3b82f6] border border-white/50 shadow-lg" title="Download"><i data-icon="download" class="w-5 h-5"></i></button>
+  </div>
+  <div class="flex items-center gap-2.5 px-4 py-3 border-t bd bg-[#161b22] shrink-0">
+    <img id="mv-thumb" class="w-9 h-9 rounded-md object-cover border bd" alt=""/>
+    <div class="min-w-0 flex-1">
+      <div id="mv-lbl" class="text-[11px] text-neutral-500">Text to Image</div>
+      <div id="mv-model" class="text-xs font-medium truncate text-neutral-200">Model</div>
+    </div>
+    <span class="text-neutral-500" title="Tersimpan di cloud"><i data-icon="cloud-arrow-up" class="w-4 h-4"></i></span>
+    <button id="mv-more" class="w-9 h-9 flex items-center justify-center text-neutral-500 hover:text-white rounded-lg" title="Menu"><i data-icon="dots-three-vertical" class="w-5 h-5"></i></button>
   </div>
 </div>
 
@@ -1243,12 +1355,28 @@ $('ncount').addEventListener('change',function(){
 
 /* ===== generate (real API / demo fallback) ===== */
 $('btn-go').addEventListener('click',function(){ ensureAudio(); doGenerate(); });
+var _mobgo=$('mobgo');
+if(_mobgo) _mobgo.addEventListener('click',function(){ ensureAudio(); doGenerate(); });
+var _mobcount=$('mobcount');
+if(_mobcount) _mobcount.addEventListener('change',function(){
+  state.ncol=parseInt(_mobcount.value)||1;
+  applyNcol();
+  var sel=$('ncount'); if(sel) sel.value=String(state.ncol);
+});
 function setBusy(b){
-  var el=$('btn-go'); if(!el) return;
-  el.disabled=b; el.style.opacity=b?'0.5':'1';
-  el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
-    :'<i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal" id="price">- 1.22</span>';
+  ['btn-go','mobgo'].forEach(function(id){
+    var el=$(id); if(!el) return;
+    el.disabled=b; el.style.opacity=b?'0.5':'1';
+    el.innerHTML=b?'<i data-icon="circle-notch" class="w-4 h-4 animate-spin"></i>Generating...'
+      :'<i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">- '+(window._rektyPrice||'1.22')+'</span>';
+  });
 }
+/* sync harga ke tombol mobile */
+function syncMobPrice(){
+  var p=window._rektyPrice||'1.22', e=$('mobprice');
+  if(e) e.textContent=p;
+}
+if($('mobprice')) syncMobPrice();
 function extractImages(data){
   if(!data) return [];
   if(Array.isArray(data)) data={images:data};
@@ -1308,6 +1436,8 @@ function addResult(r){
   renderRight();
   // efek sama untuk kartu riwayat terbaru di panel kanan
   var rl=$('rlist'); if(rl&&rl.firstChild) rl.firstChild.classList.add('gcard-in');
+  // mobile: hasil baru tampil di tab Tasks (ala Tensor.Art)
+  if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('tasks');
 }
 
 /* ===== panel kanan: Detail hasil aktif (seperti Tensor.Art) ===== */
@@ -1735,9 +1865,22 @@ function startPollOAuth(){
     window.location.href=cfg.authorizeBase+'?'+p.toString();
   }).catch(function(e){ toast('Gagal mulai login: '+(e&&e.message||e)); });
 }
+function updateBalPill(){
+  var pill=$('balpill'), txt=$('balpill-txt');
+  if(!pill||!txt) return;
+  if(!settings.pollSession){ txt.textContent='Gratis'; pill.title='Pollinations gratis tanpa key'; return; }
+  fetch('/api/oauth/status?session='+encodeURIComponent(settings.pollSession)).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.connected&&d.balance){
+      var b=d.balance;
+      var bv=b.pollenBalance!=null?b.pollenBalance:(b.balance!=null?b.balance:null);
+      txt.textContent=(bv!=null?bv:'?')+' pollen';
+      pill.title='Saldo Pollinations';
+    } else { txt.textContent='Gratis'; pill.title='Pollinations gratis tanpa key'; }
+  }).catch(function(){ txt.textContent='Gratis'; });
+}
 function refreshOAuthStatus(){
   var el=$('byop-status'), btn=$('byop-login'), out=$('byop-logout');
-  if(!settings.pollSession){ if(el)el.classList.add('hidden'); if(out)out.classList.add('hidden'); return; }
+  if(!settings.pollSession){ if(el)el.classList.add('hidden'); if(out)out.classList.add('hidden'); updateBalPill(); return; }
   fetch('/api/oauth/status?session='+encodeURIComponent(settings.pollSession)).then(function(r){return r.json();}).then(function(d){
     if(d&&d.connected){
       var balTxt='';
@@ -1745,6 +1888,7 @@ function refreshOAuthStatus(){
         var bv=d.balance.pollenBalance!=null?d.balance.pollenBalance:(d.balance.balance!=null?d.balance.balance:null);
         if(bv!=null) balTxt=' · saldo '+bv+' pollen';
       }
+      updateBalPill();
       el.textContent='Terhubung ✓'+(d.expiresIn?(' · sisa '+Math.ceil(d.expiresIn/86400)+' hari'):'')+balTxt;
       el.style.color='#27D4CD'; el.classList.remove('hidden');
       btn.textContent='Login ulang (ganti akun)'; out.classList.remove('hidden');
@@ -2083,6 +2227,29 @@ function mkResult(src,par,taskId,credits){
   };
 }
 var _demoPending=false;
+
+function demoCanvas(w,h){
+  var maxDim=1024, scale=Math.min(1,maxDim/Math.max(w,h));
+  var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+  var c=document.createElement('canvas'); c.width=cw; c.height=ch;
+  var x=c.getContext('2d');
+  var g=x.createLinearGradient(0,0,cw,ch);
+  g.addColorStop(0,'#161b22'); g.addColorStop(.5,'#0d1117'); g.addColorStop(1,'#161b22');
+  x.fillStyle=g; x.fillRect(0,0,cw,ch);
+  x.strokeStyle='rgba(111,93,255,.3)'; x.lineWidth=Math.max(2,cw*.004);
+  x.strokeRect(cw*.04,ch*.04,cw*.92,ch*.92);
+  var fs=Math.round(Math.min(cw,ch)*.07);
+  x.fillStyle='rgba(255,255,255,.85)'; x.textAlign='center';
+  x.font='600 '+fs+'px Inter, system-ui, sans-serif';
+  x.fillText('VISUAL AI ARTWORK',cw/2,ch/2-fs*.4);
+  x.fillStyle='#6F5DFF';
+  x.font='600 '+Math.round(fs*.75)+'px Inter, system-ui, sans-serif';
+  x.fillText(w+' x '+h,cw/2,ch/2+fs*.7);
+  x.fillStyle='rgba(39,212,205,.85)';
+  x.font='500 '+Math.round(fs*.55)+'px Inter, system-ui, sans-serif';
+  x.fillText('Mode Demo — simulasi',cw/2,ch/2+fs*1.6);
+  return c.toDataURL('image/png');
+}
 function demoResults(par){
   _demoPending=true;
   resetEta();
@@ -2090,7 +2257,7 @@ function demoResults(par){
   setSubmitInfo('',par.params.width+'x'+par.params.height,state.ncol);
   setTimeout(function(){
     for(var i=0;i<state.ncol;i++){
-      var src=S+Math.floor(Math.random()*1e9)+'/512';
+      var src=demoCanvas(par.params.width||768,par.params.height||1152);
       addResult({src:src, prompt:par.params.prompt, neg:par.params.negativePrompt,
         model:state.model?state.model.name:'', size:par.params.width+'x'+par.params.height,
         seed:par.params.seed, taskId:'', credits:'', ts:Date.now(), demo:true, page:state.page,
@@ -2238,11 +2405,28 @@ $('btn-history').addEventListener('click',function(){ $('rightPan').classList.to
 /* Floating TOP: tampil setelah scroll jauh, klik -> lompat ke atas */
 (function(){
   var topBtn=$('btn-top');
-  var mw=$('mainwrap');
-  if(!topBtn||!mw) return;
-  function updTopBtn(){ topBtn.style.display=(mw.scrollTop>300)?'flex':'none'; }
-  mw.addEventListener('scroll',updTopBtn,{passive:true});
-  topBtn.addEventListener('click',function(){ mw.scrollTop=0; });
+  if(!topBtn) return;
+  var mw=$('mainwrap'), shell=$('appshell');
+  function scroller(){
+    // mobile: appshell yang scroll (mainwrap display:contents); desktop: mainwrap
+    if(mw&&mw.scrollHeight>mw.clientHeight+50) return mw;
+    if(shell&&shell.scrollHeight>shell.clientHeight+50) return shell;
+    return document.scrollingElement;
+  }
+  function updTopBtn(){
+    var s=scroller();
+    topBtn.style.display=(s&&s.scrollTop>300)?'flex':'none';
+  }
+  ['scroll','resize'].forEach(function(ev){
+    if(mw) mw.addEventListener(ev,updTopBtn,{passive:true});
+    if(shell) shell.addEventListener(ev,updTopBtn,{passive:true});
+    window.addEventListener(ev,updTopBtn,{passive:true});
+  });
+  topBtn.addEventListener('click',function(){
+    var s=scroller(); if(s) s.scrollTop=0;
+    if(mw) mw.scrollTop=0; if(shell) shell.scrollTop=0;
+    var se=document.scrollingElement; if(se) se.scrollTop=0;
+  });
   updTopBtn();
 })();
 /* Panel kanan mengikuti gambar yang sedang dilihat (auto-follow saat scroll):
@@ -2315,10 +2499,184 @@ try{
   var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
   if(Array.isArray(saved)) state.results=saved;
 }catch(e){}
+/* ===== Mobile: tab Workspace | Tasks + detail task (ala Tensor.Art) ===== */
+function switchMobTab(t){
+  var ws=$('tab-workspace'), ts=$('tab-tasks');
+  if(ws) ws.classList.toggle('sel', t==='workspace');
+  if(ts) ts.classList.toggle('sel', t==='tasks');
+  document.body.classList.toggle('mob-tasks', t==='tasks');
+  if(t==='tasks') renderMobTasks();
+}
+function removeMobTask(i){
+  state.results.splice(i,1); persistResults();
+  renderMobTasks(); renderGrid(); renderDetail(); renderRight();
+}
+function shareImage(r){
+  if(navigator.share){ navigator.share({title:'REKTY AI',text:r.prompt||'',url:r.src}).catch(function(){}); }
+  else { dlImage(r.src); toast('Gambar di-download'); }
+}
+function mobTaskLbl(r){ return r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image'); }
+function mobDetailHTML(r){
+  var expires=r.ts?new Date(r.ts+7*24*3600*1000).toLocaleString('id-ID'):'';
+  var h='';
+  h+='<div><div class="text-[11px] text-neutral-500 mb-1">Input</div>'
+    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-48 overflow-y-auto hidebar">'+(r.prompt||'-')+'</div></div>';
+  h+='<div class="border bd rounded-xl bg-[#161b22] p-3 space-y-1.5">'
+    +'<div class="text-[11px] text-neutral-500 mb-1.5 font-semibold">Details</div>'
+    +'<div class="flex justify-between gap-2"><span>Task ID</span><span class="text-neutral-300 flex items-center gap-1 min-w-0"><span class="truncate" title="'+esc(r.taskId)+'">'+(r.taskId||'-')+'</span>'+(r.taskId?'<button class="md-copy text-neutral-500 hover:text-white shrink-0" title="Salin"><i data-icon="copy" class="w-3.5 h-3.5"></i></button>':'')+'</span></div>'
+    +(r.credits?'<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+r.credits+'</span></div>':'')
+    +'<div class="flex justify-between"><span>Created date</span><span class="text-neutral-300">'+fmtDateTime(r.ts)+'</span></div>'
+    +'<div class="flex justify-between"><span>Expires date</span><span class="text-neutral-300">'+expires+'</span></div>'
+    +'<div><div class="text-[11px] text-neutral-500 mb-1 mt-2">Negative prompt</div><div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-32 overflow-y-auto hidebar">'+(r.neg||'-')+'</div></div>'
+    +'<div class="flex justify-between gap-2 pt-1"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Seed</span><span class="text-neutral-300 truncate" title="'+esc(r.seed)+'">'+r.seed+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Steps</span><span class="text-neutral-300">'+(r.steps!=null&&r.steps!==''?r.steps:'-')+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>CFG scale</span><span class="text-neutral-300">'+(r.cfg!=null&&r.cfg!==''?r.cfg:'-')+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Sampler</span><span class="text-neutral-300">'+(r.sampler||'-')+'</span></div>'
+    +'</div>';
+  return h;
+}
+function renderMobTasks(){
+  var list=$('mobtasks-list'); if(!list) return;
+  list.innerHTML='';
+  var empty=$('mobtasks-empty');
+  if(empty) empty.classList.toggle('hidden', state.results.length>0);
+  if(!state.results.length) return;
+  state.results.forEach(function(r,i){
+    var d=document.createElement('div');
+    d.className='border bd rounded-2xl bg-[#161b22] overflow-hidden';
+    // ---- gambar (aspect ratio asli, di tengah) + pill aksi melayang ----
+    var wrap=document.createElement('div');
+    wrap.className='relative';
+    var img=document.createElement('img');
+    img.src=r.src; img.className='block mx-auto max-w-full max-h-[80vh] w-auto h-auto object-contain cursor-zoom-in';
+    img.addEventListener('click',function(){ openMobView(r); });
+    wrap.appendChild(img);
+    var pill=document.createElement('div');
+    pill.className='absolute top-2 right-2 flex items-center gap-0.5 bg-[#30363d]/95 backdrop-blur rounded-full px-1.5 py-1.5 z-10 border border-white/40 shadow-lg';
+    pill.innerHTML='<button class="tact" title="Bagikan"><i data-icon="share" class="w-4 h-4"></i></button>'
+      +'<button class="tact" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>'
+      +'<button class="tact" title="Hapus"><i data-icon="thumbs-down" class="w-4 h-4"></i></button>';
+    wrap.appendChild(pill);
+    d.appendChild(wrap);
+    // ---- footer: Text to Image + model (seperti Tensor.Art) ----
+    var foot=document.createElement('div');
+    foot.className='flex items-center gap-2.5 px-3 py-2.5 border-t bd';
+    foot.innerHTML='<img src="'+(r.src||'')+'" class="w-8 h-8 rounded-md object-cover border bd shrink-0"/>'
+      +'<div class="min-w-0 flex-1"><div class="text-[11px] text-neutral-500">'+mobTaskLbl(r)+'</div>'
+      +'<div class="text-xs font-medium truncate text-neutral-200">'+(r.model||'Model')+'</div></div>';
+    d.appendChild(foot);
+    // ---- tombol Expand (centered pill, buka keterangan) ----
+    var exp=document.createElement('button');
+    exp.className='w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-neutral-400 hover:text-white hover:bg-[#21262d] border-t bd transition-colors';
+    exp.innerHTML='<span class="exp-label">Expand</span><i data-icon="caret-down" class="w-3.5 h-3.5 exp-chev transition-transform"></i>';
+    d.appendChild(exp);
+    // ---- keterangan tersembunyi (Input + Details) ----
+    var det=document.createElement('div');
+    det.className='exp-details hidden px-3 pb-4 pt-3 space-y-3 border-t bd bg-black/20';
+    det.innerHTML=mobDetailHTML(r);
+    d.appendChild(det);
+    exp.addEventListener('click',function(){
+      var open=!det.classList.contains('hidden');
+      det.classList.toggle('hidden', open);
+      exp.querySelector('.exp-label').textContent=open?'Expand':'Collapse';
+      exp.querySelector('.exp-chev').style.transform=open?'':'rotate(180deg)';
+    });
+    list.appendChild(d);
+    // ---- wiring pill aksi ----
+    var btns=pill.querySelectorAll('button');
+    btns[0].addEventListener('click',function(e){ e.stopPropagation(); shareImage(r); });
+    btns[1].addEventListener('click',function(e){ e.stopPropagation(); dlImage(r.src); });
+    btns[2].addEventListener('click',function(e){ e.stopPropagation(); removeMobTask(i); });
+  });
+}
+var _mobCur=null;
+function openMobDetail(r){
+  _mobCur=r;
+  var lbl=r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image');
+  $('md-title').textContent=lbl;
+  var expires=r.ts?new Date(r.ts+7*24*3600*1000).toLocaleString('id-ID'):'';
+  var h='';
+  h+='<div class="flex items-center gap-2.5 border bd rounded-xl p-2.5 bg-[#1c2128]">'
+    +'<img src="'+(r.src||'')+'" class="w-11 h-11 rounded-lg object-cover border bd"/>'
+    +'<div class="min-w-0"><div class="text-xs font-medium truncate">'+(r.model||'Model')+'</div>'
+    +'<div class="text-[10px] text-neutral-500">'+lbl+'</div></div></div>';
+  h+='<div><div class="text-[11px] text-neutral-500 mb-1">Input</div>'
+    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-48 overflow-y-auto hidebar">'+(r.prompt||'-')+'</div></div>';
+  h+='<div class="border bd rounded-xl bg-[#161b22] p-3 space-y-1.5">'
+    +'<div class="text-[11px] text-neutral-500 mb-1.5 font-semibold">Details</div>'
+    +'<div class="flex justify-between gap-2"><span>Task ID</span><span class="text-neutral-300 flex items-center gap-1 min-w-0"><span class="truncate" title="'+esc(r.taskId)+'">'+(r.taskId||'-')+'</span>'+(r.taskId?'<button class="md-copy text-neutral-500 hover:text-white shrink-0" title="Salin"><i data-icon="copy" class="w-3.5 h-3.5"></i></button>':'')+'</span></div>'
+    +(r.credits?'<div class="flex justify-between"><span>Credits</span><span class="text-neutral-300">'+r.credits+'</span></div>':'')
+    +'<div class="flex justify-between"><span>Created date</span><span class="text-neutral-300">'+fmtDateTime(r.ts)+'</span></div>'
+    +'<div class="flex justify-between"><span>Expires date</span><span class="text-neutral-300">'+expires+'</span></div>'
+    +'<div><div class="text-[11px] text-neutral-500 mb-1 mt-2">Negative prompt</div><div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-32 overflow-y-auto hidebar">'+(r.neg||'-')+'</div></div>'
+    +'<div class="flex justify-between gap-2 pt-1"><span>Size</span><span class="text-neutral-300">'+r.size+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Seed</span><span class="text-neutral-300 truncate" title="'+esc(r.seed)+'">'+r.seed+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Steps</span><span class="text-neutral-300">'+(r.steps!=null&&r.steps!==''?r.steps:'-')+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>CFG scale</span><span class="text-neutral-300">'+(r.cfg!=null&&r.cfg!==''?r.cfg:'-')+'</span></div>'
+    +'<div class="flex justify-between gap-2"><span>Sampler</span><span class="text-neutral-300">'+(r.sampler||'-')+'</span></div>'
+    +'</div>';
+  $('md-body').innerHTML=h;
+  var cp=$('md-body').querySelector('.md-copy');
+  if(cp) cp.addEventListener('click',function(){ copyText(r.taskId); });
+  $('mobdetail').classList.remove('hidden'); $('mobdetail').classList.add('flex');
+}
+function closeMobDetail(){ $('mobdetail').classList.add('hidden'); $('mobdetail').classList.remove('flex'); }
+(function(){
+  var mw=$('tab-workspace'), mt=$('tab-tasks');
+  if(mw) mw.addEventListener('click',function(){ switchMobTab('workspace'); });
+  if(mt) mt.addEventListener('click',function(){ switchMobTab('tasks'); });
+  var md=$('mobdetail');
+  if(md){
+    $('md-back').addEventListener('click',closeMobDetail);
+    $('md-dl').addEventListener('click',function(){ if(_mobCur) dlImage(_mobCur.src); });
+    $('md-more').addEventListener('click',function(){
+      if(_mobCur&&confirm('Hapus task ini?')){ var i=state.results.indexOf(_mobCur); if(i>-1) removeMobTask(i); closeMobDetail(); }
+    });
+    md.addEventListener('click',function(e){ if(e.target===md) closeMobDetail(); });
+  }
+  var mr=$('mob-reload');
+  if(mr) mr.addEventListener('click',renderMobTasks);
+  var mm=$('mob-manage');
+  if(mm) mm.addEventListener('click',function(){
+    if(state.results.length&&confirm('Hapus SEMUA task?')){ state.results=[]; persistResults(); renderMobTasks(); renderGrid(); renderDetail(); renderRight(); }
+  });
+})();
+/* ===== Mobile image viewer (ala Tensor.Art) ===== */
+var _mobViewCur=null;
+function openMobView(r){
+  _mobViewCur=r;
+  var img=$('mv-img'), ld=$('mv-loading');
+  if(ld) ld.classList.remove('hidden');
+  img.onload=function(){ if(ld) ld.classList.add('hidden'); };
+  img.onerror=function(){ if(ld) ld.classList.add('hidden'); };
+  img.src=r.src||'';
+  $('mv-thumb').src=r.src||'';
+  $('mv-lbl').textContent=mobTaskLbl(r);
+  $('mv-model').textContent=r.model||'Model';
+  $('mobview').classList.remove('hidden'); $('mobview').classList.add('flex');
+}
+function closeMobView(){ $('mobview').classList.add('hidden'); $('mobview').classList.remove('flex'); }
+(function(){
+  var v=$('mobview');
+  if(v){
+    $('mv-close').addEventListener('click',closeMobView);
+    $('mv-dl').addEventListener('click',function(){ if(_mobViewCur) dlImage(_mobViewCur.src); });
+    $('mv-more').addEventListener('click',function(){
+      if(_mobViewCur&&confirm('Hapus task ini?')){
+        var i=state.results.indexOf(_mobViewCur);
+        if(i>-1) removeMobTask(i);
+        closeMobView();
+      }
+    });
+    v.addEventListener('click',function(e){ if(e.target===v) closeMobView(); });
+  }
+})();
 renderCanvas();
 renderGrid();
 renderDetail();
 renderRight();
+if(typeof updateBalPill==='function') updateBalPill();
 </script>
 </body>
 </html>
