@@ -458,7 +458,7 @@ input[type=range]{cursor:pointer}
         <!-- BYOP Pollinations: login OAuth (bukan kolom API key) -->
         <div class="field hidden" id="byop-row">
           <label class="text-[11px] text-neutral-500">Login Pollinations</label>
-          <button id="byop-login" class="btn btn-ghost w-full h-8 border bd text-xs justify-center">Login dengan Pollinations (BYOP)</button>
+          <button id="byop-login" class="btn btn-ghost w-full h-8 border bd text-xs justify-center"><img src="https://pollinations.ai/favicon-32x32.png" alt="" onerror="this.style.display=&apos;none&apos;" class="w-4 h-4 rounded-full shrink-0"/>Login dengan Pollinations (BYOP)</button>
           <div id="byop-status" class="hidden text-[10px] text-neutral-500 mt-1"></div>
           <button id="byop-logout" class="hidden btn btn-ghost w-full h-8 border bd text-xs justify-center mt-1">Logout</button>
         </div>
@@ -1082,7 +1082,10 @@ function setModel(m){
   state.model=m;
   $('model-name').textContent=m.name;
   $('model-thumb').src='https://picsum.photos/seed/'+m.thumb+'/64';
-  var b=$('model-badge'); if(b) b.textContent=(m.base||'Model')+' - '+(m.arch||'');
+  var b=$('model-badge'); if(b){
+    var lg=_PROV_LOGO[settings.provider]||'';
+    b.innerHTML=(lg?'<img src="'+lg+'" alt="" onerror="this.style.display=&apos;none&apos;" class="w-3 h-3 inline rounded-full align-[-2px] mr-1"/>':'')+(m.base||'Model')+' - '+(m.arch||'');
+  }
 }
 function openModelSelector(){
   $('modal-title').textContent='Pilih Model';
