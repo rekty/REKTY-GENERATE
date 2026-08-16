@@ -652,10 +652,9 @@ function b64ToBuf(b64) {
 
 /**
  * Generate via gateway OpenAI-compatible self-host (ComfyUI + LoRA-mu).
- * CATATAN: di Worker ini fetch sinkron terbatas ~90-100 detik, sedangkan
- * generate bisa ±2 menit — jalur UTAMA dari browser adalah panggilan langsung
- * ke endpoint (lihat selfhostGenerate di frontend). Jalur ini tetap ada sebagai
- * fallback; kalau timeout, pakai jalur langsung.
+ * Pakai MODE ASYNC gateway: POST balas task_id langsung (< 2 detik), generate
+ * jalan di background gateway, dan /api/task polling GET /v1/tasks/<id>.
+ * Dengan begitu tidak ada fetch panjang di Worker -> tidak kena timeout 504.
  */
 async function selfhostCreateJob(body, env) {
   const params = body.params || body;
@@ -676,6 +675,7 @@ async function selfhostCreateJob(body, env) {
     sampler: String(params.ksamplerName || 'er_sde'),
     scheduler: String(params.schedule || 'simple'),
     negative_prompt: String(params.negativePrompt || 'low quality, worst quality').slice(0, 500),
+    async: true,
   };
   if (seed > 0) payload.seed = seed;
 
@@ -683,7 +683,7 @@ async function selfhostCreateJob(body, env) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-  }, 170000);
+  }, 25000);
   const txt = await res.text();
   if (!res.ok) {
     let msg = txt.slice(0, 300);
@@ -692,24 +692,17 @@ async function selfhostCreateJob(body, env) {
   }
   let d = null;
   try { d = JSON.parse(txt); } catch { /* ignore */ }
-  const list = (d && Array.isArray(d.data)) ? d.data : [];
-  if (!list.length) throw new Error('Endpoint self-host balas tanpa gambar');
+  const gatewayTask = String((d && d.task_id) || '');
+  if (!gatewayTask) throw new Error('Gateway tidak membalas task id (mode async)');
 
-  const urls = [];
-  for (const it of list) {
-    const b64 = String(it.b64_json || it.b64 || '').trim();
-    if (!b64) { urls.push(null); continue; }
-    try {
-      const buf = b64ToBuf(b64);
-      urls.push((await storeImageBuf(buf, sniffImageCt(buf), env)) || null);
-    } catch { urls.push(null); }
-  }
-  const images = urls.filter(Boolean);
   const taskId = 'selfhost:' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2));
   if (env && env.IMAGES) {
-    await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images })).catch(() => {});
+    await env.IMAGES.put('task:' + taskId, JSON.stringify({
+      status: 'RUNNING', progress: 0, startedAt: Date.now(),
+      endpoint: base, gatewayTask,
+    })).catch(() => {});
   }
-  return { taskId, images };
+  return { taskId, images: [] };
 }
 
 async function selfhostGetTask(jobId, env) {
@@ -717,7 +710,45 @@ async function selfhostGetTask(jobId, env) {
   const raw = await env.IMAGES.get('task:selfhost:' + jobId, { type: 'text' }).catch(() => null);
   if (!raw) return { status: 'RUNNING', progress: 0 };
   const rec = safeJson(raw);
-  return rec || { status: 'FAILED', error: 'Task tidak dikenal' };
+  if (!rec) return { status: 'FAILED', error: 'Task tidak dikenal' };
+  if (rec.status === 'SUCCESS' || rec.status === 'FAILED') return rec;
+
+  // RUNNING -> tanya gateway sampai selesai.
+  const base = String(rec.endpoint || '').trim().replace(/\/+$/, '').replace(/\/v1$/i, '');
+  const gt = String(rec.gatewayTask || '');
+  if (!base || !gt) return { status: 'RUNNING', progress: 0 };
+  let d = null;
+  try {
+    const res = await fetchWithTimeout(base + '/v1/tasks/' + encodeURIComponent(gt), {}, 15000);
+    if (res.ok) d = safeJson(await res.text());
+  } catch { d = null; }
+  if (!d || d.status === 'processing') {
+    // Endpoint tidak terjangkau lama -> biar tidak polling selamanya.
+    if (Date.now() - (rec.startedAt || 0) > 6 * 60 * 1000) {
+      const err = 'Endpoint self-host tidak terjangkau (sesi Kaggle mungkin mati) — restart notebook lalu update URL di Pengaturan.';
+      await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify({ status: 'FAILED', error: err })).catch(() => {});
+      return { status: 'FAILED', error: err };
+    }
+    return { status: 'RUNNING', progress: 0 };
+  }
+  if (d.status === 'error') {
+    const err = String(d.error || 'Gateway error');
+    await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify({ status: 'FAILED', error: err })).catch(() => {});
+    return { status: 'FAILED', error: err };
+  }
+  // completed -> arsip base64 ke KV.
+  const list = (Array.isArray(d.data) ? d.data : []).filter((x) => x && x.b64_json);
+  const urls = [];
+  for (const it of list) {
+    try {
+      const buf = b64ToBuf(it.b64_json);
+      urls.push((await storeImageBuf(buf, sniffImageCt(buf), env)) || null);
+    } catch { urls.push(null); }
+  }
+  const images = urls.filter(Boolean);
+  const final = { status: 'SUCCESS', progress: 100, images };
+  await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify(final)).catch(() => {});
+  return final;
 }
 
 /* --------------------------- Pollinations --------------------------- */
