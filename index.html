@@ -444,7 +444,7 @@ input[type=range]{cursor:pointer}
         <div class="field">
           <label class="text-[11px] text-neutral-500">Provider</label>
           <select id="apiprovider" class="inp text-xs">
-            <option value="tams">Tensor.Art</option>
+            <option value="tams">Tensor.Art TAMS</option>
             <option value="replicate">Replicate</option>
             <option value="fal">fal.ai</option>
             <option value="pollinations">Pollinations AI</option>
@@ -1972,7 +1972,7 @@ var _PROV_LOGO={
   pollinations:'https://pollinations.ai/favicon-32x32.png',
   selfhost:'https://www.google.com/s2/favicons?domain=krea.ai&sz=64'
 };
-var _PROV_NAME={ tams:'Tensor.Art', replicate:'Replicate', fal:'fal.ai', pollinations:'Pollinations AI', selfhost:'Krea2 By Rekty' };
+var _PROV_NAME={ tams:'Tensor.Art TAMS', replicate:'Replicate', fal:'fal.ai', pollinations:'Pollinations AI', selfhost:'Krea2 By Rekty' };
 function updateApiStatus(){
   var el=$('api-status'); if(!el) return;
   var name=_PROV_NAME[settings.provider]||_PROV_NAME.tams;
