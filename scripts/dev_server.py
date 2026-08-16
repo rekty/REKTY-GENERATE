@@ -187,6 +187,12 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        try:
+            self._do_GET()
+        except (ConnectionError, OSError, BrokenPipeError):
+            pass  # klien membatalkan koneksi (mis. iframe ditutup) — jangan crash server
+
+    def _do_GET(self):
         path = self.path.split("?")[0]
         if path == "/api/health":
             return self._send(200, {"ok": True, "hasKeys": {"tams": False, "replicate": False, "fal": False, "pollinations": True}, "tams": "mock"})
@@ -264,6 +270,12 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, {"error": "not found"})
 
     def do_POST(self):
+        try:
+            self._do_POST()
+        except (ConnectionError, OSError, BrokenPipeError):
+            pass
+
+    def _do_POST(self):
         path = self.path.split("?")[0]
         if path == "/api/generate":
             length = int(self.headers.get("Content-Length") or 0)
