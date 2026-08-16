@@ -444,11 +444,11 @@ input[type=range]{cursor:pointer}
         <div class="field">
           <label class="text-[11px] text-neutral-500">Provider</label>
           <select id="apiprovider" class="inp text-xs">
-            <option value="tams">Tensor.Art (TAMS)</option>
-            <option value="replicate">Replicate (SDXL)</option>
-            <option value="fal">fal.ai (fast-sdxl)</option>
+            <option value="tams">Tensor.Art</option>
+            <option value="replicate">Replicate</option>
+            <option value="fal">fal.ai</option>
             <option value="pollinations">Pollinations AI</option>
-            <option value="selfhost">Self-Host (Krea 2 + LoRA-mu)</option>
+            <option value="selfhost">Krea2 By Rekty</option>
           </select>
         </div>
         <div class="field" id="apikey-field">
@@ -464,9 +464,9 @@ input[type=range]{cursor:pointer}
         </div>
         <!-- Self-Host: URL endpoint ComfyUI gateway (trycloudflare) -->
         <div class="field hidden" id="selfhost-row">
-          <label class="text-[11px] text-neutral-500">Endpoint Self-Host</label>
+          <label class="text-[11px] text-neutral-500">Endpoint Krea2 By Rekty</label>
           <input id="selfhost-url" type="text" class="inp text-xs" placeholder="https://xxx.trycloudflare.com" autocomplete="off"/>
-          <p class="text-[10px] text-neutral-600 mt-1">Paste URL dari output notebook Kaggle/Colab (tanpa /v1). Tanpa API key — model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.</p>
+          <p class="text-[10px] text-neutral-600 mt-1">Paste URL dari output notebook Kaggle/Colab (tanpa /v1). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.</p>
         </div>
         <div id="api-hint" class="text-[10px] text-neutral-600"></div>
         <div class="field">
@@ -969,10 +969,10 @@ var MODEL_LIBS = {
     { name:'Krea 2 Turbo', base:'fal.ai', arch:'Krea 2', thumb:'krea', badge:'KREA2', views:'1.1M', ver:'V2', model:'fal-ai/krea-2/turbo' },
   ],
   selfhost: [
-    { name:'REKTY ANJANY (Krea 2 + LoRA-mu)', base:'Self-Host', arch:'Krea 2', thumb:'anjany', badge:'LOKAL', views:'', ver:'V1', model:'rekty1988/anjany' },
-    { name:'Krea 2 Turbo', base:'Self-Host', arch:'Krea 2', thumb:'krea', badge:'LOKAL', views:'', ver:'V1', model:'krea2' },
-    { name:'Anjany', base:'Self-Host', arch:'Krea 2', thumb:'anjany', badge:'LOKAL', views:'', ver:'V1', model:'anjany' },
-    { name:'Rekty', base:'Self-Host', arch:'Krea 2', thumb:'krea', badge:'LOKAL', views:'', ver:'V1', model:'rekty' },
+    { name:'REKTY ANJANY (Krea 2 + LoRA-mu)', base:'Krea2 By Rekty', arch:'Krea 2', thumb:'anjany', badge:'LOKAL', views:'', ver:'V1', model:'rekty1988/anjany' },
+    { name:'Krea 2 Turbo', base:'Krea2 By Rekty', arch:'Krea 2', thumb:'krea', badge:'LOKAL', views:'', ver:'V1', model:'krea2' },
+    { name:'Anjany', base:'Krea2 By Rekty', arch:'Krea 2', thumb:'anjany', badge:'LOKAL', views:'', ver:'V1', model:'anjany' },
+    { name:'Rekty', base:'Krea2 By Rekty', arch:'Krea 2', thumb:'krea', badge:'LOKAL', views:'', ver:'V1', model:'rekty' },
   ],
   pollinations: [
     { name:'Agnes Image 2.0 Flash', base:'Pollinations', arch:'Catniti AI', thumb:'Catnitiagnesimage20flash', badge:'FREE', views:'', ver:'V1', model:'Catniti/agnes-image-2.0-flash' },
@@ -1824,11 +1824,11 @@ var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', selfhost
   upscale:2, ncol:1, page:'text', modeA1111:false, modeElla:false, modelName:'',
   loras:[], denoise:0.5, animDur:0.5 };
 var PROVIDER_INFO={
-  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
+  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Daftar model dari tams.tensor.art — pakai di UI.' },
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
   fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
-  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Tanpa key (model otomatis). Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' },
-  selfhost:{ label:'Endpoint Self-Host (URL trycloudflare)', hint:'Tanpa API key. Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.' }
+  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Model otomatis. Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' },
+  selfhost:{ label:'Endpoint Krea2 By Rekty (URL trycloudflare)', hint:'Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.' }
 };
 
 function loadSettings(){
@@ -1965,21 +1965,24 @@ function refreshPollinationsModels(){
     if(MODELS===MODEL_LIBS.pollinations){ setModel(MODELS[0]); }
   }).catch(function(){});
 }
+var _PROV_LOGO={
+  tams:'https://www.google.com/s2/favicons?domain=tensor.art&sz=64',
+  replicate:'https://static.replicateassets.com/fe/233a65bfe0a04e6e313f31cbbddf322b37a2dc58/favicon-CKiqAkf2.png',
+  fal:'https://fal.ai/favicon.ico',
+  pollinations:'https://pollinations.ai/favicon-32x32.png',
+  selfhost:'https://www.google.com/s2/favicons?domain=krea.ai&sz=64'
+};
+var _PROV_NAME={ tams:'Tensor.Art', replicate:'Replicate', fal:'fal.ai', pollinations:'Pollinations AI', selfhost:'Krea2 By Rekty' };
 function updateApiStatus(){
   var el=$('api-status'); if(!el) return;
-  if(settings.provider==='pollinations'){
-    el.innerHTML='<img src="https://pollinations.ai/favicon-32x32.png" alt="" onerror="this.style.display=&apos;none&apos;" class="w-3.5 h-3.5 inline rounded-full align-[-3px] mr-1"/>'+(settings.pollSession?'Pollinations AI · BYOP':'Pollinations AI');
-    el.style.color=settings.pollSession?'#27D4CD':'#9a9aa2';
-    return;
-  }
-  if(settings.provider==='selfhost'){
-    el.textContent='Self-Host'+(settings.selfhostUrl?' · endpoint':' · belum di-set');
-    el.style.color=settings.selfhostUrl?'#27D4CD':'#9a9aa2';
-    return;
-  }
-  var name=settings.provider==='tams'?'TAMS':(settings.provider==='replicate'?'Replicate':'fal.ai');
-  el.textContent=name+(settings.apiKey?' · key':' · tanpa key');
-  el.style.color=settings.apiKey?'#27D4CD':'#9a9aa2';
+  var name=_PROV_NAME[settings.provider]||_PROV_NAME.tams;
+  var logo=_PROV_LOGO[settings.provider]||_PROV_LOGO.tams;
+  var connected = settings.provider==='pollinations' ? settings.pollSession
+    : settings.provider==='selfhost' ? settings.selfhostUrl
+    : !!settings.apiKey;
+  var extra = settings.provider==='pollinations'&&settings.pollSession ? ' · BYOP' : '';
+  el.innerHTML='<img src="'+logo+'" alt="" onerror="this.style.display=&apos;none&apos;" class="w-3.5 h-3.5 inline rounded-full align-[-3px] mr-1"/>'+name+extra;
+  el.style.color=connected?'#27D4CD':'#9a9aa2';
 }
 $('apiprovider').addEventListener('change',function(){
   settings.provider=$('apiprovider').value; saveSettings(); updateProviderUI();
@@ -1998,7 +2001,7 @@ $('api-test').addEventListener('click',async function(){
       var r=await fetch(url+'/health');
       var d=await r.json().catch(function(){return null;});
       if(!r.ok) throw new Error('HTTP '+r.status);
-      toast('Self-Host OK · '+(d&&d.comfy?'ComfyUI terhubung':'endpoint hidup')+' · '+(d&&d.lora?'LoRA: '+d.lora:'LoRA REKTY ANJANY aktif'));
+      toast('Krea2 By Rekty OK · '+(d&&d.comfy?'ComfyUI terhubung':'endpoint hidup')+' · '+(d&&d.lora?'LoRA: '+d.lora:'LoRA REKTY ANJANY aktif'));
     }catch(e){ toast('Endpoint tidak terjangkau ('+e.message+'). Pastikan sesi Kaggle masih jalan & URL benar.'); }
     b.disabled=false; b.textContent='Tes';
     return;
@@ -2376,7 +2379,7 @@ async function pollTask(taskId,onProg){
 /* --- Self-Host: generate langsung ke gateway ComfyUI (browser -> endpoint) --- */
 async function selfhostGenerate(par){
   var url=(settings.selfhostUrl||'').trim().replace(/\/+$/,'').replace(/\/v1$/i,'');
-  if(!url) throw new Error('URL endpoint self-host belum diatur — isi di Pengaturan -> Endpoint Self-Host');
+  if(!url) throw new Error('URL endpoint belum diatur — isi di Pengaturan -> Endpoint Krea2 By Rekty');
   if(!/^https?:\/\//.test(url)) throw new Error('URL endpoint self-host harus diawali https://');
   var m=state.model||{};
   var body={
