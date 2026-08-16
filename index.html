@@ -638,7 +638,6 @@ input[type=range]{cursor:pointer}
 
 <!-- Bottom action bar (mobile, seperti Tensor.Art: 1 image + Generate besar) -->
 <div id="mobbar" class="hidden lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t bd bg-[#0d1117]/95 backdrop-blur px-3 py-2 flex items-center gap-2">
-  <div class="vaia-pill shrink-0" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></div>
   <select id="mobcount" class="inp h-10 text-sm w-[6.5rem] shrink-0" title="Jumlah gambar">
     <option value="1" selected>1 image</option>
     <option value="2">2 images</option>
@@ -2586,7 +2585,7 @@ function hideSplash(){
 })();
 /* Klik brand VAIA (header mobile / bottom bar / footer Tasks) -> splash besar */
 (function(){
-  var brands=document.querySelectorAll('#mobnavtabs .vaia-pill,#mobbar .vaia-pill,#mobtasks .vaia-pill');
+  var brands=document.querySelectorAll('#mobnavtabs .vaia-pill,#mobtasks .vaia-pill');
   brands.forEach(function(brand){
     brand.addEventListener('click',function(e){ e.stopPropagation(); showSplash('VAIA'); });
   });
