@@ -1649,8 +1649,10 @@ function buildPayload(){
   // Mode A1111 OFF (default): bersihkan sintaks bobot (kata:1.2)/[kata] agar
   // provider yang tidak support sintaks A1111 tetap paham prompt.
   var prompt=(state.modeA1111||false)?rawPrompt:stripA1111(rawPrompt);
-  // Anti-crop (default ON): tambahkan kata kunci framing penuh supaya model tidak memotong kepala maupun kaki subjek.
-  if(settings.antiCrop&&prompt&&!/full portrait|head fully visible|full body|headroom|entire head|head to toe|full body shot/i.test(prompt)){
+  // Anti-crop (default ON): tambahkan kata kunci framing penuh supaya model tidak memotong kepala/kaki.
+  // Pengecualian: prompt yang memang close-up / framing khusus TIDAK ditambahkan apa-apa (hormati keinginan user).
+  var _acCloseup=/close.?up|closeup|headshot|macro|zoom|face.?shot|upper body|head and shoulders|bust shot|facial/i;
+  if(settings.antiCrop&&prompt&&!_acCloseup.test(prompt)&&!/full portrait|head fully visible|full body|headroom|entire head|head to toe|full body shot/i.test(prompt)){
     prompt=prompt.trim()+', full body portrait, entire subject fully visible head to toe, head fully visible';
   }
   return {
