@@ -2250,21 +2250,44 @@ function demoCanvas(w,h){
   var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
   var c=document.createElement('canvas'); c.width=cw; c.height=ch;
   var x=c.getContext('2d');
-  var g=x.createLinearGradient(0,0,cw,ch);
-  g.addColorStop(0,'#161b22'); g.addColorStop(.5,'#0d1117'); g.addColorStop(1,'#161b22');
+  // langit gradasi ala artwork AI
+  var g=x.createLinearGradient(0,0,0,ch);
+  g.addColorStop(0,'#1e1b4b'); g.addColorStop(.45,'#312e81'); g.addColorStop(.75,'#4c1d95'); g.addColorStop(1,'#0d1117');
   x.fillStyle=g; x.fillRect(0,0,cw,ch);
-  x.strokeStyle='rgba(111,93,255,.3)'; x.lineWidth=Math.max(2,cw*.004);
-  x.strokeRect(cw*.04,ch*.04,cw*.92,ch*.92);
-  var fs=Math.round(Math.min(cw,ch)*.07);
-  x.fillStyle='rgba(255,255,255,.85)'; x.textAlign='center';
+  // glow + matahari
+  var sunR=Math.max(20,cw*.13);
+  var sg=x.createRadialGradient(cw/2,ch*.40,5,cw/2,ch*.40,sunR*2.6);
+  sg.addColorStop(0,'rgba(253,224,71,.95)'); sg.addColorStop(.35,'rgba(251,146,60,.6)'); sg.addColorStop(1,'rgba(251,146,60,0)');
+  x.fillStyle=sg; x.fillRect(cw/2-sunR*2.6,ch*.40-sunR*2.6,sunR*5.2,sunR*5.2);
+  x.fillStyle='#fde047'; x.beginPath(); x.arc(cw/2,ch*.40,sunR*.6,0,Math.PI*2); x.fill();
+  // gunung berlapis
+  function mtn(y,base,color,amp){
+    x.fillStyle=color; x.beginPath(); x.moveTo(0,ch*y);
+    var step=cw/16;
+    for(var i=0;i<=16;i++){ var px=i*step; var py=ch*y-Math.abs(Math.sin(i*.9+base))*amp*ch; x.lineTo(px,py); }
+    x.lineTo(cw,ch); x.lineTo(0,ch); x.closePath(); x.fill();
+  }
+  mtn(.56,0,'rgba(91,33,182,.85)',.17);
+  mtn(.64,2,'rgba(76,29,149,.9)',.14);
+  mtn(.72,4,'rgba(49,46,129,.95)',.11);
+  mtn(.80,6,'rgba(17,24,39,.95)',.08);
+  // bintang
+  x.fillStyle='rgba(255,255,255,.65)';
+  for(var i=0;i<50;i++){ var sx=((i*37+11)%cw), sy=((i*23+7)%Math.max(1,Math.round(ch*.32))); x.fillRect(sx,sy,1.5,1.5); }
+  // bingkai
+  x.strokeStyle='rgba(111,93,255,.35)'; x.lineWidth=Math.max(2,cw*.004);
+  x.strokeRect(cw*.03,ch*.03,cw*.94,ch*.94);
+  // label kecil di bawah
+  var fs=Math.round(Math.min(cw,ch)*.045);
+  x.fillStyle='rgba(255,255,255,.82)'; x.textAlign='center';
   x.font='600 '+fs+'px Inter, system-ui, sans-serif';
-  x.fillText('VISUAL AI ARTWORK',cw/2,ch/2-fs*.4);
-  x.fillStyle='#6F5DFF';
-  x.font='600 '+Math.round(fs*.75)+'px Inter, system-ui, sans-serif';
-  x.fillText(w+' x '+h,cw/2,ch/2+fs*.7);
-  x.fillStyle='rgba(39,212,205,.85)';
-  x.font='500 '+Math.round(fs*.55)+'px Inter, system-ui, sans-serif';
-  x.fillText('Mode Demo — simulasi',cw/2,ch/2+fs*1.6);
+  x.fillText('VISUAL AI ARTWORK',cw/2,ch-fs*2.6);
+  x.fillStyle='rgba(111,93,255,.95)';
+  x.font='600 '+Math.round(fs*.8)+'px Inter, system-ui, sans-serif';
+  x.fillText(w+' x '+h,cw/2,ch-fs*1.5);
+  x.fillStyle='rgba(39,212,205,.9)';
+  x.font='500 '+Math.round(fs*.7)+'px Inter, system-ui, sans-serif';
+  x.fillText('Mode Demo — simulasi',cw/2,ch-fs*.5);
   return c.toDataURL('image/png');
 }
 function demoResults(par){

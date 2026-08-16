@@ -81,27 +81,53 @@ def _job_state(task_id):
 
 
 def _demo_svg(w, h):
-    """Placeholder SVG rasio-tepat (tidak di-crop seperti picsum)."""
-    fs = max(14, min(w, h) * 0.06)
+    """Placeholder SVG artwork rasio-tepat (langit + matahari + gunung + bintang, tidak di-crop)."""
+    import math, base64
+    fs = max(12, min(w, h) * 0.045)
+    sun = max(20, w * 0.13)
+    def mtn(base, amp, color):
+        pts = []
+        for i in range(17):
+            px = w * i / 16.0
+            py = h * (0.62 - math.sin(i * 0.9 + base) * amp)
+            pts.append("%.1f,%.1f" % (px, py))
+        return '<polygon points="0,%.1f %s %.1f,%.1f" fill="%s"/>' % (h * 0.62, " ".join(pts), w, h, color)
+    stars = ''.join(
+        '<rect x="%.1f" y="%.1f" width="1.5" height="1.5"/>'
+        % ((i * 37 + 11) % w, (i * 23 + 7) % max(1, int(h * 0.32)))
+        for i in range(50)
+    )
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d">'
-        '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        '<stop offset="0" stop-color="#161b22"/><stop offset=".5" stop-color="#0d1117"/>'
-        '<stop offset="1" stop-color="#161b22"/></linearGradient></defs>'
+        '<defs>'
+        '<linearGradient id="g" x1="0" y1="0" x2="0" y2="1">'
+        '<stop offset="0" stop-color="#1e1b4b"/><stop offset=".45" stop-color="#312e81"/>'
+        '<stop offset=".75" stop-color="#4c1d95"/><stop offset="1" stop-color="#0d1117"/></linearGradient>'
+        '<radialGradient id="sg"><stop offset="0" stop-color="rgba(253,224,71,.95)"/><stop offset=".35" stop-color="rgba(251,146,60,.6)"/><stop offset="1" stop-color="rgba(251,146,60,0)"/></radialGradient>'
+        '</defs>'
         '<rect width="%d" height="%d" fill="url(#g)"/>'
-        '<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" fill="none" stroke="rgba(111,93,255,.3)" stroke-width="%.0f"/>'
-        '<text x="%.0f" y="%.0f" fill="rgba(255,255,255,.85)" font-family="Inter, Arial, sans-serif" font-size="%.0f" font-weight="600" text-anchor="middle" dominant-baseline="middle">VISUAL AI ARTWORK</text>'
-        '<text x="%.0f" y="%.0f" fill="#6F5DFF" font-family="Inter, Arial, sans-serif" font-size="%.0f" font-weight="600" text-anchor="middle" dominant-baseline="middle">%d x %d</text>'
-        '<text x="%.0f" y="%.0f" fill="rgba(39,212,205,.85)" font-family="Inter, Arial, sans-serif" font-size="%.0f" font-weight="500" text-anchor="middle" dominant-baseline="middle">Mode Demo - simulasi</text>'
-        '</svg>'
+        '<circle cx="%.1f" cy="%.1f" r="%.1f" fill="url(#sg)"/>'
+        '<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#fde047"/>'
+        + mtn(0, 0.17, 'rgba(91,33,182,.85)')
+        + mtn(2, 0.14, 'rgba(76,29,149,.9)')
+        + mtn(4, 0.11, 'rgba(49,46,129,.95)')
+        + mtn(6, 0.08, 'rgba(17,24,39,.95)')
+        + '<g fill="rgba(255,255,255,.65)">' + stars + '</g>'
+        + '<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="none" stroke="rgba(111,93,255,.35)" stroke-width="%.1f"/>'
+        + '<text x="%.1f" y="%.1f" fill="rgba(255,255,255,.82)" font-family="Inter, Arial, sans-serif" font-size="%.1f" font-weight="600" text-anchor="middle">VISUAL AI ARTWORK</text>'
+        + '<text x="%.1f" y="%.1f" fill="rgba(111,93,255,.95)" font-family="Inter, Arial, sans-serif" font-size="%.1f" font-weight="600" text-anchor="middle">%d x %d</text>'
+        + '<text x="%.1f" y="%.1f" fill="rgba(39,212,205,.9)" font-family="Inter, Arial, sans-serif" font-size="%.1f" font-weight="500" text-anchor="middle">Mode Demo - simulasi</text>'
+        + '</svg>'
     ) % (
-        w, h, w, h, w, h,
-        w * 0.04, h * 0.04, w * 0.92, h * 0.92, max(2, w * 0.004),
-        w / 2, h / 2 - fs * 0.4, fs,
-        w / 2, h / 2 + fs * 0.7, fs * 0.75, w, h,
-        w / 2, h / 2 + fs * 1.6, fs * 0.55,
+        w, h, w, h,
+        w, h,
+        w / 2, h * 0.40, sun * 2.6,
+        w / 2, h * 0.40, sun * 0.6,
+        w * 0.03, h * 0.03, w * 0.94, h * 0.94, max(2, w * 0.004),
+        w / 2, h - fs * 2.2, fs,
+        w / 2, h - fs * 1.2, fs * 0.8, w, h,
+        w / 2, h - fs * 0.4, fs * 0.7,
     )
-    import base64
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
 
