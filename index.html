@@ -138,6 +138,11 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .chip{border:1px solid #30363d;border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#1c2128;transition:.12s}
 .chip:hover{color:#fff}.chip.on{border-color:#6F5DFF;color:#fff;background:#161b22}
 #toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
+/* Galeri desktop: grid 2-4 kolom (dikontrol tombol #ncol di header). Mobile tetap tersembunyi via media query. */
+.gcols{display:grid;gap:.75rem}
+.gcols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.gcols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.gcols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 /* ===== Mobile: tab Workspace|Tasks + Tasks view (ala Tensor.Art) ===== */
 .mobtab{display:inline-flex;align-items:center;height:36px;padding:0 10px;font-size:14px;font-weight:600;color:#9ca3af;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.12s}
 .mobtab:hover{color:#fff}
@@ -595,7 +600,7 @@ input[type=range]{cursor:pointer}
         <span class="text-neutral-600 p-1" title="List"><i data-icon="list" class="w-4 h-4"></i></span>
         <span class="text-neutral-600 p-1" title="Grid"><i data-icon="squares-four" class="w-4 h-4"></i></span>
       </div>
-      <div id="grid" class="space-y-3"></div>
+      <div id="grid" class="gcols gcols-2"></div>
     </div>
       <!-- Mobile Tasks (ala Tensor.Art): hasil generate tampil di tab Tasks -->
       <div id="mobtasks" class="flex-col">
@@ -849,7 +854,7 @@ input[type=range]{cursor:pointer}
 <script>
 const $ = id => document.getElementById(id);
 const S = 'https://picsum.photos/seed/';
-const state = { results:[], page:'text', aspect:'portrait', ncol:1, model:null, modeA1111:false, modeElla:false };
+const state = { results:[], page:'text', aspect:'portrait', ncol:1, ncols:2, model:null, modeA1111:false, modeElla:false };
 
 /* ===== Ikon SVG — render <i data-icon="..."> (sebelumnya kosong/tidak terlihat) ===== */
 var ICON_SVG={
@@ -1478,11 +1483,12 @@ function applyNcol(){
   var sel=$('ncount'); if(sel) sel.value=String(state.ncol);
   // Tampilan tengah selalu 1 gambar sesuai aspect ratio (seperti Tensor.Art).
   // ncol hanya menentukan jumlah gambar per generate (imageCount).
-  $('ncollbl').textContent=String(state.ncol);
+  // #ncollbl = jumlah KOLOM galeri desktop (2-4); imageCount per generate tetap pakai state.ncol (dropdown #ncount).
+  $('ncollbl').textContent=String(state.ncols);
   renderGrid();
 }
 $('ncol').addEventListener('click',function(){
-  state.ncol = state.ncol===2?1:2;
+  state.ncols = state.ncols>=4 ? 2 : (state.ncols||2)+1;
   applyNcol();
 });
 $('ncount').addEventListener('change',function(){
@@ -1582,6 +1588,7 @@ function makeGalleryRow(r,i){
 }
 function renderGrid(){
   var grid=$('grid'); grid.innerHTML='';
+  grid.className='gcols gcols-'+(state.ncols>=2&&state.ncols<=4?state.ncols:2);
   var fil=$('gfilter');
   if(!state.results.length){ $('empty').style.display=''; if(fil) fil.classList.add('hidden'); return; }
   $('empty').style.display='none';
@@ -1825,7 +1832,7 @@ var SETTINGS_KEY='rekty.settings', RESULTS_KEY='rekty.results';
 var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', selfhostUrl:'', seed:'',
   prompt:'', negPrompt:'', negCheck:false, steps:10, cfg:1, sampler:'euler', sched:'normal',
   vae:'automatic', width:768, height:1152, aspect:'portrait', clipSkip:2, ensd:31337,
-  upscale:2, ncol:1, page:'text', modeA1111:false, modeElla:false, modelName:'',
+  upscale:2, ncol:1, ncols:2, page:'text', modeA1111:false, modeElla:false, modelName:'',
   loras:[], denoise:0.5, animDur:0.5 };
 var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Daftar model dari tams.tensor.art — pakai di UI.' },
@@ -1847,7 +1854,7 @@ function loadSettings(){
       settings.width=parseInt(s.width)||768; settings.height=parseInt(s.height)||1152;
       settings.aspect=s.aspect||'portrait'; settings.clipSkip=parseInt(s.clipSkip)||2;
       settings.ensd=parseInt(s.ensd)!=null?parseInt(s.ensd):31337; settings.upscale=parseFloat(s.upscale)||2;
-      settings.ncol=parseInt(s.ncol)||1; settings.page=s.page||'text';
+      settings.ncol=parseInt(s.ncol)||1; settings.ncols=parseInt(s.ncols)||2; settings.page=s.page||'text';
       settings.modeA1111=!!s.modeA1111; settings.modeElla=!!s.modeElla; settings.modelName=String(s.modelName||'');
 
       settings.denoise=parseFloat(s.denoise)!=null?parseFloat(s.denoise):0.5;
@@ -1866,7 +1873,7 @@ function collectUI(){
   settings.width=parseInt($('width').value)||768; settings.height=parseInt($('height').value)||1152;
   settings.aspect=state.aspect||'custom'; settings.clipSkip=parseInt($('clipskip').value)||2;
   settings.ensd=parseInt($('etansd').value); settings.upscale=parseFloat($('upscale').value)||2;
-  settings.ncol=state.ncol||1; settings.page=state.page||'text';
+  settings.ncol=state.ncol||1; settings.ncols=state.ncols||2; settings.page=state.page||'text';
   settings.modeA1111=!!state.modeA1111; settings.modeElla=!!state.modeElla;
   settings.modelName=state.model?state.model.name:'';
   settings.loras=LORA.map(function(l){ return { name:l.name, w:l.w, loraUrl:l.loraUrl||'' }; });
@@ -1904,6 +1911,7 @@ function applySettingsUI(){
   $('etansd').value=settings.ensd!=null?settings.ensd:31337; $('ensd').textContent=$('etansd').value;
   if(settings.upscale) $('upscale').value=settings.upscale;
   if(settings.ncol){ state.ncol=settings.ncol; }
+  if(settings.ncols){ state.ncols=settings.ncols; }
   $('i2i-ds').value=settings.denoise!=null?settings.denoise:0.5; $('i2i-dsv').textContent=parseFloat($('i2i-ds').value).toFixed(2);
   state.page=settings.page||'text';
   state.modeA1111=!!settings.modeA1111; state.modeElla=!!settings.modeElla;
