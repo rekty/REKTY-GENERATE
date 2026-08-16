@@ -2444,6 +2444,7 @@ function mkResult(src,par,taskId,credits){
   };
 }
 var _demoPending=false;
+var _demoGen=0; // penanda generasi demo: hasil dari generate lama diabaikan
 
 function demoCanvas(w,h){
   var maxDim=1024, scale=Math.min(1,maxDim/Math.max(w,h));
@@ -2479,14 +2480,27 @@ function demoCanvas(w,h){
 }
 function demoResults(par){
   _demoPending=true;
+  var gen=++_demoGen;
   resetEta();
-  showProgress('Mode demo','Menyiapkan gambar simulasi...',15);
+  showProgress('Mode demo','Membuat gambar dari prompt (Pollinations gratis)...',10);
   setSubmitInfo('',par.params.width+'x'+par.params.height,state.ncol);
-  setTimeout(function(){
-    for(var i=0;i<state.ncol;i++){
-      var src=demoCanvas(par.params.width||768,par.params.height||1152);
-      addResult({src:src, prompt:par.params.prompt, neg:par.params.negativePrompt,
-        model:state.model?state.model.name:'', size:par.params.width+'x'+par.params.height,
+  startProgAnim(); // progress berjalan sambil menunggu gambar sungguhan dibuat
+  var w=par.params.width||768, h=par.params.height||1152;
+  // Pollinations tolak seed > int32 (HTTP 500) — clamp ke rentang aman
+  var seedRaw=parseInt(par.params.seed,10)||Math.floor(Math.random()*1e9);
+  var seedBase=Math.max(1,seedRaw%2000000000);
+  var urls=[];
+  for(var i=0;i<state.ncol;i++){
+    urls.push('https://image.pollinations.ai/prompt/'+encodeURIComponent(par.params.prompt)
+      +'?width='+w+'&height='+h+'&seed='+(seedBase+i)+'&nologo=true');
+  }
+  var done=false;
+  function addDemoResults(srcs){
+    if(gen!==_demoGen) return; // hasil dari generate demo lama tidak dipakai
+    if(done) return; done=true;
+    for(var i=0;i<srcs.length;i++){
+      addResult({src:srcs[i], prompt:par.params.prompt, neg:par.params.negativePrompt,
+        model:state.model?state.model.name:'', size:w+'x'+h,
         seed:par.params.seed, taskId:'', credits:'', ts:Date.now(), demo:true, page:state.page,
         steps:par.params.steps!=null?par.params.steps:'',
         cfg:par.params.cfgScale!=null?par.params.cfgScale:'',
@@ -2498,8 +2512,20 @@ function demoResults(par){
     }
     _demoPending=false;
     hideProgress();
-    notifyDone(state.results.length?[state.results[0].src]:[]);
-  },700);
+    notifyDone(srcs);
+  }
+  function fallbackArt(){
+    var srcs=[];
+    for(var i=0;i<state.ncol;i++) srcs.push(demoCanvas(w,h));
+    addDemoResults(srcs);
+  }
+  // Tunggu gambar pertama selesai dibuat (Pollinations generate on-demand);
+  // kalau gagal/offline/terlalu lama, pakai artwork canvas biar demo tetap jalan.
+  var im=new Image();
+  im.onload=function(){ addDemoResults(urls); };
+  im.onerror=fallbackArt;
+  im.src=urls[0];
+  setTimeout(fallbackArt,180000);
 }
 
 async function doGenerate(){
@@ -2524,8 +2550,8 @@ async function doGenerate(){
     if(settings.mode==='demo'||(!buildApiKey()&&settings.provider!=='pollinations'&&settings.provider!=='selfhost')){
       await new Promise(function(r){ setTimeout(r,300); });
       demoResults(par);
-      if(!buildApiKey()) toast('Belum ada API key — hasil simulasi. Isi API Key TAMS di panel kiri untuk generate asli.');
-      else toast('Mode demo aktif — hasil simulasi.');
+      if(!buildApiKey()) toast('Belum ada API key — mode demo (gambar dari Pollinations gratis). Isi API Key TAMS di panel kiri untuk generate asli.');
+      else toast('Mode demo aktif — gambar contoh dari Pollinations gratis.');
     }else if(settings.provider==='selfhost'){
       // Self-Host: coba langsung browser -> endpoint (butuh CORS di gateway),
       // kalau gagal (CORS/network) otomatis fallback lewat backend /api
