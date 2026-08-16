@@ -131,10 +131,10 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .mfbtn.sel{color:#fff;border-color:#3d444d;background:#21262d}
 .mficon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid #30363d;border-radius:8px;color:#9ca3af;background:#1c2128;cursor:pointer;transition:.12s}
 .mficon:hover{color:#fff;border-color:#3d444d}
-.tact{width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:#1c2128;background:#fff;border-radius:9999px;transition:.12s;box-shadow:0 1px 4px rgba(0,0,0,.45)}
-.tact:hover{background:#e6edf3}
-.tact:active{transform:scale(.94)}
-.tact.on{background:#fff;color:#ef4444}
+.tact{width:26px;height:26px;display:flex;align-items:center;justify-content:center;color:#fff;border-radius:9999px;transition:.12s}
+.tact:hover{background:rgba(255,255,255,.14)}
+.tact:active{transform:scale(.92)}
+.tact.on{color:#ef4444}
 #progoverlay{top:56px}
 @media (max-width:1023px){
   #rightPan.mobile-open{position:fixed;top:56px;right:0;bottom:0;left:auto;z-index:40;display:flex;width:min(21rem,92vw);box-shadow:-8px 0 30px rgba(0,0,0,.5)}
@@ -677,9 +677,9 @@ input[type=range]{cursor:pointer}
 <div id="mobview" class="lg:hidden fixed inset-0 z-50 hidden flex-col bg-black/90">
   <div class="flex-1 relative flex items-center justify-center bg-[#0d1117] pb-14">
     <div id="mv-loading" class="absolute inset-0 flex items-center justify-center"><i data-icon="circle-notch" class="w-8 h-8 animate-spin text-neutral-500"></i></div>
-    <button id="mv-close" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white text-[#1c2128] flex items-center justify-center hover:bg-[#e6edf3] shadow-lg" title="Tutup"><i data-icon="x" class="w-4 h-4"></i></button>
+    <button id="mv-close" class="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/45 text-white flex items-center justify-center hover:bg-black/60 border border-white/40 shadow-lg" title="Tutup"><i data-icon="x" class="w-4 h-4"></i></button>
     <img id="mv-img" class="relative z-10 max-w-full max-h-[72vh] w-auto h-auto object-contain" alt=""/>
-    <button id="mv-dl" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-9 h-9 rounded-full bg-white text-[#1c2128] flex items-center justify-center hover:bg-[#e6edf3] shadow-lg" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>
+    <button id="mv-dl" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-9 h-9 rounded-full bg-black/45 text-white flex items-center justify-center hover:bg-black/60 border border-white/40 shadow-lg" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>
   </div>
 </div>
 
@@ -814,7 +814,11 @@ var ICON_SVG={
   'circle-notch':'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a10 10 0 0 1 10 10h-4a6 6 0 0 0-6-6V2z"/></svg>',
   'x':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
   'copy':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
-  'layers':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 10 5-10 5L2 7l10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>'
+  'layers':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 10 5-10 5L2 7l10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>',
+  'paper-plane':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+  'download':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+  'thumbs-down':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2.52a2 2 0 0 0-1.72.98l-.92 1.84A3 3 0 0 1 12 22a2 2 0 0 1-3-1.88Z"/></svg>',
+  'dots-three-vertical':'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>'
 };
 function renderIcons(root){
   (root||document).querySelectorAll('[data-icon]').forEach(function(el){
@@ -2573,7 +2577,7 @@ function renderMobTasks(){
     img.addEventListener('click',function(){ openMobView(r); });
     wrap.appendChild(img);
     var pill=document.createElement('div');
-    pill.className='absolute top-2 right-2 flex items-center gap-1 rounded-full p-1 z-10';
+    pill.className='absolute top-3 right-3 flex items-center gap-0.5 bg-[#1c2128]/90 backdrop-blur rounded-full px-1 py-1 z-10 border border-white/15 shadow-lg';
     pill.innerHTML='<button class="tact" title="Bagikan ke Facebook"><i data-icon="paper-plane" class="w-4 h-4"></i></button>'
       +'<button class="tact" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>'
       +'<span class="w-px h-4 bg-white/30 mx-0.5"></span>'
