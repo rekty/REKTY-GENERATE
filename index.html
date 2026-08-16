@@ -2829,14 +2829,19 @@ function renderMobTasks(){
       wrap.appendChild(ov);
     }
     d.appendChild(wrap);
-    // ---- footer: Text to Image + model (seperti Tensor.Art) ----
-    var foot=document.createElement('div');
-    foot.className='flex items-center gap-2.5 px-3 py-2.5 border-t bd';
-    foot.innerHTML='<img src="'+(r.src||'')+'" class="w-8 h-8 rounded-md object-cover border bd shrink-0"/>'
-      +'<div class="min-w-0 flex-1"><div class="text-[11px] text-neutral-500">'+mobTaskLbl(r)+'</div>'
-      +'<div class="text-xs font-medium truncate text-neutral-200">'+(r.model||'Model')+'</div></div>'
+    // ---- header row: label + refresh + menu (ala Tensor.Art) ----
+    var head=document.createElement('div');
+    head.className='flex items-center gap-1.5 px-3 py-2.5 border-t bd';
+    head.innerHTML='<span class="text-[11px] text-neutral-500 flex-1 min-w-0">'+mobTaskLbl(r)+'</span>'
+      +'<button class="tact shrink-0" title="Regenerate (remix)"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></button>'
       +'<button class="tact shrink-0" title="Menu task"><i data-icon="dots-three-vertical" class="w-4 h-4"></i></button>';
-    d.appendChild(foot);
+    d.appendChild(head);
+    // ---- model row: thumbnail + nama model (ala Tensor.Art) ----
+    var mrow=document.createElement('div');
+    mrow.className='flex items-center gap-2.5 px-3 pb-3';
+    mrow.innerHTML='<img src="'+(r.src||'')+'" class="w-8 h-8 rounded-md object-cover border bd shrink-0"/>'
+      +'<div class="min-w-0 flex-1 text-xs font-medium truncate text-neutral-200">'+(r.model||'Model')+'</div>';
+    d.appendChild(mrow);
     // ---- tombol Expand (centered pill, buka keterangan) ----
     var exp=document.createElement('button');
     exp.className='w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-neutral-400 hover:text-white hover:bg-[#21262d] border-t bd transition-colors';
@@ -2853,14 +2858,21 @@ function renderMobTasks(){
       exp.querySelector('.exp-label').textContent=open?'Expand':'Collapse';
       exp.querySelector('.exp-chev').style.transform=open?'':'rotate(180deg)';
     });
+    // ---- tombol View Detail lebar (ala Tensor.Art) ----
+    var vd=document.createElement('button');
+    vd.className='w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-neutral-200 hover:bg-[#21262d] border-t bd transition-colors';
+    vd.innerHTML='<i data-icon="list" class="w-3.5 h-3.5 text-neutral-400"></i>View Detail';
+    d.appendChild(vd);
     list.appendChild(d);
     // ---- wiring pill aksi ----
     var btns=pill.querySelectorAll('button');
     btns[0].addEventListener('click',function(e){ e.stopPropagation(); shareImage(r); });
     btns[1].addEventListener('click',function(e){ e.stopPropagation(); dlImage(r.src); });
     btns[2].addEventListener('click',function(e){ e.stopPropagation(); if(r.dislike){ undoDislike(r); } else { openDislike(r); } });
-    var mBtn=foot.querySelector('button');
+    var refBtn=head.querySelectorAll('button')[0], mBtn=head.querySelectorAll('button')[1];
+    refBtn.addEventListener('click',function(e){ e.stopPropagation(); remixResult(r); });
     mBtn.addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, mBtn, function(){ removeMobTask(i); }); });
+    vd.addEventListener('click',function(){ openParams(r); });
   });
 }
 var _mobCur=null;
