@@ -544,7 +544,7 @@ input[type=range]{cursor:pointer}
         </div>
       </div>
 
-      <!-- Img2Img upload -->
+      <!-- Img2Img upload (ala Tensor.Art: preview penuh + denoising + ikuti ukuran asli) -->
       <div id="img2img-card" class="hidden mb-4 border bd rounded-xl bg-[#161b22] p-4">
         <div class="flex items-center justify-between mb-2">
           <span class="text-sm font-semibold">Img2Img — gambar awal</span>
@@ -555,12 +555,18 @@ input[type=range]{cursor:pointer}
         </div>
         <input id="i2i-file" type="file" accept="image/*" class="hidden"/>
         <div id="i2i-preview" class="hidden mt-3">
-          <img id="i2i-img" class="w-40 h-40 object-cover rounded-lg border bd" alt=""/>
+          <img id="i2i-img" class="block mx-auto max-w-full max-h-72 object-contain rounded-lg border bd" alt=""/>
+          <div class="text-center text-[11px] text-neutral-500 mt-1.5"><span id="i2i-dims"></span></div>
         </div>
         <div class="mt-3">
           <label class="text-xs flex justify-between"><span>Denoising Strength</span><span id="i2i-dsv" class="text-neutral-500">0.50</span></label>
           <input id="i2i-ds" type="range" min="0" max="1" step="0.05" value="0.5" class="slider mt-1"/>
+          <p class="text-[10px] text-neutral-600 mt-1">0.1 = hampir sama dengan aslinya · 1.0 = hasil baru total</p>
         </div>
+        <label class="mt-2 flex items-center gap-2 text-xs text-neutral-400 cursor-pointer select-none">
+          <input id="i2i-follow" type="checkbox" class="w-3.5 h-3.5"/>
+          <span>Ikuti ukuran gambar asli (ganti Width/Height saat generate)</span>
+        </label>
       </div>
 
       <!-- Kartu Submitting (seperti Tensor.Art): tampil di ATAS area output, tepat di tempat hasil muncul -->
@@ -1784,6 +1790,7 @@ $('lightbox').addEventListener('click',function(e){ if(e.target===$('lightbox'))
 /* ===== payload (struktur nyata Tensor.Art) ===== */
 function buildPayload(){
   var neg=$('negcheck').checked?$('negprompt').value:'';
+  var _i2i=i2iWH(); // Img2Img: "ikuti ukuran gambar asli" -> pakai ukuran input (diklem)
   var m=state.model;
   var rawPrompt=$('prompt').value;
   // Mode A1111 OFF (default): bersihkan sintaks bobot (kata:1.2)/[kata] agar
@@ -1799,8 +1806,8 @@ function buildPayload(){
       sdVae:$('vae').value==='automatic'?'Automatic':$('vae').value,
       prompt:prompt,
       negativePrompt:neg,
-      height:parseInt($('height').value),
-      width:parseInt($('width').value),
+      height:_i2i?_i2i.h:parseInt($('height').value),
+      width:_i2i?_i2i.w:parseInt($('width').value),
       imageCount:state.ncol,
       steps:parseInt($('steps').value),
       images:i2iDataUrl?[i2iDataUrl]:[],
@@ -2487,11 +2494,40 @@ function demoCanvas(w,h){
   // hasil demo tampil seperti gambar generate sungguhan (tanpa label teks)
   return c.toDataURL('image/png');
 }
+/* Demo img2img: hasil = gambar input yang di-transform halus (cover-fit + filter)
+   supaya mode demo benar-benar terasa "image to image" dari gambar yang diupload. */
+function i2iDemoCanvas(w,h,idx){
+  var maxDim=1024, scale=Math.min(1,maxDim/Math.max(w,h));
+  var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+  var c=document.createElement('canvas'); c.width=cw; c.height=ch;
+  var x=c.getContext('2d');
+  x.fillStyle='#0d1117'; x.fillRect(0,0,cw,ch);
+  var im=i2iImgEl;
+  if(im&&im.complete&&im.naturalWidth){
+    var ir=im.naturalWidth/im.naturalHeight, cr=cw/ch, sw,sh,sx,sy;
+    if(ir>cr){ sh=im.naturalHeight; sw=im.naturalHeight*cr; sx=(im.naturalWidth-sw)/2; sy=0; }
+    else{ sw=im.naturalWidth; sh=im.naturalWidth/cr; sx=0; sy=(im.naturalHeight-sh)/2; }
+    // variasi per gambar: hue + kecerahan + saturasi beda-beda (seperti hasil generate beda)
+    var hue=(idx||0)*24+((w+h+idx)%180);
+    x.filter='saturate(1.2) contrast(1.06) brightness(1.04) hue-rotate('+hue+'deg) blur(0.5px)';
+    x.drawImage(im,sx,sy,sw,sh,0,0,cw,ch);
+    x.filter='none';
+    // vignette halus ala hasil diffusion
+    var v=x.createRadialGradient(cw/2,ch/2,Math.min(cw,ch)*.35,cw/2,ch/2,Math.max(cw,ch)*.75);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.22)');
+    x.fillStyle=v; x.fillRect(0,0,cw,ch);
+  } else {
+    return demoCanvas(w,h);
+  }
+  return c.toDataURL('image/png');
+}
+
 function demoResults(par){
   _demoPending=true;
   var gen=++_demoGen;
   resetEta();
-  showProgress('Mode demo','Membuat gambar dari prompt (Pollinations gratis)...',10);
+  var isI2I=state.page==='img'&&i2iDataUrl&&i2iImgEl;
+  showProgress('Mode demo',isI2I?'Mengubah gambar awal (mode demo)...':'Membuat gambar dari prompt (Pollinations gratis)...',10);
   setSubmitInfo('',par.params.width+'x'+par.params.height,state.ncol);
   startProgAnim(); // progress berjalan sambil menunggu gambar sungguhan dibuat
   var w=par.params.width||768, h=par.params.height||1152;
@@ -2507,6 +2543,13 @@ function demoResults(par){
   for(var i=0;i<state.ncol;i++){
     urls.push('https://image.pollinations.ai/prompt/'+encodeURIComponent(par.params.prompt)
       +'?width='+w+'&height='+h+'&seed='+(seedBase+i)+modelParam+'&nologo=true');
+  }
+  // Img2Img demo: hasil diturunkan dari gambar yang di-upload (tanpa jaringan, offline-safe).
+  if(isI2I){
+    var srcs=[];
+    for(var i=0;i<state.ncol;i++) srcs.push(i2iDemoCanvas(w,h,i));
+    addDemoResults(srcs);
+    return;
   }
   var done=false;
   function addDemoResults(srcs){
@@ -2635,24 +2678,38 @@ async function doGenerate(){
   }
 }
 
-/* --- Img2Img --- */
-var i2iDataUrl=null;
+/* --- Img2Img (ala Tensor.Art: upload -> preview penuh + denoising + ikuti ukuran asli) --- */
+var i2iDataUrl=null, i2iW=0, i2iH=0, i2iImgEl=null;
 $('i2i-drop').addEventListener('click',function(){ $('i2i-file').click(); });
 $('i2i-file').addEventListener('change',function(e){ handleI2iFile(e.target.files&&e.target.files[0]); });
 $('i2i-drop').addEventListener('dragover',function(e){ e.preventDefault(); });
 $('i2i-drop').addEventListener('drop',function(e){ e.preventDefault(); handleI2iFile(e.dataTransfer.files&&e.dataTransfer.files[0]); });
 $('i2i-ds').addEventListener('input',function(e){ $('i2i-dsv').textContent=parseFloat(e.target.value).toFixed(2); });
 $('i2i-clear').addEventListener('click',function(){
-  i2iDataUrl=null; $('i2i-preview').classList.add('hidden'); $('i2i-img').src=''; $('i2i-drop').classList.remove('hidden');
+  i2iDataUrl=null; i2iW=0; i2iH=0; i2iImgEl=null;
+  $('i2i-preview').classList.add('hidden'); $('i2i-img').src=''; $('i2i-drop').classList.remove('hidden');
 });
 function handleI2iFile(f){
   if(!f) return;
   var rd=new FileReader();
   rd.onload=function(){
     i2iDataUrl=rd.result;
+    // preload Image sekaligus baca ukuran asli (untuk "ikuti ukuran asli" + demo img2img)
+    var im=new Image();
+    im.onload=function(){
+      i2iW=im.naturalWidth||0; i2iH=im.naturalHeight||0; i2iImgEl=im;
+      var dm=$('i2i-dims'); if(dm) dm.textContent=(i2iW&&i2iH)?(i2iW+' × '+i2iH+' px'):'';
+    };
+    im.src=rd.result;
     $('i2i-img').src=rd.result; $('i2i-preview').classList.remove('hidden'); $('i2i-drop').classList.add('hidden');
   };
   rd.readAsDataURL(f);
+}
+/* Ukuran output mengikuti gambar asli (diklem 64-2048, pertahankan aspect ratio). */
+function i2iWH(){
+  if(!(state.page==='img'&&i2iDataUrl&&$('i2i-follow')&&$('i2i-follow').checked&&i2iW>0&&i2iH>0)) return null;
+  var sc=Math.min(2048/i2iW,2048/i2iH,1);
+  return { w:Math.max(64,Math.round(i2iW*sc)), h:Math.max(64,Math.round(i2iH*sc)) };
 }
 
 /* --- render per tab --- */
