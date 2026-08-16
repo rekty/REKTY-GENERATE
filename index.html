@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
 <meta charset="UTF-8" />
@@ -654,7 +654,7 @@ input[type=range]{cursor:pointer}
 </div>
 
 <!-- ============ MOBILE DISLIKE (ala Tensor.Art: Unliked works hidden + Dislike Reason) ============ -->
-<div id="mobdislike" class="lg:hidden fixed inset-0 z-[70] hidden items-center justify-center bg-black/70 p-5">
+<div id="mobdislike" class="lg:hidden fixed inset-0 z-[70] hidden items-center justify-center bg-[#0d1117]/80 p-5">
   <div class="w-full max-w-sm bg-[#161b22] border bd rounded-2xl overflow-hidden">
     <div class="p-5">
       <div class="text-lg font-bold text-white">Unliked works hidden</div>
@@ -2609,7 +2609,7 @@ function renderMobTasks(){
     if(r.dislike){
       img.classList.add('blur-md','opacity-70');
       var ov=document.createElement('div');
-      ov.className='absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/30 z-10 cursor-pointer';
+      ov.className='absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[#0d1117]/85 z-10 cursor-pointer';
       ov.innerHTML='<div class="text-sm font-semibold text-white">Unliked works hidden</div>'
         +'<div class="text-[11px] text-neutral-400 max-w-[85%] text-center">'+esc(r.dislike)+'</div>';
       ov.addEventListener('click',function(){ openDislike(r); });
