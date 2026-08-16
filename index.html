@@ -2881,7 +2881,8 @@ function applyI2iData(dataUrl){
 }
 /* Pick hasil generate sebelumnya sebagai gambar awal (ala Tensor.Art). */
 $('i2i-ws').addEventListener('click',function(e){ e.stopPropagation(); openI2iPicker(); });
-$('i2i-lib').addEventListener('click',function(e){ e.stopPropagation(); openI2iPicker(); });
+// Library = galeri gambar dari perangkat (file picker -> langsung jadi input img2img)
+$('i2i-lib').addEventListener('click',function(e){ e.stopPropagation(); $('i2i-file').click(); });
 $('i2i-pick-close').addEventListener('click',closeI2iPicker);
 $('i2i-picker').addEventListener('click',function(e){ if(e.target===$('i2i-picker')) closeI2iPicker(); });
 function openI2iPicker(){
