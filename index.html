@@ -1541,8 +1541,9 @@ function makeGalleryRow(r,i){
   row.appendChild(img);
   if(r.demo){
     var bd=document.createElement('span');
-    bd.className='absolute top-2 left-2 text-[9px] bg-black/60 px-1.5 py-0.5 rounded text-neutral-300 z-10 pointer-events-none';
-    bd.textContent='DEMO'; row.appendChild(bd);
+    bd.className='absolute top-2 left-2 flex items-center gap-1 text-[8px] font-medium tracking-[0.14em] bg-white/10 backdrop-blur-md border border-white/15 text-white/80 px-2 py-0.5 rounded-full z-20 pointer-events-none';
+    bd.innerHTML='<span class="w-1 h-1 rounded-full bg-[#27D4CD] shadow-[0_0_4px_rgba(39,212,205,.8)]"></span>DEMO';
+    row.appendChild(bd);
   }
   // nama model kecil di pojok kiri bawah gambar (seperti Tensor.Art)
   var mdl=document.createElement('span');
@@ -2836,6 +2837,12 @@ function renderMobTasks(){
     img.src=r.src; img.className='block mx-auto max-w-full max-h-[80vh] w-auto h-auto object-contain cursor-zoom-in';
     img.addEventListener('click',function(){ openMobView(r); });
     wrap.appendChild(img);
+    if(r.demo){
+      var bd=document.createElement('span');
+      bd.className='absolute top-2 left-2 flex items-center gap-1 text-[8px] font-medium tracking-[0.14em] bg-white/10 backdrop-blur-md border border-white/15 text-white/80 px-2 py-0.5 rounded-full z-20 pointer-events-none';
+      bd.innerHTML='<span class="w-1 h-1 rounded-full bg-[#27D4CD] shadow-[0_0_4px_rgba(39,212,205,.8)]"></span>DEMO';
+      wrap.appendChild(bd);
+    }
     var pill=document.createElement('div');
     pill.className='absolute top-3 right-3 flex items-center gap-0.5 bg-[#1c2128]/90 backdrop-blur rounded-full px-1 py-1 z-30 border border-white/15 shadow-lg';
     pill.innerHTML='<button class="tact" title="Bagikan ke Facebook"><i data-icon="paper-plane" class="w-4 h-4"></i></button>'
