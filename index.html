@@ -523,7 +523,6 @@ input[type=range]{cursor:pointer}
           <div class="flex items-center gap-2 flex-wrap justify-end">
             <span class="chip" id="chip-a1111" title="Mode A1111: saat ON sintaks bobot (kata:1.2) dipertahankan; saat OFF dibersihkan otomatis sebelum dikirim">A1111</span>
             <span class="chip" id="chip-ella" title="Mode Ella: prompt otomatis diperluas ke bahasa alami (AI) saat Generate">Ella</span>
-            <span class="chip" id="chip-anticrop" title="Anti-crop: otomatis tambahkan 'full portrait, head fully visible' ke prompt supaya kepala tidak terpotong oleh framing model">Anti-crop</span>
             <select id="ncount" class="inp w-[5.4rem] text-xs h-8" title="Jumlah gambar">
               <option value="1" selected>1 image</option>
               <option value="2">2 images</option>
@@ -1320,13 +1319,6 @@ $('enh-use').addEventListener('click',function(){
 /* Chip A1111 & Ella = mode prompt nyata (saling eksklusif) */
 document.querySelectorAll('.chip').forEach(function(c){
   c.addEventListener('click',function(){
-    if(c.id==='chip-anticrop'){
-      settings.antiCrop=!settings.antiCrop;
-      c.classList.toggle('on',settings.antiCrop);
-      saveSettings();
-      toast(settings.antiCrop?'Anti-crop aktif — prompt otomatis diberi "full portrait, head fully visible"':'Anti-crop nonaktif');
-      return;
-    }
     if(c.id==='chip-a1111'||c.id==='chip-ella'){
       var on=!c.classList.contains('on');
       document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('on')});
@@ -1649,12 +1641,6 @@ function buildPayload(){
   // Mode A1111 OFF (default): bersihkan sintaks bobot (kata:1.2)/[kata] agar
   // provider yang tidak support sintaks A1111 tetap paham prompt.
   var prompt=(state.modeA1111||false)?rawPrompt:stripA1111(rawPrompt);
-  // Anti-crop (default ON): tambahkan kata kunci framing penuh supaya model tidak memotong kepala/kaki.
-  // Pengecualian: prompt yang memang close-up / framing khusus TIDAK ditambahkan apa-apa (hormati keinginan user).
-  var _acCloseup=/close.?up|closeup|headshot|macro|zoom|face.?shot|upper body|head and shoulders|bust shot|facial/i;
-  if(settings.antiCrop&&prompt&&!_acCloseup.test(prompt)&&!/full portrait|head fully visible|full body|headroom|entire head|head to toe|full body shot/i.test(prompt)){
-    prompt=prompt.trim()+', full body portrait, entire subject fully visible head to toe, head fully visible';
-  }
   return {
     params:{
       baseModel:{ modelId:m.modelId, modelFileId:m.modelFileId },
@@ -1699,7 +1685,7 @@ var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', selfhost
   prompt:'', negPrompt:'', negCheck:false, steps:10, cfg:1, sampler:'euler', sched:'normal',
   vae:'automatic', width:768, height:1152, aspect:'portrait', clipSkip:2, ensd:31337,
   upscale:2, ncol:1, page:'text', modeA1111:false, modeElla:false, modelName:'',
-  loras:[], denoise:0.5, animDur:0.5, antiCrop:false };
+  loras:[], denoise:0.5, animDur:0.5 };
 var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
@@ -1722,7 +1708,7 @@ function loadSettings(){
       settings.ensd=parseInt(s.ensd)!=null?parseInt(s.ensd):31337; settings.upscale=parseFloat(s.upscale)||2;
       settings.ncol=parseInt(s.ncol)||1; settings.page=s.page||'text';
       settings.modeA1111=!!s.modeA1111; settings.modeElla=!!s.modeElla; settings.modelName=String(s.modelName||'');
-      settings.antiCrop=s.antiCrop===true;
+
       settings.denoise=parseFloat(s.denoise)!=null?parseFloat(s.denoise):0.5;
       settings.animDur=parseFloat(s.animDur)!=null?parseFloat(s.animDur):0.5;
       settings.loras=Array.isArray(s.loras)?s.loras.map(function(l){ return { name:String(l.name||''), w:parseFloat(l.w)!=null?parseFloat(l.w):0.8, loraUrl:String(l.loraUrl||'') }; }).filter(function(l){ return l.name; }):[];
@@ -1781,7 +1767,7 @@ function applySettingsUI(){
   state.page=settings.page||'text';
   state.modeA1111=!!settings.modeA1111; state.modeElla=!!settings.modeElla;
   document.querySelectorAll('.chip').forEach(function(c){
-    c.classList.toggle('on',(c.id==='chip-a1111'&&state.modeA1111)||(c.id==='chip-ella'&&state.modeElla)||(c.id==='chip-anticrop'&&settings.antiCrop));
+    c.classList.toggle('on',(c.id==='chip-a1111'&&state.modeA1111)||(c.id==='chip-ella'&&state.modeElla));
   });
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.toggle('sel', t.dataset.tab===state.page); });
   updateProviderUI();
