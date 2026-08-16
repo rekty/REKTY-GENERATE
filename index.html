@@ -651,6 +651,26 @@ input[type=range]{cursor:pointer}
   <div id="md-body" class="flex-1 overflow-y-auto hidebar p-4 space-y-4"></div>
 </div>
 
+<!-- ============ MOBILE DISLIKE (ala Tensor.Art: Unliked works hidden + Dislike Reason) ============ -->
+<div id="mobdislike" class="lg:hidden fixed inset-0 z-[70] hidden items-center justify-center bg-black/70 p-5">
+  <div class="w-full max-w-sm bg-[#161b22] border bd rounded-2xl overflow-hidden">
+    <div class="p-5">
+      <div class="text-lg font-bold text-white">Unliked works hidden</div>
+      <div class="text-sm text-neutral-500 mt-0.5">Dislike Reason</div>
+      <div class="grid grid-cols-1 gap-2 mt-4">
+        <button class="dl-reason text-left text-xs text-neutral-200 bg-[#21262d] hover:bg-[#30363d] border border-white/10 rounded-lg px-3 py-2.5 flex items-center gap-2 transition-colors" data-reason="Visual corruption / artifacts"><span class="text-neutral-500 shrink-0">+</span>Visual corruption / artifacts</button>
+        <button class="dl-reason text-left text-xs text-neutral-200 bg-[#21262d] hover:bg-[#30363d] border border-white/10 rounded-lg px-3 py-2.5 flex items-center gap-2 transition-colors" data-reason="Excessive noise"><span class="text-neutral-500 shrink-0">+</span>Excessive noise</button>
+        <button class="dl-reason text-left text-xs text-neutral-200 bg-[#21262d] hover:bg-[#30363d] border border-white/10 rounded-lg px-3 py-2.5 flex items-center gap-2 transition-colors" data-reason="Poor visual aesthetics"><span class="text-neutral-500 shrink-0">+</span>Poor visual aesthetics</button>
+        <div class="grid grid-cols-2 gap-2">
+          <button class="dl-reason text-left text-xs text-neutral-200 bg-[#21262d] hover:bg-[#30363d] border border-white/10 rounded-lg px-3 py-2.5 flex items-center gap-2 transition-colors" data-reason="Style mismatch"><span class="text-neutral-500 shrink-0">+</span>Style mismatch</button>
+          <button class="dl-reason text-left text-xs text-neutral-200 bg-[#21262d] hover:bg-[#30363d] border border-white/10 rounded-lg px-3 py-2.5 flex items-center gap-2 transition-colors" data-reason="Poor aesthetics"><span class="text-neutral-500 shrink-0">+</span>Poor aesthetics</button>
+        </div>
+      </div>
+    </div>
+    <button id="dl-close" class="w-full py-3 text-sm font-medium text-neutral-400 hover:text-white border-t bd transition-colors">Close</button>
+  </div>
+</div>
+
 <!-- ============ MOBILE IMAGE VIEWER (ala Tensor.Art: gambar aspect ratio + download di bawah) ============ -->
 <div id="mobview" class="lg:hidden fixed inset-0 z-50 hidden flex-col bg-black/90">
   <div class="flex-1 relative flex items-center justify-center bg-[#0d1117]">
@@ -658,15 +678,6 @@ input[type=range]{cursor:pointer}
     <button id="mv-close" class="absolute top-3 right-3 z-20 w-10 h-10 rounded-full bg-[#30363d] text-white flex items-center justify-center hover:bg-[#3d444d] border border-white/50 shadow-lg" title="Tutup"><i data-icon="x" class="w-5 h-5"></i></button>
     <img id="mv-img" class="relative z-10 max-w-full max-h-[86vh] w-auto h-auto object-contain" alt=""/>
     <button id="mv-dl" class="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 w-12 h-12 rounded-full bg-[#30363d] text-white flex items-center justify-center hover:bg-[#3b82f6] border border-white/50 shadow-lg" title="Download"><i data-icon="download" class="w-5 h-5"></i></button>
-  </div>
-  <div class="flex items-center gap-2.5 px-4 py-3 border-t bd bg-[#161b22] shrink-0">
-    <img id="mv-thumb" class="w-9 h-9 rounded-md object-cover border bd" alt=""/>
-    <div class="min-w-0 flex-1">
-      <div id="mv-lbl" class="text-[11px] text-neutral-500">Text to Image</div>
-      <div id="mv-model" class="text-xs font-medium truncate text-neutral-200">Model</div>
-    </div>
-    <span class="text-neutral-500" title="Tersimpan di cloud"><i data-icon="cloud-arrow-up" class="w-4 h-4"></i></span>
-    <button id="mv-more" class="w-9 h-9 flex items-center justify-center text-neutral-500 hover:text-white rounded-lg" title="Menu"><i data-icon="dots-three-vertical" class="w-5 h-5"></i></button>
   </div>
 </div>
 
@@ -2512,8 +2523,15 @@ function removeMobTask(i){
   renderMobTasks(); renderGrid(); renderDetail(); renderRight();
 }
 function shareImage(r){
-  if(navigator.share){ navigator.share({title:'REKTY AI',text:r.prompt||'',url:r.src}).catch(function(){}); }
-  else { dlImage(r.src); toast('Gambar di-download'); }
+  var src=r.src||'';
+  if(src.indexOf('data:')!==0&&src.indexOf('http')===0){
+    var fb='https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(src);
+    var w=window.open(fb,'_blank','width=640,height=560,noopener,noreferrer');
+    if(w) w.focus();
+    return;
+  }
+  if(navigator.share){ navigator.share({title:'REKTY AI',text:r.prompt||'',url:src}).catch(function(){}); }
+  else { dlImage(src); toast('Gambar di-download'); }
 }
 function mobTaskLbl(r){ return r.demo?'Demo (simulasi)':(r.page==='img'?'Image to Image':'Text to Image'); }
 function mobDetailHTML(r){
@@ -2554,10 +2572,20 @@ function renderMobTasks(){
     wrap.appendChild(img);
     var pill=document.createElement('div');
     pill.className='absolute top-2 right-2 flex items-center gap-0.5 bg-[#30363d]/95 backdrop-blur rounded-full px-1.5 py-1.5 z-10 border border-white/40 shadow-lg';
-    pill.innerHTML='<button class="tact" title="Bagikan"><i data-icon="share" class="w-4 h-4"></i></button>'
+    pill.innerHTML='<button class="tact" title="Bagikan ke Facebook"><i data-icon="paper-plane" class="w-4 h-4"></i></button>'
       +'<button class="tact" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>'
-      +'<button class="tact" title="Hapus"><i data-icon="thumbs-down" class="w-4 h-4"></i></button>';
+      +'<span class="w-px h-4 bg-white/30 mx-0.5"></span>'
+      +'<button class="tact'+(r.dislike?' text-red-400':'')+'" title="'+(r.dislike?'Batal dislike (kembalikan)':'Dislike')+'"><i data-icon="thumbs-down" class="w-4 h-4"></i></button>';
     wrap.appendChild(pill);
+    if(r.dislike){
+      img.classList.add('blur-md','opacity-70');
+      var ov=document.createElement('div');
+      ov.className='absolute inset-0 flex flex-col items-center justify-center gap-1 bg-black/30 z-10 cursor-pointer';
+      ov.innerHTML='<div class="text-sm font-semibold text-white">Unliked works hidden</div>'
+        +'<div class="text-[11px] text-neutral-400 max-w-[85%] text-center">'+esc(r.dislike)+'</div>';
+      ov.addEventListener('click',function(){ openDislike(r); });
+      wrap.appendChild(ov);
+    }
     d.appendChild(wrap);
     // ---- footer: Text to Image + model (seperti Tensor.Art) ----
     var foot=document.createElement('div');
@@ -2587,7 +2615,7 @@ function renderMobTasks(){
     var btns=pill.querySelectorAll('button');
     btns[0].addEventListener('click',function(e){ e.stopPropagation(); shareImage(r); });
     btns[1].addEventListener('click',function(e){ e.stopPropagation(); dlImage(r.src); });
-    btns[2].addEventListener('click',function(e){ e.stopPropagation(); removeMobTask(i); });
+    btns[2].addEventListener('click',function(e){ e.stopPropagation(); if(r.dislike){ undoDislike(r); } else { openDislike(r); } });
   });
 }
 var _mobCur=null;
@@ -2651,9 +2679,6 @@ function openMobView(r){
   img.onload=function(){ if(ld) ld.classList.add('hidden'); };
   img.onerror=function(){ if(ld) ld.classList.add('hidden'); };
   img.src=r.src||'';
-  $('mv-thumb').src=r.src||'';
-  $('mv-lbl').textContent=mobTaskLbl(r);
-  $('mv-model').textContent=r.model||'Model';
   $('mobview').classList.remove('hidden'); $('mobview').classList.add('flex');
 }
 function closeMobView(){ $('mobview').classList.add('hidden'); $('mobview').classList.remove('flex'); }
@@ -2662,15 +2687,25 @@ function closeMobView(){ $('mobview').classList.add('hidden'); $('mobview').clas
   if(v){
     $('mv-close').addEventListener('click',closeMobView);
     $('mv-dl').addEventListener('click',function(){ if(_mobViewCur) dlImage(_mobViewCur.src); });
-    $('mv-more').addEventListener('click',function(){
-      if(_mobViewCur&&confirm('Hapus task ini?')){
-        var i=state.results.indexOf(_mobViewCur);
-        if(i>-1) removeMobTask(i);
-        closeMobView();
-      }
-    });
     v.addEventListener('click',function(e){ if(e.target===v) closeMobView(); });
   }
+})();
+/* ===== Dislike (Unliked works hidden — ala Tensor.Art) ===== */
+var _dislikeTarget=null;
+function openDislike(r){ _dislikeTarget=r; var m=$('mobdislike'); if(m){ m.classList.remove('hidden'); m.classList.add('flex'); } }
+function closeDislike(){ var m=$('mobdislike'); if(m){ m.classList.add('hidden'); m.classList.remove('flex'); } }
+function applyDislike(reason){
+  var r=_dislikeTarget; if(!r||!reason) return;
+  r.dislike=reason; persistResults(); closeDislike(); renderMobTasks();
+}
+function undoDislike(r){ r.dislike=''; persistResults(); renderMobTasks(); }
+(function(){
+  var m=$('mobdislike'); if(!m) return;
+  var close=$('dl-close'); if(close) close.addEventListener('click',closeDislike);
+  m.querySelectorAll('.dl-reason').forEach(function(b){
+    b.addEventListener('click',function(){ applyDislike(b.getAttribute('data-reason')); });
+  });
+  m.addEventListener('click',function(e){ if(e.target===m) closeDislike(); });
 })();
 renderCanvas();
 renderGrid();
