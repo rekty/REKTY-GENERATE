@@ -1269,16 +1269,25 @@ $('btn-translate').addEventListener('click',function(){
    fallback template lokal kalau tanpa key. */
 var _enhOrig='';
 function fallbackEnhance(p){
+  p=(p||'').trim();
+  if(!p) return p;
+  var low=p.toLowerCase();
+  // JAGA framing asli — jangan pernah menambahkan kata framing yang bertentangan
+  // (mis. "full body" ke prompt "close up" — persis bug framing yang dulu).
+  var closeup=/(close[- ]?up|headshot|macro|zoom|face shot|upper body|head and shoulders|bust shot|facial)/.test(low);
+  var fullbody=/(full body|head to toe|head-to-toe|full-length|full length|whole body)/.test(low);
   var segs=p.split(',').map(function(s){return s.trim()}).filter(Boolean);
-  var tagLike=segs.length>=3 && segs.every(function(s){return s.length<=28});
+  var tagLike=segs.length>=2 && segs.every(function(s){return s.length<=30});
   if(tagLike){
-    // input gaya tag WD14/booru: perluas jadi prompt alami
-    return 'A highly detailed image: '+segs.join(', ')
+    // input gaya tag WD14/booru: perluas jadi kalimat alami (template lokal tanpa LLM)
+    var style=closeup?'close-up ':fullbody?'full-body ':'';
+    return 'A highly detailed '+style+'image: '+segs.join(', ').replace(/\s*,\s*,+/g,',')
       +', natural soft lighting, shallow depth of field, sharp focus, vibrant colors, ultra-detailed, masterpiece, best quality';
   }
-  return p
-    +'\n\nEnhance detail, lighting, composition, and atmosphere. '
-    +'Ultra-detailed, professional photography, sharp focus, cinematic lighting.';
+  // Prompt sudah natural language — tanpa LLM tidak ada "enhance" yang jujur.
+  // Mengembalikan prompt apa adanya (dibersihkan) lebih baik daripada menempel
+  // instruksi bahasa Inggris yang mencemari prompt (bug fallback lama).
+  return p.replace(/\s*,\s*,+/g,',').replace(/\s{2,}/g,' ').trim();
 }
 function openEnhModal(p){
   _enhOrig=p;
