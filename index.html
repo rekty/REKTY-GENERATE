@@ -175,7 +175,7 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
   #empty,#gfilter,#grid{display:none!important}
   #mobtasks{order:6;padding-bottom:4rem}
   /* Tasks: form disembunyikan, tampil daftar task */
-  body.mob-tasks #promptbar,body.mob-tasks #leftpan,body.mob-tasks #img2img-card,body.mob-tasks #tab-placeholder,body.mob-tasks #rightPan,body.mob-tasks #mobbar,body.mob-tasks #btn-history{display:none!important}
+  body.mob-tasks #promptbar,body.mob-tasks #leftpan,body.mob-tasks #img2img-card,body.mob-tasks #tab-placeholder,body.mob-tasks #rightPan,body.mob-tasks #mobbar,body.mob-tasks #btn-history,body.mob-tasks #submitcard{display:none!important}
   body.mob-tasks #mobtasks{display:flex!important}
   /* Tombol Generate tunggal di bottom bar; sembunyikan yang di prompt bar */
   #promptbar #btn-go,#promptbar #ncount{display:none}
@@ -607,6 +607,23 @@ input[type=range]{cursor:pointer}
           <button id="mob-reload" class="mficon" title="Reload"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></button>
           <button id="mob-manage" class="mficon" title="Manage"><i data-icon="squares-four" class="w-4 h-4"></i></button>
         </div>
+        <!-- Kartu Generating mobile (ala Tensor.Art): tampil di tab Tasks saat task berjalan -->
+        <div id="mobgen" class="hidden mx-3 mt-3 border border-[#3d2f6e] rounded-2xl bg-[#252033] p-4 space-y-3">
+          <div class="flex items-start justify-between gap-2">
+            <div class="text-lg font-bold text-white">Generating</div>
+            <span id="mobgen-task" class="text-[10px] text-neutral-400 truncate max-w-[55%]" title="Task ID"></span>
+          </div>
+          <div class="relative h-2 bg-white/10 rounded-full overflow-hidden">
+            <div id="mobgen-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(90deg,#6F5DFF,#27D4CD);transition:width .3s"></div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5">
+              <span id="mobgen-count" class="flex items-center gap-1 text-[11px] text-neutral-300 bg-white/10 rounded-full px-2 py-0.5"><i data-icon="image-square" class="w-3.5 h-3.5"></i><span>x1</span></span>
+              <span id="mobgen-size" class="flex items-center gap-1 text-[11px] text-neutral-300 bg-white/10 rounded-full px-2 py-0.5"><i data-icon="phone" class="w-3.5 h-3.5"></i><span>830x1536</span></span>
+            </div>
+            <span id="mobgen-pct" class="text-sm font-semibold text-white">0%</span>
+          </div>
+        </div>
         <p id="mobtasks-empty" class="hidden text-center text-neutral-600 text-sm py-20 px-4">Belum ada task — buat gambar di tab Workspace.</p>
         <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
         <div class="py-4 text-center"><span class="vaia-pill" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></span></div>
@@ -848,6 +865,7 @@ var ICON_SVG={
   'lightning':'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>',
   'hourglass-medium':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.17a2 2 0 0 0-.59-1.41L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22"/><path d="M7 2v4.17a2 2 0 0 0 .59 1.41L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></svg>',
   'image-square':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>',
+  'phone':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="10" y1="18" x2="14" y2="18"/></svg>',
   'clock-counter-clockwise':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
   'arrow-up':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>',
   'arrows-clockwise':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v5h-5"/></svg>',
@@ -2209,6 +2227,7 @@ function showProgress(title,status,pct){
   $('sc-status').textContent=status||'';
   $('sc-bar').style.width=Math.max(0,Math.min(100,_progPct))+'%';
   $('sc-pct')&&($('sc-pct').textContent=Math.round(_progPct)+'%');
+  mobGenPct(_progPct);
   updateSubmitThumbs(_progPct);
   $('submitcard').classList.remove('hidden');
   // Modal lama tidak dipakai lagi — kartu di output menggantikannya.
@@ -2227,6 +2246,7 @@ function startProgAnim(){
     $('prog-pct').textContent=Math.round(_progPct)+'%';
     $('sc-bar').style.width=_progPct+'%';
     $('sc-pct')&&($('sc-pct').textContent=Math.round(_progPct)+'%');
+    mobGenPct(_progPct);
     updateSubmitThumbs(_progPct);
     updateEta();
   },250);
@@ -2241,10 +2261,11 @@ function showProgDone(){
   $('prog-status').textContent='Selesai — menampilkan hasil...';
   $('sc-bar').style.width='100%';
   $('sc-pct')&&($('sc-pct').textContent='100%');
+  mobGenPct(100);
   $('sc-status').textContent='Selesai — menampilkan hasil...';
   if($('sc-eta')) $('sc-eta').textContent='';
 }
-function hideProgress(){ stopProgAnim(); _progPct=0; _progStart=0; _etaSpeed=0; _etaLastPct=0; _etaMode='time'; $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); $('submitcard').classList.add('hidden'); }
+function hideProgress(){ stopProgAnim(); _progPct=0; _progStart=0; _etaSpeed=0; _etaLastPct=0; _etaMode='time'; $('progoverlay').classList.add('hidden'); $('progoverlay').classList.remove('flex'); $('submitcard').classList.add('hidden'); mobGenHide(); }
 /** Tahan kartu Submitting sesaat agar thumbnail hasil terlihat sebelum
  *  pindah ke galeri (seperti Tensor.Art). */
 function holdResultCard(){ return new Promise(function(r){ setTimeout(r,1400); }); }
@@ -2253,6 +2274,22 @@ function setSubmitInfo(taskId,size,n){
   if(taskId) $('sc-task').textContent=taskId;
   if(size) $('sc-size').textContent=size;
   if(n!=null){ $('sc-count').textContent='x'+n; initSubmitThumbs(n); }
+  // kartu Generating mobile (ala Tensor.Art)
+  var mg=$('mobgen');
+  if(mg){
+    mg.classList.remove('hidden');
+    if(taskId){ var mt=$('mobgen-task'); if(mt){ mt.textContent=taskId; mt.title=taskId; } }
+    if(size){ var ms=$('mobgen-size'); if(ms){ var t=ms.querySelector('span'); if(t) t.textContent=size; } }
+    if(n!=null){ var mc=$('mobgen-count'); if(mc){ var c=mc.querySelector('span'); if(c) c.textContent='x'+n; } }
+  }
+}
+function mobGenPct(p){
+  var bar=$('mobgen-bar'), pct=$('mobgen-pct');
+  if(bar) bar.style.width=Math.max(0,Math.min(100,p))+'%';
+  if(pct) pct.textContent=Math.round(p)+'%';
+}
+function mobGenHide(){
+  var mg=$('mobgen'); if(mg) mg.classList.add('hidden');
 }
 /** Buat kotak mini-preview per gambar (hanya saat n>1, seperti Tensor.Art). */
 function initSubmitThumbs(n){
@@ -2475,6 +2512,8 @@ async function doGenerate(){
   var p=$('prompt').value.trim();
   if(!p){ openLeft(); $('prompt').focus(); toast('Isi prompt dulu'); return; }
   state.busy=true; setBusy(true); _pollStop=false;
+  // mobile: pindah ke tab Tasks supaya kartu Generating tampil sebelum hasil (ala Tensor.Art)
+  if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('tasks');
   var par=buildPayload();
   // Mode Ella: perluas prompt ke bahasa alami (AI) sebelum dikirim
   if(state.modeElla){
