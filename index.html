@@ -571,6 +571,25 @@ input[type=range]{cursor:pointer}
           <img id="i2i-img" class="block mx-auto max-w-full max-h-72 object-contain rounded-lg border bd" alt=""/>
           <div class="text-center text-[11px] text-neutral-500 mt-1.5"><span id="i2i-dims"></span></div>
         </div>
+        <!-- Inpaint: brush mask (area putih = digambar ulang oleh AI) -->
+        <div id="i2i-maskwrap" class="hidden mt-3">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold">Area redraw (sapukan brush)</span>
+            <span class="text-[10px] text-neutral-500">Inpaint</span>
+          </div>
+          <div class="relative border bd rounded-lg overflow-hidden bg-black">
+            <img id="i2i-mask-bg" class="block w-full h-auto opacity-40" alt=""/>
+            <canvas id="i2i-mask" class="absolute inset-0 w-full h-full" style="touch-action:none"></canvas>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <button id="i2i-eraser" class="btn btn-ghost h-7 border bd text-[11px] px-2.5">Eraser</button>
+            <button id="i2i-mask-clear" class="btn btn-ghost h-7 border bd text-[11px] px-2.5">Hapus mask</button>
+            <label class="text-[11px] text-neutral-500 flex items-center gap-1.5 ml-auto">Brush
+              <input id="i2i-brush" type="range" min="2" max="90" value="28" class="slider w-24"/>
+            </label>
+          </div>
+          <p class="text-[10px] text-neutral-600 mt-1">Sapukan putih pada area yang ingin digambar ulang (redraw). Hitam = dipertahankan.</p>
+        </div>
         <div class="mt-3">
           <label class="text-xs flex justify-between items-center"><span>Denoising Strength</span>
             <input id="i2i-dsv-inp" type="number" min="0" max="1" step="0.05" value="0.5" class="wvnum" title="Denoising Strength"/>
@@ -1838,6 +1857,7 @@ function buildPayload(){
       imageCount:state.ncol,
       steps:parseInt($('steps').value),
       images:i2iDataUrl?[i2iDataUrl]:[],
+      masks:(_i2iTool==='inpaint'&&i2iMaskDirty&&i2iMaskCanvas)?[i2iMaskCanvas.toDataURL('image/jpeg',0.9)]:[],
       denoisingStrength:parseFloat($('i2i-ds').value)||0.5,
       cfgScale:parseFloat($('cfg').value),
       seed:makeSeed(),
@@ -2524,6 +2544,54 @@ function demoCanvas(w,h){
 }
 /* Demo img2img: hasil = gambar input yang di-transform halus (cover-fit + filter)
    supaya mode demo benar-benar terasa "image to image" dari gambar yang diupload. */
+/* Gambar cover-fit penuh ke canvas (dipakai demo img2img & inpaint). */
+function drawI2iCover(ctx,im,cw,ch){
+  var ir=im.naturalWidth/im.naturalHeight, cr=cw/ch, sw,sh,sx,sy;
+  if(ir>cr){ sh=im.naturalHeight; sw=im.naturalHeight*cr; sx=(im.naturalWidth-sw)/2; sy=0; }
+  else{ sw=im.naturalWidth; sh=im.naturalWidth/cr; sx=0; sy=(im.naturalHeight-sh)/2; }
+  ctx.drawImage(im,sx,sy,sw,sh,0,0,cw,ch);
+}
+/* Alpha mask dari luminance (putih -> opaque, hitam -> transparan) untuk demo inpaint. */
+function maskAlphaData(cw,ch){
+  var m=i2iMaskCanvas; if(!m) return null;
+  var tmp=document.createElement('canvas'); tmp.width=cw; tmp.height=ch;
+  var t=tmp.getContext('2d');
+  t.fillStyle='#000'; t.fillRect(0,0,cw,ch);
+  t.drawImage(m,0,0,cw,ch);
+  var d=t.getImageData(0,0,cw,ch);
+  for(var i=0;i<d.data.length;i+=4){
+    var lum=(d.data[i]+d.data[i+1]+d.data[i+2])/3;
+    d.data[i+3]=lum; // alpha = seberapa putih
+  }
+  var out=document.createElement('canvas'); out.width=cw; out.height=ch;
+  out.getContext('2d').putImageData(d,0,0);
+  return out;
+}
+/* Demo inpaint: transformasi kuat HANYA di area mask (putih) — simulasi redraw. */
+function i2iInpaintDemoCanvas(w,h,idx){
+  var maxDim=1024, scale=Math.min(1,maxDim/Math.max(w,h));
+  var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+  var c=document.createElement('canvas'); c.width=cw; c.height=ch;
+  var x=c.getContext('2d');
+  x.fillStyle='#0d1117'; x.fillRect(0,0,cw,ch);
+  var im=i2iImgEl, alpha=maskAlphaData(cw,ch);
+  if(im&&im.complete&&im.naturalWidth&&alpha){
+    drawI2iCover(x,im,cw,ch); // dasar = gambar asli
+    // efek redraw: hue + kontras + blur, hanya di area putih mask
+    var fx=document.createElement('canvas'); fx.width=cw; fx.height=ch;
+    var f=fx.getContext('2d');
+    drawI2iCover(f,im,cw,ch);
+    f.filter='saturate(1.4) contrast(1.12) brightness(1.06) hue-rotate('+((idx||0)*30+120)+'deg) blur(2.5px)';
+    f.drawImage(im,0,0,cw,ch);
+    f.filter='none';
+    f.globalCompositeOperation='destination-in';
+    f.drawImage(alpha,0,0); // simpan hanya area mask
+    x.drawImage(fx,0,0);
+  } else {
+    return demoCanvas(w,h);
+  }
+  return c.toDataURL('image/png');
+}
 function i2iDemoCanvas(w,h,idx){
   var maxDim=1024, scale=Math.min(1,maxDim/Math.max(w,h));
   var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
@@ -2532,13 +2600,10 @@ function i2iDemoCanvas(w,h,idx){
   x.fillStyle='#0d1117'; x.fillRect(0,0,cw,ch);
   var im=i2iImgEl;
   if(im&&im.complete&&im.naturalWidth){
-    var ir=im.naturalWidth/im.naturalHeight, cr=cw/ch, sw,sh,sx,sy;
-    if(ir>cr){ sh=im.naturalHeight; sw=im.naturalHeight*cr; sx=(im.naturalWidth-sw)/2; sy=0; }
-    else{ sw=im.naturalWidth; sh=im.naturalWidth/cr; sx=0; sy=(im.naturalHeight-sh)/2; }
     // variasi per gambar: hue + kecerahan + saturasi beda-beda (seperti hasil generate beda)
     var hue=(idx||0)*24+((w+h+idx)%180);
     x.filter='saturate(1.2) contrast(1.06) brightness(1.04) hue-rotate('+hue+'deg) blur(0.5px)';
-    x.drawImage(im,sx,sy,sw,sh,0,0,cw,ch);
+    drawI2iCover(x,im,cw,ch);
     x.filter='none';
     // vignette halus ala hasil diffusion
     var v=x.createRadialGradient(cw/2,ch/2,Math.min(cw,ch)*.35,cw/2,ch/2,Math.max(cw,ch)*.75);
@@ -2573,10 +2638,11 @@ function demoResults(par){
     urls.push('https://image.pollinations.ai/prompt/'+encodeURIComponent(par.params.prompt)
       +'?width='+w+'&height='+h+'&seed='+(seedBase+i)+modelParam+'&nologo=true');
   }
-  // Img2Img demo: hasil diturunkan dari gambar yang di-upload (tanpa jaringan, offline-safe).
+  // Img2Img/Inpaint demo: hasil diturunkan dari gambar yang di-upload (tanpa jaringan, offline-safe).
   if(isI2I){
+    var isInpaint=par.params.masks&&par.params.masks.length;
     var srcs=[];
-    for(var i=0;i<state.ncol;i++) srcs.push(i2iDemoCanvas(w,h,i));
+    for(var i=0;i<state.ncol;i++) srcs.push(isInpaint?i2iInpaintDemoCanvas(w,h,i):i2iDemoCanvas(w,h,i));
     addDemoResults(srcs);
     return;
   }
@@ -2622,6 +2688,12 @@ async function doGenerate(){
   // mobile: pindah ke tab Tasks supaya kartu Generating tampil sebelum hasil (ala Tensor.Art)
   if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('tasks');
   var par=buildPayload();
+  // Inpaint tanpa mask = tidak ada area yang digambar ulang -> minta user menyapukan brush dulu
+  if(_i2iTool==='inpaint'&&!(par.params.masks&&par.params.masks.length)){
+    state.busy=false; setBusy(false);
+    toast('Sapukan brush dulu pada area yang ingin digambar ulang (area putih)');
+    return;
+  }
   // Mode Ella: perluas prompt ke bahasa alami (AI) sebelum dikirim
   if(state.modeElla){
     try{
@@ -2713,29 +2785,78 @@ $('i2i-drop').addEventListener('click',function(){ $('i2i-file').click(); });
 $('i2i-file').addEventListener('change',function(e){ handleI2iFile(e.target.files&&e.target.files[0]); });
 $('i2i-drop').addEventListener('dragover',function(e){ e.preventDefault(); });
 $('i2i-drop').addEventListener('drop',function(e){ e.preventDefault(); handleI2iFile(e.dataTransfer.files&&e.dataTransfer.files[0]); });
-/* Tool pills ala Tensor.Art: Img2Img + Upscale berfungsi; ADetailer/Inpaint/Pix2Pix segera hadir */
+/* Tool pills ala Tensor.Art: Img2Img + Upscale + Inpaint berfungsi; ADetailer/Pix2Pix segera hadir */
 var _i2iTool='img2img';
 function setI2iTool(tool){
   _i2iTool=tool;
   document.querySelectorAll('.i2i-tool').forEach(function(x){ x.classList.toggle('on', x.dataset.tool===tool); });
+  updateMaskUI();
 }
 document.querySelectorAll('.i2i-tool').forEach(function(t){
   t.addEventListener('click',function(){
     var tool=t.dataset.tool;
-    if(tool==='adetailer'||tool==='inpaint'||tool==='pix2pix'){ toast('Tool '+t.textContent+' segera hadir'); return; }
+    if(tool==='adetailer'||tool==='pix2pix'){ toast('Tool '+t.textContent+' segera hadir'); return; }
     setI2iTool(tool);
     if(tool==='upscale'&&settings.provider!=='tams'&&settings.provider!=='pollinations'){
       toast('Upscale 2x aktif — asli via TAMS (IMAGE_TO_UPSCALER), ukuran 2x via Pollinations. Provider lain: hasil tetap ukuran normal.');
     }
+    if(tool==='inpaint'&&settings.provider!=='tams'){
+      toast('Inpaint asli via TAMS (IMAGE_TO_INPAINT) — pilih Tensor.Art TAMS. Mode demo: efek simulasi.');
+    }
   });
 });
+/* --- Inpaint: brush mask (putih = area redraw oleh AI, hitam = dipertahankan) --- */
+var i2iMaskCanvas=null, i2iMaskCtx=null, i2iMaskDirty=false, i2iMaskInit=false, i2iMaskErase=false, _maskDown=false, _maskLastX=0, _maskLastY=0;
+function updateMaskUI(){
+  var mw=$('i2i-maskwrap'); if(!mw) return;
+  var show=_i2iTool==='inpaint'&&i2iDataUrl&&i2iW>0&&i2iH>0;
+  mw.classList.toggle('hidden',!show);
+  if(show&&!i2iMaskInit) resetMaskCanvas();
+}
+function resetMaskCanvas(){
+  var cv=$('i2i-mask'); if(!cv||!i2iW||!i2iH) return;
+  cv.width=i2iW; cv.height=i2iH;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,i2iW,i2iH);
+  i2iMaskCanvas=cv; i2iMaskCtx=ctx; i2iMaskDirty=false; i2iMaskInit=true;
+  var bg=$('i2i-mask-bg'); if(bg) bg.src=i2iDataUrl;
+}
+function maskPosFromEvent(e){
+  var rect=$('i2i-mask').getBoundingClientRect();
+  if(!rect.width||!rect.height) return null;
+  return { x:(e.clientX-rect.left)*(i2iW/rect.width), y:(e.clientY-rect.top)*(i2iH/rect.height) };
+}
+function maskPaintTo(x,y){
+  if(!i2iMaskCtx) return;
+  var rect=$('i2i-mask').getBoundingClientRect();
+  var brushPx=Math.max(2,parseFloat($('i2i-brush').value)||28)*(i2iW/(rect.width||i2iW));
+  i2iMaskCtx.lineCap='round'; i2iMaskCtx.lineJoin='round';
+  i2iMaskCtx.strokeStyle=i2iMaskErase?'#000':'#fff';
+  i2iMaskCtx.lineWidth=brushPx;
+  i2iMaskCtx.beginPath(); i2iMaskCtx.moveTo(_maskLastX,_maskLastY); i2iMaskCtx.lineTo(x,y); i2iMaskCtx.stroke();
+  _maskLastX=x; _maskLastY=y; i2iMaskDirty=true;
+}
+(function(){
+  var cv=$('i2i-mask'); if(!cv) return;
+  cv.addEventListener('pointerdown',function(e){ e.preventDefault(); _maskDown=true; var p=maskPosFromEvent(e); if(!p) return; _maskLastX=p.x; _maskLastY=p.y; maskPaintTo(p.x,p.y); });
+  cv.addEventListener('pointermove',function(e){ if(!_maskDown) return; e.preventDefault(); var p=maskPosFromEvent(e); if(!p) return; maskPaintTo(p.x,p.y); });
+  window.addEventListener('pointerup',function(){ _maskDown=false; });
+  $('i2i-eraser').addEventListener('click',function(){
+    i2iMaskErase=!i2iMaskErase;
+    var b=$('i2i-eraser');
+    b.classList.toggle('border-[#6F5DFF]',i2iMaskErase); b.classList.toggle('text-white',i2iMaskErase);
+  });
+  $('i2i-mask-clear').addEventListener('click',function(){ resetMaskCanvas(); });
+})();
 /* Denoising Strength: slider <-> kotak angka (ala Tensor.Art) */
 function syncDs(v){ v=Math.max(0,Math.min(1,parseFloat(v)||0.5)); $('i2i-ds').value=v; $('i2i-dsv-inp').value=v.toFixed(2); }
 $('i2i-ds').addEventListener('input',function(e){ syncDs(e.target.value); });
 $('i2i-dsv-inp').addEventListener('change',function(e){ syncDs(e.target.value); });
 $('i2i-clear').addEventListener('click',function(){
   i2iDataUrl=null; i2iW=0; i2iH=0; i2iImgEl=null;
+  i2iMaskInit=false; i2iMaskDirty=false; i2iMaskCanvas=null; i2iMaskCtx=null;
   $('i2i-preview').classList.add('hidden'); $('i2i-img').src=''; $('i2i-drop').classList.remove('hidden');
+  updateMaskUI();
 });
 function handleI2iFile(f){
   if(!f) return;
@@ -2751,6 +2872,8 @@ function applyI2iData(dataUrl){
   im.onload=function(){
     i2iW=im.naturalWidth||0; i2iH=im.naturalHeight||0; i2iImgEl=im;
     var dm=$('i2i-dims'); if(dm) dm.textContent=(i2iW&&i2iH)?(i2iW+' × '+i2iH+' px'):'';
+    i2iMaskInit=false; i2iMaskDirty=false; i2iMaskCanvas=null; i2iMaskCtx=null;
+    updateMaskUI();
   };
   im.src=dataUrl;
   $('i2i-img').src=dataUrl; $('i2i-preview').classList.remove('hidden'); $('i2i-drop').classList.add('hidden');

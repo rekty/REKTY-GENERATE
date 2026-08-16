@@ -69,22 +69,34 @@ globalThis.fetch = async (url, opts) => {
   calls.push({ method, url: u, body: bodyText });
 
   // --- TAMS ---
-  if (u.includes('ap-east-1.tensorart.cloud')) {
+  if (u.includes('ap-east-1.tensorart.cloud') || u.startsWith('https://put.test/')) {
+    if (method === 'POST' && u.endsWith('/v1/resource/image')) {
+      return jsonResp({ resourceId: 'res_' + calls.length, putUrl: 'https://put.test/up' + calls.length });
+    }
+    if (method === 'PUT' && u.startsWith('https://put.test/')) {
+      return new Response(null, { status: 200 });
+    }
     if (method === 'POST' && u.endsWith('/v1/jobs')) {
       const b = JSON.parse(bodyText);
       assert.ok(b.request_id, 'TAMS: request_id wajib');
+      const stage2 = b.stages[1];
       assert.ok(
         b.stages.length === 2 ||
           (b.stages.length === 3 && b.stages[2].type === 'IMAGE_TO_UPSCALER'),
-        'TAMS stages: 2 (normal) atau 3 (upscale)',
+        'TAMS stages: 2 (normal/inpaint) atau 3 (upscale)',
       );
-      const diff = b.stages[1].diffusion;
+      const diff = stage2.diffusion || (stage2.imageToInpaint && stage2.imageToInpaint.diffusion);
+      assert.ok(diff, 'TAMS: diffusion ada (DIFFUSION atau di dalam IMAGE_TO_INPAINT)');
       assert.strictEqual(diff.sdModel, '1027906253260603805', 'TAMS sdModel');
       assert.deepStrictEqual(diff.negativePrompts, [{ text: 'blurry, low quality' }], 'TAMS negativePrompts');
       assert.strictEqual(diff.sampler, 'DPM++ 2M Karras', 'TAMS sampler display name');
       assert.strictEqual(diff.scheduleName, 'karras', 'TAMS scheduleName');
       assert.strictEqual(diff.lora.items[0].loraModel, '987654321', 'TAMS lora id');
-      assert.strictEqual(b.stages[0].inputInitialize.count, 2, 'TAMS count');
+      assert.ok(
+        b.stages[0].inputInitialize.count === 2 ||
+          (stage2.type === 'IMAGE_TO_INPAINT' && b.stages[0].inputInitialize.count === 1),
+        'TAMS count: 2 (normal) atau 1 (inpaint)',
+      );
       return jsonResp({ job: { id: '12345', credits: 1.22 } });
     }
     if (method === 'GET' && u.includes('/v1/jobs/')) {
@@ -681,6 +693,27 @@ console.log('Tool Upscale 2x (TAMS IMAGE_TO_UPSCALER + Pollinations 2x):');
   assert.ok(lastP.url.includes('width=1536'), 'Pollinations width 2x: ' + lastP.url);
   assert.ok(lastP.url.includes('height=2304'), 'Pollinations height 2x');
   ok('Pollinations: upscale=true -> ukuran 2x (1536x2304)');
+}
+
+console.log('Tool Inpaint (TAMS IMAGE_TO_INPAINT):');
+{
+  const p = webPayload('tams', '');
+  p.taskType = 'IMG2IMG';
+  p.params.enablePix2pix = true;
+  p.params.images = ['data:image/jpeg;base64,AAAA'];
+  p.params.masks = ['data:image/jpeg;base64,BBBB'];
+  const g = await run('/api/generate', p, {}, AUTH);
+  assert.strictEqual(g.status, 200);
+  const jobCall = calls.filter((c) => c.method === 'POST' && c.url.includes('/v1/jobs'));
+  const b = JSON.parse(jobCall[jobCall.length - 1].body);
+  assert.strictEqual(b.stages.length, 2, 'inpaint: 2 stages (INPUT_INITIALIZE + IMAGE_TO_INPAINT)');
+  assert.strictEqual(b.stages[1].type, 'IMAGE_TO_INPAINT', 'stage ke-2 = IMAGE_TO_INPAINT');
+  assert.ok(b.stages[0].inputInitialize.imageResourceId, 'imageResourceId asli terupload');
+  assert.ok(b.stages[1].imageToInpaint.maskImageResourceId, 'maskImageResourceId terupload');
+  assert.strictEqual(b.stages[0].inputInitialize.count, 1, 'inpaint count = 1');
+  assert.strictEqual(b.stages[1].imageToInpaint.resizeMode, 'JUST_RESIZE', 'resizeMode JUST_RESIZE');
+  assert.ok(b.stages[1].imageToInpaint.diffusion, 'diffusion ada di dalam imageToInpaint');
+  ok('TAMS: inpaint -> INPUT_INITIALIZE + IMAGE_TO_INPAINT (gambar + mask terupload)');
 }
 
 console.log('Validasi (API key + provider salah):');

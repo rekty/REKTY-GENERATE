@@ -255,8 +255,9 @@ async function tamsCreateJob(body, apiKey) {
     count: clampInt(params.imageCount, 1, 4, 1),
   };
 
-  // IMG2IMG: upload gambar input lalu pakai sebagai inisialisasi diffusion.
-  if (isImg && Array.isArray(params.images) && params.images[0]) {
+  const hasImage = isImg && Array.isArray(params.images) && params.images[0];
+  const hasMask = isImg && hasImage && Array.isArray(params.masks) && params.masks[0];
+  if (hasImage) {
     const resourceId = await tamsUploadImage(params.images[0], apiKey);
     inputInit.imageResourceId = resourceId;
     diffusion.denoisingStrength = clampFloat(
@@ -267,8 +268,27 @@ async function tamsCreateJob(body, apiKey) {
 
   const stages = [
     { type: 'INPUT_INITIALIZE', inputInitialize: inputInit },
-    { type: 'DIFFUSION', diffusion },
   ];
+  // Tool Inpaint (mask brush): stage IMAGE_TO_INPAINT — area putih di mask = digambar ulang.
+  // Per docs TAMS: mask hitam + bagian yang mau di-redraw berwarna putih, resolusi sama dengan aslinya.
+  if (hasMask) {
+    const maskResourceId = await tamsUploadImage(params.masks[0], apiKey);
+    inputInit.count = 1;
+    stages.push({
+      type: 'IMAGE_TO_INPAINT',
+      imageToInpaint: {
+        resizeMode: 'JUST_RESIZE',
+        maskImageResourceId: maskResourceId,
+        maskBlur: 4,
+        inpaintingFill: 'ORIGINAL',
+        inpaintFullRes: true,
+        inpaintFullResPadding: 32,
+        diffusion,
+      },
+    });
+  } else {
+    stages.push({ type: 'DIFFUSION', diffusion });
+  }
   // Tool Upscale 2x (ala Tensor.Art): tambah stage IMAGE_TO_UPSCALER setelah DIFFUSION
   // supaya hasil generate otomatis di-upscale 2x oleh TAMS.
   if (params.upscale === true) {
