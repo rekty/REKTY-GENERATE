@@ -587,6 +587,7 @@ input[type=range]{cursor:pointer}
         </div>
         <p id="mobtasks-empty" class="hidden text-center text-neutral-600 text-sm py-20 px-4">Belum ada task — buat gambar di tab Workspace.</p>
         <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
+        <div class="py-4 text-center"><span class="glass-brand" style="height:20px;padding:0 8px;display:inline-flex" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:7.5px">VAIA</span></span></div>
       </div>
   </main>
 
@@ -615,6 +616,7 @@ input[type=range]{cursor:pointer}
 
 <!-- Bottom action bar (mobile, seperti Tensor.Art: 1 image + Generate besar) -->
 <div id="mobbar" class="hidden lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t bd bg-[#0d1117]/95 backdrop-blur px-3 py-2 flex items-center gap-2">
+  <div class="glass-brand shrink-0" style="height:20px;padding:0 7px;display:inline-flex" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:7.5px">VAIA</span></div>
   <select id="mobcount" class="inp h-10 text-sm w-[6.5rem] shrink-0" title="Jumlah gambar">
     <option value="1" selected>1 image</option>
     <option value="2">2 images</option>
@@ -2560,10 +2562,12 @@ function hideSplash(){
   if(lastSeen>0 && (Date.now()-lastSeen)<WEEK) return; // belum lewat 7 hari
   showSplash();
 })();
-/* Klik brand VAIA di header mobile -> splash besar versi VAIA */
+/* Klik brand VAIA (header mobile / bottom bar / footer Tasks) -> splash besar */
 (function(){
-  var brand=document.querySelector('#mobnavtabs .glass-brand');
-  if(brand) brand.addEventListener('click',function(e){ e.stopPropagation(); showSplash('VAIA'); });
+  var brands=document.querySelectorAll('#mobnavtabs .glass-brand,#mobbar .glass-brand,#mobtasks .glass-brand');
+  brands.forEach(function(brand){
+    brand.addEventListener('click',function(e){ e.stopPropagation(); showSplash('VAIA'); });
+  });
 })();
 try{
   var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
