@@ -558,6 +558,23 @@ input[type=range]{cursor:pointer}
         </div>
       </div>
 
+      <!-- Kartu Submitting (seperti Tensor.Art): tampil di ATAS area output, tepat di tempat hasil muncul -->
+      <div id="submitcard" class="hidden mb-3 border bd rounded-xl bg-[#1c2128] p-4 space-y-3">
+        <div class="flex items-center justify-between gap-2">
+          <span id="sc-title" class="text-sm font-semibold">Submitting</span>
+          <span id="sc-task" class="text-[11px] text-neutral-500 truncate" title="Task ID"></span>
+          <button id="sc-cancel" class="shrink-0 w-6 h-6 flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/10 rounded-md text-sm" title="Batal">✕</button>
+        </div>
+        <div class="relative h-2 bg-[#1c2128] rounded-full overflow-hidden">
+          <div id="sc-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);box-shadow:0 0 12px rgba(111,93,255,.55);transition:width .4s"></div>
+        </div>
+        <!-- Mini-preview per gambar (x2/x4): kotak kecil + bar progress masing-masing -->
+        <div id="sc-thumbs" class="hidden flex items-center gap-2"></div>
+        <div class="flex items-center justify-between text-xs text-neutral-500">
+          <span id="sc-status">Mengirim task...</span>
+          <span class="flex items-center gap-3"><span id="sc-eta" class="text-neutral-600"></span><span id="sc-count">x1</span><span id="sc-size"></span></span>
+        </div>
+      </div>
       <!-- Tab placeholder (Edit/Video/Prime) -->
       <div id="tab-placeholder" class="hidden flex-col items-center justify-center h-[50vh] text-neutral-600">
         <i data-icon="hourglass-medium" class="w-12 h-12 mb-3"></i>
@@ -577,23 +594,6 @@ input[type=range]{cursor:pointer}
         <span class="flex-1"></span>
         <span class="text-neutral-600 p-1" title="List"><i data-icon="list" class="w-4 h-4"></i></span>
         <span class="text-neutral-600 p-1" title="Grid"><i data-icon="squares-four" class="w-4 h-4"></i></span>
-      </div>
-      <!-- Kartu Submitting (seperti Tensor.Art): tampil di area output saat task berjalan -->
-      <div id="submitcard" class="hidden mb-3 border bd rounded-xl bg-[#1c2128] p-4 space-y-3">
-        <div class="flex items-center justify-between gap-2">
-          <span id="sc-title" class="text-sm font-semibold">Submitting</span>
-          <span id="sc-task" class="text-[11px] text-neutral-500 truncate" title="Task ID"></span>
-          <button id="sc-cancel" class="shrink-0 w-6 h-6 flex items-center justify-center text-neutral-500 hover:text-white hover:bg-white/10 rounded-md text-sm" title="Batal">✕</button>
-        </div>
-        <div class="relative h-2 bg-[#1c2128] rounded-full overflow-hidden">
-          <div id="sc-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(95deg,#6F5DFF,#27D4CD);box-shadow:0 0 12px rgba(111,93,255,.55);transition:width .4s"></div>
-        </div>
-        <!-- Mini-preview per gambar (x2/x4): kotak kecil + bar progress masing-masing -->
-        <div id="sc-thumbs" class="hidden flex items-center gap-2"></div>
-        <div class="flex items-center justify-between text-xs text-neutral-500">
-          <span id="sc-status">Mengirim task...</span>
-          <span class="flex items-center gap-3"><span id="sc-eta" class="text-neutral-600"></span><span id="sc-count">x1</span><span id="sc-size"></span></span>
-        </div>
       </div>
       <div id="grid" class="space-y-3"></div>
     </div>
@@ -2244,10 +2244,12 @@ function startProgAnim(){
   if(!_progStart) _progStart=Date.now();
   if(_progTimer) clearInterval(_progTimer);
   _progTimer=setInterval(function(){
-    // kurva melambat: naik cepat di awal, pelan menjelang 95% (<=95 supaya
-    // pindah ke 100% terjadi tepat saat gambar selesai)
-    _progPct=_progPct+(95-_progPct)*0.02+0.05;
-    if(_progPct>95) _progPct=95;
+    // kurva melambat: naik cepat di awal, lalu pelan. Batas atas naik bertahap
+    // (95 -> 98 selama menunggu) supaya bar tidak terlihat beku saat generate
+    // lama; 100% HANYA saat gambar benar-benar selesai (showProgDone).
+    var _ceil=Math.min(98, 95+(Date.now()-_progStart)/100000); // +1% tiap ~100 dtk
+    _progPct=_progPct+(_ceil-_progPct)*0.02+0.05;
+    if(_progPct>_ceil) _progPct=_ceil;
     $('prog-bar').style.width=_progPct+'%';
     $('prog-pct').textContent=Math.round(_progPct)+'%';
     $('sc-bar').style.width=_progPct+'%';
@@ -2472,20 +2474,7 @@ function demoCanvas(w,h){
   // bintang
   x.fillStyle='rgba(255,255,255,.65)';
   for(var i=0;i<50;i++){ var sx=((i*37+11)%cw), sy=((i*23+7)%Math.max(1,Math.round(ch*.32))); x.fillRect(sx,sy,1.5,1.5); }
-  // bingkai
-  x.strokeStyle='rgba(111,93,255,.35)'; x.lineWidth=Math.max(2,cw*.004);
-  x.strokeRect(cw*.03,ch*.03,cw*.94,ch*.94);
-  // label kecil di bawah
-  var fs=Math.round(Math.min(cw,ch)*.045);
-  x.fillStyle='rgba(255,255,255,.82)'; x.textAlign='center';
-  x.font='600 '+fs+'px Inter, system-ui, sans-serif';
-  x.fillText('VISUAL AI ARTWORK',cw/2,ch-fs*2.6);
-  x.fillStyle='rgba(111,93,255,.95)';
-  x.font='600 '+Math.round(fs*.8)+'px Inter, system-ui, sans-serif';
-  x.fillText(w+' x '+h,cw/2,ch-fs*1.5);
-  x.fillStyle='rgba(39,212,205,.9)';
-  x.font='500 '+Math.round(fs*.7)+'px Inter, system-ui, sans-serif';
-  x.fillText('Mode Demo — simulasi',cw/2,ch-fs*.5);
+  // hasil demo tampil seperti gambar generate sungguhan (tanpa label teks)
   return c.toDataURL('image/png');
 }
 function demoResults(par){

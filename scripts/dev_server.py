@@ -126,20 +126,12 @@ def _demo_svg(w, h):
         + mtn(4, 0.11, 'rgba(49,46,129,.95)')
         + mtn(6, 0.08, 'rgba(17,24,39,.95)')
         + '<g fill="rgba(255,255,255,.65)">' + stars + '</g>'
-        + '<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="none" stroke="rgba(111,93,255,.35)" stroke-width="%.1f"/>'
-        + '<text x="%.1f" y="%.1f" fill="rgba(255,255,255,.82)" font-family="Inter, Arial, sans-serif" font-size="%.1f" font-weight="600" text-anchor="middle">VISUAL AI ARTWORK</text>'
-        + '<text x="%.1f" y="%.1f" fill="rgba(111,93,255,.95)" font-family="Inter, Arial, sans-serif" font-size="%.1f" font-weight="600" text-anchor="middle">%d x %d</text>'
-        + '<text x="%.1f" y="%.1f" fill="rgba(39,212,205,.9)" font-family="Inter, Arial, sans-serif" font-size="%.1f" font-weight="500" text-anchor="middle">Mode Demo - simulasi</text>'
         + '</svg>'
     ) % (
         w, h, w, h,
         w, h,
         w / 2, h * 0.40, sun * 2.6,
         w / 2, h * 0.40, sun * 0.6,
-        w * 0.03, h * 0.03, w * 0.94, h * 0.94, max(2, w * 0.004),
-        w / 2, h - fs * 2.2, fs,
-        w / 2, h - fs * 1.2, fs * 0.8, w, h,
-        w / 2, h - fs * 0.4, fs * 0.7,
     )
     return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
 
