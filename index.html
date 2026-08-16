@@ -1561,12 +1561,21 @@ function renderRight(){
 }
 
 /* ===== lightbox (detail hasil, seperti Tensor.Art) ===== */
+function dlExt(src){
+  var m=/\.(jpe?g|png|webp|gif|avif|svg)(\?|$)/i.exec(src||'');
+  if(m) return m[1].toLowerCase()==='jpeg'?'jpg':m[1].toLowerCase();
+  m=/^data:image\/(jpeg|png|webp|gif|avif|svg\+xml)/.exec(src||'');
+  if(m) return m[1]==='svg+xml'?'svg':(m[1]==='jpeg'?'jpg':m[1]);
+  return 'png';
+}
 function dlImage(src){
+  var ext=dlExt(src)||'png';
+  var fn='rekty-image-'+Date.now()+'.'+ext;
   try{
     fetch(src).then(function(res){ return res.blob(); }).then(function(blob){
       var url=URL.createObjectURL(blob);
       var a=document.createElement('a');
-      a.href=url; a.download='rekty-image.png'; a.rel='noopener';
+      a.href=url; a.download=fn; a.rel='noopener';
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
     }).catch(function(){ window.open(src,'_blank'); });
