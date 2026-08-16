@@ -38,6 +38,9 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .glass-brand::before{content:'';position:absolute;top:-2px;bottom:-2px;left:-30%;width:30%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.45),transparent);animation:sc-shine 2.6s linear infinite;pointer-events:none}
 .brand-spark{font-size:10px;color:#2E7CF0;text-shadow:0 0 8px rgba(46,124,240,.9)}
 .brand-txt{font-size:9px;font-weight:800;letter-spacing:.14em;background:linear-gradient(135deg,#1FC7CE,#2E7CF0);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* Pill brand VAIA mobile: warna & ukuran mengikuti logo V glass (satu identitas) */
+.vaia-pill{position:relative;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:9999px;white-space:nowrap;border:1px solid transparent;background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.02)) padding-box,linear-gradient(135deg,#1FC7CE,#2E7CF0) border-box;background-color:#101722;box-shadow:0 0 12px rgba(31,199,206,.30),inset 0 1px 0 rgba(255,255,255,.15);overflow:hidden}
+.vaia-pill::before{content:'';position:absolute;top:-2px;bottom:-2px;left:-30%;width:30%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.4),transparent);animation:sc-shine 2.6s linear infinite;pointer-events:none}
 /* Splash screen (pertama kali dibuka) */
 #splash{background:radial-gradient(1200px 600px at 50% -10%,rgba(46,124,240,.2),transparent 60%),radial-gradient(900px 520px at 82% 112%,rgba(31,199,206,.16),transparent 55%),#0d1117}
 .splash-logo{filter:drop-shadow(0 0 26px rgba(31,199,206,.45));animation:splash-float 3.2s ease-in-out infinite}
@@ -204,7 +207,7 @@ input[type=range]{cursor:pointer}
   <div id="mobnavtabs" class="lg:hidden flex items-center gap-0.5">
     <button id="tab-workspace" class="mobtab sel">Workspace</button>
     <button id="tab-tasks" class="mobtab">Tasks</button>
-    <div class="glass-brand ml-1 shrink-0" style="height:22px;padding:0 8px"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></div>
+    <div class="vaia-pill ml-1 shrink-0" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></div>
   </div>
   <div class="w-7 h-7 shrink-0 hidden sm:flex items-center justify-center">
     <svg width="28" height="28" viewBox="0 0 64 64">
@@ -587,7 +590,7 @@ input[type=range]{cursor:pointer}
         </div>
         <p id="mobtasks-empty" class="hidden text-center text-neutral-600 text-sm py-20 px-4">Belum ada task — buat gambar di tab Workspace.</p>
         <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
-        <div class="py-4 text-center"><span class="glass-brand" style="height:20px;padding:0 8px;display:inline-flex" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:7.5px">VAIA</span></span></div>
+        <div class="py-4 text-center"><span class="vaia-pill" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></span></div>
       </div>
   </main>
 
@@ -616,7 +619,7 @@ input[type=range]{cursor:pointer}
 
 <!-- Bottom action bar (mobile, seperti Tensor.Art: 1 image + Generate besar) -->
 <div id="mobbar" class="hidden lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t bd bg-[#0d1117]/95 backdrop-blur px-3 py-2 flex items-center gap-2">
-  <div class="glass-brand shrink-0" style="height:20px;padding:0 7px;display:inline-flex" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:7.5px">VAIA</span></div>
+  <div class="vaia-pill shrink-0" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></div>
   <select id="mobcount" class="inp h-10 text-sm w-[6.5rem] shrink-0" title="Jumlah gambar">
     <option value="1" selected>1 image</option>
     <option value="2">2 images</option>
@@ -2564,7 +2567,7 @@ function hideSplash(){
 })();
 /* Klik brand VAIA (header mobile / bottom bar / footer Tasks) -> splash besar */
 (function(){
-  var brands=document.querySelectorAll('#mobnavtabs .glass-brand,#mobbar .glass-brand,#mobtasks .glass-brand');
+  var brands=document.querySelectorAll('#mobnavtabs .vaia-pill,#mobbar .vaia-pill,#mobtasks .vaia-pill');
   brands.forEach(function(brand){
     brand.addEventListener('click',function(e){ e.stopPropagation(); showSplash('VAIA'); });
   });
