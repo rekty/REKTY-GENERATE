@@ -755,7 +755,7 @@ input[type=range]{cursor:pointer}
       <path d="M19 21 L32 45 L45 21" fill="none" stroke="url(#sg)" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#sglow)"/>
     </svg>
   </div>
-  <h1 class="splash-title">VISUAL AI ARTWORK</h1>
+  <h1 id="splash-title" class="splash-title">VISUAL AI ARTWORK</h1>
   <p class="splash-sub">AI Artwork Generator</p>
   <button id="splash-start" class="btn btn-turq h-10 px-9 text-sm font-semibold">Mulai ✦</button>
 </div>
@@ -2528,24 +2528,42 @@ applyNcol();
 loadSettings(); applySettingsUI();
 handleOAuthCallback();
 
-/* ---- Splash 'VISUAL AI ARTWORK' muncul ulang tiap 7 hari ---- */
+/* ---- Splash 'VISUAL AI ARTWORK' / 'VAIA' (bisa dipanggil manual) ---- */
+function showSplash(txt){
+  var s=$('splash'); if(!s) return;
+  var t=$('splash-title');
+  if(t&&txt) t.textContent=txt;
+  s.classList.remove('hidden'); s.classList.add('flex','gsplash-in');
+  // Chime pembuka: jadwalkan nada sekarang (bisa tersuspensi karena autoplay),
+  // lalu resume saat klik Mulai (gesture) supaya pasti berbunyi.
+  playDoneChime();
+  var start=$('splash-start');
+  if(start && !start._vaiaBound){
+    start._vaiaBound=true;
+    start.addEventListener('click',function(){
+      if(_audioCtx&&_audioCtx.state!=='running') ensureAudio(); // resume -> nada pembuka berbunyi
+      try{ localStorage.setItem('rekty.splashSeen',String(Date.now())); }catch(e){}
+      hideSplash();
+    });
+  }
+}
+function hideSplash(){
+  var s=$('splash'); if(!s) return;
+  s.classList.add('gsplash-out');
+  setTimeout(function(){ s.classList.add('hidden'); s.classList.remove('flex','gsplash-in','gsplash-out'); },450);
+}
 (function(){
   var s=$('splash'); if(!s) return;
   var lastSeen=0;
   try{ lastSeen=parseInt(localStorage.getItem('rekty.splashSeen')||'0',10)||0; }catch(e){}
   var WEEK=7*24*3600*1000;
   if(lastSeen>0 && (Date.now()-lastSeen)<WEEK) return; // belum lewat 7 hari
-  s.classList.remove('hidden'); s.classList.add('flex','gsplash-in');
-  // Chime pembuka: jadwalkan nada sekarang (bisa tersuspensi karena autoplay),
-  // lalu resume saat klik Mulai (gesture) supaya pasti berbunyi.
-  playDoneChime();
-  var start=$('splash-start');
-  if(start) start.addEventListener('click',function(){
-    if(_audioCtx&&_audioCtx.state!=='running') ensureAudio(); // resume -> nada pembuka berbunyi
-    try{ localStorage.setItem('rekty.splashSeen',String(Date.now())); }catch(e){}
-    s.classList.add('gsplash-out');
-    setTimeout(function(){ s.classList.add('hidden'); s.classList.remove('flex','gsplash-in','gsplash-out'); },450);
-  });
+  showSplash();
+})();
+/* Klik brand VAIA di header mobile -> splash besar versi VAIA */
+(function(){
+  var brand=document.querySelector('#mobnavtabs .glass-brand');
+  if(brand) brand.addEventListener('click',function(e){ e.stopPropagation(); showSplash('VAIA'); });
 })();
 try{
   var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
