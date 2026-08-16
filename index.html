@@ -752,6 +752,21 @@ input[type=range]{cursor:pointer}
   </div>
 </div>
 
+<!-- ============ PARAMETERS (detail task ala Tensor.Art) ============ -->
+<div id="param-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/70">
+  <div class="w-full max-w-lg bg-[#161b22] border bd rounded-2xl overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b bd">
+      <span class="text-sm font-semibold">Parameters</span>
+      <button id="pm-close" class="w-8 h-8 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-white/5 rounded-lg">✕</button>
+    </div>
+    <div id="pm-body" class="p-4 space-y-3 max-h-[60vh] overflow-y-auto hidebar text-xs"></div>
+    <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2 px-4 py-3 border-t bd">
+      <button id="pm-copy" class="btn btn-ghost flex-1 h-9 border bd text-xs whitespace-nowrap"><i data-icon="copy" class="w-3.5 h-3.5"></i>Copy generation data</button>
+      <button id="pm-remix" class="btn btn-turq flex-1 h-9 text-xs whitespace-nowrap"><i data-icon="magic-wand" class="w-3.5 h-3.5"></i>Remix</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ TOAST ============ -->
 <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#1c2128] border bd rounded-xl px-4 py-2.5 text-sm shadow-lg max-w-[85vw]"></div>
 <div id="done-pop" class="fixed top-20 right-4 z-50 hidden items-center gap-2.5 bg-[#1c2128] border bd rounded-xl pl-2 pr-2.5 py-2 text-sm shadow-xl cursor-pointer max-w-[300px]">
@@ -844,7 +859,8 @@ var ICON_SVG={
   'paper-plane':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
   'download':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
   'thumbs-down':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2.52a2 2 0 0 0-1.72.98l-.92 1.84A3 3 0 0 1 12 22a2 2 0 0 1-3-1.88Z"/></svg>',
-  'dots-three-vertical':'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>'
+  'dots-three-vertical':'<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>',
+  'trash':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>'
 };
 function renderIcons(root){
   (root||document).querySelectorAll('[data-icon]').forEach(function(el){
@@ -1487,7 +1503,7 @@ function persistResults(){
 var _viewIdx=0; // index ke state.results (0 = terbaru)
 function makeGalleryRow(r,i){
   var row=document.createElement('div');
-  row.className='relative border bd rounded-2xl bg-[#161b22] overflow-hidden cursor-zoom-in';
+  row.className='relative group border bd rounded-2xl bg-[#161b22] overflow-hidden cursor-zoom-in';
   var img=document.createElement('img');
   img.src=r.src;
   img.className='block mx-auto max-w-full max-h-[80vh] w-auto h-auto object-contain';
@@ -1506,6 +1522,12 @@ function makeGalleryRow(r,i){
   mdl.className='absolute bottom-2 left-2 text-[10px] bg-black/60 px-2 py-0.5 rounded text-neutral-300 z-10 pointer-events-none';
   mdl.textContent=r.model||'';
   row.appendChild(mdl);
+  // tombol menu (View Detail / Delete) — tampil saat hover, seperti Tensor.Art
+  var mbtn=document.createElement('button');
+  mbtn.className='absolute top-2 right-2 w-7 h-7 rounded-full bg-black/55 hover:bg-[#21262d] hover:text-white text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20';
+  mbtn.innerHTML='<i data-icon="dots-three-vertical" class="w-4 h-4"></i>';
+  mbtn.addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, mbtn, function(){ removeResult(i); }); });
+  row.appendChild(mbtn);
   return row;
 }
 function renderGrid(){
@@ -2654,10 +2676,7 @@ function switchMobTab(t){
   document.body.classList.toggle('mob-tasks', t==='tasks');
   if(t==='tasks') renderMobTasks();
 }
-function removeMobTask(i){
-  state.results.splice(i,1); persistResults();
-  renderMobTasks(); renderGrid(); renderDetail(); renderRight();
-}
+function removeMobTask(i){ removeResult(i); }
 function shareImage(r){
   var src=r.src||'';
   if(src.indexOf('data:')!==0&&src.indexOf('http')===0){
@@ -2730,7 +2749,8 @@ function renderMobTasks(){
     foot.className='flex items-center gap-2.5 px-3 py-2.5 border-t bd';
     foot.innerHTML='<img src="'+(r.src||'')+'" class="w-8 h-8 rounded-md object-cover border bd shrink-0"/>'
       +'<div class="min-w-0 flex-1"><div class="text-[11px] text-neutral-500">'+mobTaskLbl(r)+'</div>'
-      +'<div class="text-xs font-medium truncate text-neutral-200">'+(r.model||'Model')+'</div></div>';
+      +'<div class="text-xs font-medium truncate text-neutral-200">'+(r.model||'Model')+'</div></div>'
+      +'<button class="tact shrink-0" title="Menu task"><i data-icon="dots-three-vertical" class="w-4 h-4"></i></button>';
     d.appendChild(foot);
     // ---- tombol Expand (centered pill, buka keterangan) ----
     var exp=document.createElement('button');
@@ -2754,6 +2774,8 @@ function renderMobTasks(){
     btns[0].addEventListener('click',function(e){ e.stopPropagation(); shareImage(r); });
     btns[1].addEventListener('click',function(e){ e.stopPropagation(); dlImage(r.src); });
     btns[2].addEventListener('click',function(e){ e.stopPropagation(); if(r.dislike){ undoDislike(r); } else { openDislike(r); } });
+    var mBtn=foot.querySelector('button');
+    mBtn.addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, mBtn, function(){ removeMobTask(i); }); });
   });
 }
 var _mobCur=null;
@@ -2845,6 +2867,130 @@ function undoDislike(r){ r.dislike=''; persistResults(); renderMobTasks(); }
   });
   m.addEventListener('click',function(e){ if(e.target===m) closeDislike(); });
 })();
+/* ===== Hapus hasil (mobile + desktop) ===== */
+function removeResult(i){
+  if(i<0||i>=state.results.length) return;
+  state.results.splice(i,1); persistResults();
+  renderGrid(); renderDetail(); renderRight(); renderMobTasks();
+  toast('Task dihapus');
+}
+/* ===== Menu task (View Detail / Delete — ala Tensor.Art) ===== */
+var _taskMenuEl=null;
+function closeTaskMenu(){
+  if(_taskMenuEl){ _taskMenuEl.remove(); _taskMenuEl=null; }
+}
+function openTaskMenu(r, anchor, onDelete){
+  closeTaskMenu();
+  var m=document.createElement('div');
+  m.className='fixed z-[80] min-w-[10.5rem] rounded-xl bg-[#1c2128] border border-white/15 shadow-2xl py-1.5 text-xs overflow-hidden';
+  m.innerHTML='<button class="tm-item w-full flex items-center gap-2 px-3 py-2.5 text-neutral-200 hover:bg-[#21262d] transition-colors"><i data-icon="list" class="w-4 h-4 text-neutral-400"></i>View Detail</button>'
+    +'<div class="h-px bg-white/10 mx-3"></div>'
+    +'<button class="tm-item w-full flex items-center gap-2 px-3 py-2.5 text-red-300 hover:bg-red-500/10 transition-colors"><i data-icon="trash" class="w-4 h-4"></i>Delete</button>';
+  document.body.appendChild(m);
+  var b=m.querySelectorAll('button');
+  b[0].addEventListener('click',function(){ closeTaskMenu(); openParams(r); });
+  b[1].addEventListener('click',function(){ closeTaskMenu(); if(onDelete) onDelete(); });
+  // posisikan di bawah anchor, rata kanan; balik ke atas kalau mepet bawah
+  var ar=anchor.getBoundingClientRect();
+  var mw=m.offsetWidth, mh=m.offsetHeight;
+  var x=Math.min(window.innerWidth-mw-8, Math.max(8, ar.right-mw));
+  var y=ar.bottom+6;
+  if(y+mh>window.innerHeight-8) y=ar.top-mh-6;
+  m.style.left=x+'px'; m.style.top=Math.max(8,y)+'px';
+  setTimeout(function(){
+    document.addEventListener('click',function h(e){ if(!m.contains(e.target)){ closeTaskMenu(); document.removeEventListener('click',h); } });
+    window.addEventListener('scroll',function h2(){ closeTaskMenu(); window.removeEventListener('scroll',h2); },true);
+  },0);
+  _taskMenuEl=m;
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeTaskMenu(); });
+/* ===== Parameters modal (detail task — ala Tensor.Art) ===== */
+var _pmCur=null;
+function paramsHTML(r){
+  function row(k,v){
+    return '<div class="flex justify-between gap-3 py-1.5 border-b bd"><span class="text-neutral-500 shrink-0">'+k+'</span>'
+      +'<span class="text-neutral-200 text-right break-words min-w-0">'+(v==null||v===''?'-':v)+'</span></div>';
+  }
+  function block(label,val){
+    return '<div><div class="text-[11px] text-neutral-500 mb-1">'+label+'</div>'
+      +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-200 leading-relaxed max-h-40 overflow-y-auto hidebar whitespace-pre-wrap break-words">'+esc(val||'-')+'</div></div>';
+  }
+  var h=block('Prompt', r.prompt);
+  h+=block('Negative prompt', r.neg);
+  h+='<div class="pt-1">';
+  h+=row('Size', esc(r.size||'-'));
+  h+=row('Seed', esc(r.seed||'-'));
+  h+=row('Model', esc(r.model||'-'));
+  h+=row('Steps', esc(r.steps!=null&&r.steps!==''?r.steps:'-'));
+  h+=row('CFG scale', esc(r.cfg!=null&&r.cfg!==''?r.cfg:'-'));
+  h+=row('KSampler', esc(r.sampler||'-'));
+  h+=row('Schedule', esc(r.sched||'-'));
+  h+='</div>';
+  return h;
+}
+function openParams(r){
+  _pmCur=r;
+  $('pm-body').innerHTML=paramsHTML(r);
+  var pm=$('param-modal');
+  if(pm){ pm.classList.remove('hidden'); pm.classList.add('flex'); }
+}
+function closeParams(){
+  var pm=$('param-modal');
+  if(pm){ pm.classList.add('hidden'); pm.classList.remove('flex'); }
+}
+function copyGenData(r){
+  var lines=[
+    'Prompt: '+ (r.prompt||''),
+    'Negative prompt: '+ (r.neg||''),
+    'Size: '+ (r.size||''),
+    'Seed: '+ (r.seed||''),
+    'Model: '+ (r.model||''),
+    'Steps: '+ (r.steps!=null?r.steps:''),
+    'CFG scale: '+ (r.cfg!=null?r.cfg:''),
+    'KSampler: '+ (r.sampler||''),
+    'Schedule: '+ (r.sched||'')
+  ];
+  var txt=lines.join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(function(){ toast('Data generasi tersalin ✓'); }); }
+  else toast(txt);
+}
+function selVal(id,v){
+  var el=$(id); if(!el||!v) return;
+  var i;
+  for(i=0;i<el.options.length;i++){
+    if(String(el.options[i].value).toLowerCase()===String(v).toLowerCase()){ el.value=el.options[i].value; return; }
+  }
+}
+function remixResult(r){
+  $('prompt').value=r.prompt||'';
+  if(r.neg){ $('negcheck').checked=true; $('negwrap').classList.remove('hidden'); $('negprompt').value=r.neg; }
+  else { $('negcheck').checked=false; $('negwrap').classList.add('hidden'); $('negprompt').value=''; }
+  var sm=String(r.size||'').toLowerCase().split('x');
+  if(sm.length===2){
+    var w=parseInt(sm[0],10), hh=parseInt(sm[1],10);
+    if(w>0&&hh>0){ $('width').value=w; $('height').value=hh; updWH(); state.aspect='custom'; setArActive('custom'); }
+  }
+  if(r.seed){ $('seed').value=r.seed; if(typeof persistSeed==='function') persistSeed(r.seed); }
+  if(r.steps!=null&&r.steps!==''){ $('steps').value=r.steps; $('sv').textContent=r.steps; }
+  if(r.cfg!=null&&r.cfg!==''){ $('cfg').value=r.cfg; $('cfv').textContent=r.cfg; }
+  selVal('sampler', r.sampler);
+  selVal('sched', r.sched);
+  var m=MODELS.filter(function(x){return x.name===r.model})[0];
+  if(m) setModel(m);
+  if(typeof renderTriggers==='function') renderTriggers();
+  closeParams();
+  // mobile: kembali ke tab Workspace untuk edit prompt
+  if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('workspace');
+  toast('Prompt & pengaturan dimuat (Remix) ✓');
+}
+(function(){
+  var pm=$('param-modal'); if(!pm) return;
+  var c=$('pm-close'); if(c) c.addEventListener('click',closeParams);
+  var cp=$('pm-copy'); if(cp) cp.addEventListener('click',function(){ if(_pmCur) copyGenData(_pmCur); });
+  var rx=$('pm-remix'); if(rx) rx.addEventListener('click',function(){ if(_pmCur) remixResult(_pmCur); });
+  pm.addEventListener('click',function(e){ if(e.target===pm) closeParams(); });
+})();
+
 /* --- Pinch-to-zoom kotak prompt mobile: 2 jari -> perbesar (ala iOS Notes) --- */
 (function(){
   var ta=$('prompt'); if(!ta) return;
