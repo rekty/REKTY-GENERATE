@@ -2881,16 +2881,9 @@ function renderMobGrid(){
   });
   list.appendChild(g);
 }
-function renderMobTasks(){
-  if(_mobView==='grid'){ renderMobGrid(); return; }
-  var list=$('mobtasks-list'); if(!list) return;
-  list.innerHTML='';
-  var empty=$('mobtasks-empty');
-  if(empty) empty.classList.toggle('hidden', state.results.length>0);
-  if(!state.results.length) return;
-  state.results.forEach(function(r,i){
-    var d=document.createElement('div');
-    d.className='border bd rounded-2xl bg-[#161b22] overflow-hidden';
+function mobTaskCard(r,i){
+  var d=document.createElement('div');
+  d.className='border bd rounded-2xl bg-[#161b22] overflow-hidden';
     // ---- gambar (aspect ratio asli, di tengah) + pill aksi melayang ----
     var wrap=document.createElement('div');
     wrap.className='relative';
@@ -2957,7 +2950,6 @@ function renderMobTasks(){
     vd.className='w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold text-neutral-200 hover:bg-[#21262d] border-t bd transition-colors';
     vd.innerHTML='<i data-icon="list" class="w-3.5 h-3.5 text-neutral-400"></i>View Detail';
     d.appendChild(vd);
-    list.appendChild(d);
     // ---- wiring pill aksi ----
     var btns=pill.querySelectorAll('button');
     btns[0].addEventListener('click',function(e){ e.stopPropagation(); shareImage(r); });
@@ -2967,6 +2959,44 @@ function renderMobTasks(){
     refBtn.addEventListener('click',function(e){ e.stopPropagation(); remixResult(r); });
     mBtn.addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, mBtn, function(){ removeMobTask(i); }); });
     vd.addEventListener('click',function(){ openParams(r); });
+  return d;
+}
+function renderMobTasks(){
+  if(_mobView==='grid'){ renderMobGrid(); return; }
+  if(_mobView==='date'){ renderMobDate(); return; }
+  var list=$('mobtasks-list'); if(!list) return;
+  list.innerHTML='';
+  var empty=$('mobtasks-empty');
+  if(empty) empty.classList.toggle('hidden', state.results.length>0);
+  if(!state.results.length) return;
+  state.results.forEach(function(r,i){ list.appendChild(mobTaskCard(r,i)); });
+}
+function dayKey(ts){ var dt=new Date(ts||Date.now()); return dt.getFullYear()+'-'+dt.getMonth()+'-'+dt.getDate(); }
+function dayLabel(ts){
+  var dt=new Date(ts||Date.now()), today=new Date();
+  if(dayKey(dt.getTime())===dayKey(today.getTime())) return 'Hari Ini';
+  if(dayKey(dt.getTime())===dayKey(today.getTime()-86400000)) return 'Kemarin';
+  return dt.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+function renderMobDate(){
+  var list=$('mobtasks-list'); if(!list) return;
+  list.innerHTML='';
+  var empty=$('mobtasks-empty');
+  if(empty) empty.classList.toggle('hidden', state.results.length>0);
+  if(!state.results.length) return;
+  var groups=[];
+  state.results.forEach(function(r,i){
+    var k=dayKey(r.ts), g=groups[groups.length-1];
+    if(!g||g.k!==k){ g={k:k,label:dayLabel(r.ts),items:[]}; groups.push(g); }
+    g.items.push({r:r,i:i});
+  });
+  groups.forEach(function(g){
+    var hd=document.createElement('div');
+    hd.className='flex items-center justify-between px-3 pt-4 pb-2';
+    hd.innerHTML='<span class="text-[11px] font-semibold uppercase tracking-wide text-neutral-400">'+g.label+'</span>'
+      +'<span class="text-[10px] text-neutral-600">'+g.items.length+'</span>';
+    list.appendChild(hd);
+    g.items.forEach(function(it){ list.appendChild(mobTaskCard(it.r,it.i)); });
   });
 }
 var _mobCur=null;
