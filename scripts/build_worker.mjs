@@ -44,6 +44,13 @@ const FAVICON_PNG = Uint8Array.from(atob(FAVICON_PNG_B64), (c) => c.charCodeAt(0
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    // Redirect domain lama (rekty-generator.pages.dev + alias preview-nya)
+    // ke visualaiartwork.pages.dev — pengunjung lama ikut pindah (308 permanen,
+    // path & query dipertahankan). KV sama, jadi /img/ arsip tetap terbaca.
+    const host = (url.hostname || '').toLowerCase();
+    if (host === 'rekty-generator.pages.dev' || host.endsWith('.rekty-generator.pages.dev')) {
+      return Response.redirect('https://visualaiartwork.pages.dev' + url.pathname + url.search, 308);
+    }
     if (url.pathname === '/favicon.svg') {
       return new Response(FAVICON_SVG, { status: 200, headers: { 'Content-Type': 'image/svg+xml; charset=utf-8' } });
     }
