@@ -1848,7 +1848,8 @@ function buildPayload(){
       guidance:3.5,
       useFirstLastFrame:false,
       ksamplerName:$('sampler').value,
-      schedule:$('sched').value
+      schedule:$('sched').value,
+      upscale:_i2iTool==='upscale'
     },
     provider:settings.provider||'tams',
     selfhostUrl:settings.selfhostUrl||'',
@@ -2558,6 +2559,7 @@ function demoResults(par){
   setSubmitInfo('',par.params.width+'x'+par.params.height,state.ncol);
   startProgAnim(); // progress berjalan sambil menunggu gambar sungguhan dibuat
   var w=par.params.width||768, h=par.params.height||1152;
+  if(par.params.upscale){ w=Math.min(4096,w*2); h=Math.min(4096,h*2); } // Upscale 2x: hasil 2x ukuran
   // Pollinations tolak seed > int32 (HTTP 500) — clamp ke rentang aman
   var seedRaw=parseInt(par.params.seed,10)||Math.floor(Math.random()*1e9);
   var seedBase=Math.max(1,seedRaw%2000000000);
@@ -2711,11 +2713,20 @@ $('i2i-drop').addEventListener('click',function(){ $('i2i-file').click(); });
 $('i2i-file').addEventListener('change',function(e){ handleI2iFile(e.target.files&&e.target.files[0]); });
 $('i2i-drop').addEventListener('dragover',function(e){ e.preventDefault(); });
 $('i2i-drop').addEventListener('drop',function(e){ e.preventDefault(); handleI2iFile(e.dataTransfer.files&&e.dataTransfer.files[0]); });
-/* Tool pills: Img2Img aktif; yang lain info "segera hadir" */
+/* Tool pills ala Tensor.Art: Img2Img + Upscale berfungsi; ADetailer/Inpaint/Pix2Pix segera hadir */
+var _i2iTool='img2img';
+function setI2iTool(tool){
+  _i2iTool=tool;
+  document.querySelectorAll('.i2i-tool').forEach(function(x){ x.classList.toggle('on', x.dataset.tool===tool); });
+}
 document.querySelectorAll('.i2i-tool').forEach(function(t){
   t.addEventListener('click',function(){
-    if(t.dataset.tool==='img2img') return;
-    toast('Tool '+t.textContent+' segera hadir — Img2Img aktif');
+    var tool=t.dataset.tool;
+    if(tool==='adetailer'||tool==='inpaint'||tool==='pix2pix'){ toast('Tool '+t.textContent+' segera hadir'); return; }
+    setI2iTool(tool);
+    if(tool==='upscale'&&settings.provider!=='tams'&&settings.provider!=='pollinations'){
+      toast('Upscale 2x aktif — asli via TAMS (IMAGE_TO_UPSCALER), ukuran 2x via Pollinations. Provider lain: hasil tetap ukuran normal.');
+    }
   });
 });
 /* Denoising Strength: slider <-> kotak angka (ala Tensor.Art) */

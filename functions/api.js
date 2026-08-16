@@ -265,12 +265,27 @@ async function tamsCreateJob(body, apiKey) {
     );
   }
 
+  const stages = [
+    { type: 'INPUT_INITIALIZE', inputInitialize: inputInit },
+    { type: 'DIFFUSION', diffusion },
+  ];
+  // Tool Upscale 2x (ala Tensor.Art): tambah stage IMAGE_TO_UPSCALER setelah DIFFUSION
+  // supaya hasil generate otomatis di-upscale 2x oleh TAMS.
+  if (params.upscale === true) {
+    stages.push({
+      type: 'IMAGE_TO_UPSCALER',
+      image_to_upscaler: {
+        hr_upscaler: '4x-UltraSharp',
+        hr_scale: 2,
+        hr_second_pass_steps: 10,
+        denoising_strength: 0.3,
+      },
+    });
+  }
+
   const payload = {
     request_id: 'rekty-' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
-    stages: [
-      { type: 'INPUT_INITIALIZE', inputInitialize: inputInit },
-      { type: 'DIFFUSION', diffusion },
-    ],
+    stages,
   };
 
   const res = await fetchWithTimeout(TAMS_BASE + '/v1/jobs', {
@@ -764,8 +779,13 @@ async function pollinationsCreateJob(body, env, apiKey) {
   const params = body.params || body;
   // Pollinations menyesuaikan ukuran per model (maxSideLength) — jangan
   // di-clamp ketat, biarkan sisi panjang sampai 4096 (rasio bebas).
-  const width = clampInt(params.width, 64, 4096, 1024);
-  const height = clampInt(params.height, 64, 4096, 1024);
+  let width = clampInt(params.width, 64, 4096, 1024);
+  let height = clampInt(params.height, 64, 4096, 1024);
+  // Tool Upscale 2x: minta gambar 2x ukuran (Pollinations tidak punya stage upscale terpisah).
+  if (params.upscale === true) {
+    width = clampInt(width * 2, 64, 4096, width);
+    height = clampInt(height * 2, 64, 4096, height);
+  }
   const seed = toSeed(params.seed);
   const model = String(params.model || '').trim();
   const prompt = String(params.prompt || '').slice(0, 1500);

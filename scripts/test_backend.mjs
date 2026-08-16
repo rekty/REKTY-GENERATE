@@ -73,7 +73,11 @@ globalThis.fetch = async (url, opts) => {
     if (method === 'POST' && u.endsWith('/v1/jobs')) {
       const b = JSON.parse(bodyText);
       assert.ok(b.request_id, 'TAMS: request_id wajib');
-      assert.ok(Array.isArray(b.stages) && b.stages.length === 2, 'TAMS: 2 stages');
+      assert.ok(
+        b.stages.length === 2 ||
+          (b.stages.length === 3 && b.stages[2].type === 'IMAGE_TO_UPSCALER'),
+        'TAMS stages: 2 (normal) atau 3 (upscale)',
+      );
       const diff = b.stages[1].diffusion;
       assert.strictEqual(diff.sdModel, '1027906253260603805', 'TAMS sdModel');
       assert.deepStrictEqual(diff.negativePrompts, [{ text: 'blurry, low quality' }], 'TAMS negativePrompts');
@@ -640,6 +644,43 @@ console.log('OAuth BYOP (Bring Your Own Pollen):');
   const g2 = await run('/api/generate', p2, { POLLINATIONS_API_KEY: 'sk_env_fallback', IMAGES });
   assert.strictEqual(g2.status, 200);
   ok('generate tanpa session -> fallback env POLLINATIONS_API_KEY');
+}
+
+console.log('Tool Upscale 2x (TAMS IMAGE_TO_UPSCALER + Pollinations 2x):');
+{
+  // TAMS: upscale=true -> tambah stage IMAGE_TO_UPSCALER (hr_scale 2)
+  const p = webPayload('tams', '');
+  p.params.upscale = true;
+  const g = await run('/api/generate', p, {}, AUTH);
+  assert.strictEqual(g.status, 200);
+  const jobCall = calls.filter((c) => c.method === 'POST' && c.url.includes('/v1/jobs'));
+  const b = JSON.parse(jobCall[jobCall.length - 1].body);
+  assert.strictEqual(b.stages.length, 3, 'TAMS upscale: 3 stages (INPUT_INITIALIZE + DIFFUSION + IMAGE_TO_UPSCALER)');
+  assert.strictEqual(b.stages[2].type, 'IMAGE_TO_UPSCALER', 'stage ke-3 = IMAGE_TO_UPSCALER');
+  assert.strictEqual(b.stages[2].image_to_upscaler.hr_scale, 2, 'hr_scale = 2');
+  assert.ok(String(b.stages[2].image_to_upscaler.hr_upscaler).length > 0, 'hr_upscaler terisi');
+  ok('TAMS: upscale=true -> stage IMAGE_TO_UPSCALER (hr_scale 2) ditambahkan');
+
+  // tanpa upscale -> tetap 2 stages (tidak berubah)
+  const p2 = webPayload('tams', '');
+  const g2 = await run('/api/generate', p2, {}, AUTH);
+  const jobCall2 = calls.filter((c) => c.method === 'POST' && c.url.includes('/v1/jobs'));
+  const b2 = JSON.parse(jobCall2[jobCall2.length - 1].body);
+  assert.strictEqual(b2.stages.length, 2, 'tanpa upscale: tetap 2 stages');
+  ok('TAMS: tanpa upscale -> tetap 2 stages');
+
+  // Pollinations: upscale=true -> ukuran 2x (768x1152 -> 1536x2304)
+  const pp = webPayload('pollinations', 'flux');
+  pp.params.upscale = true;
+  pp.params.width = 768;
+  pp.params.height = 1152;
+  const pg = await run('/api/generate', pp, { POLLINATIONS_API_KEY: 'sk_env_fallback', IMAGES });
+  assert.strictEqual(pg.status, 200);
+  const polliCall = calls.filter((c) => c.url.startsWith('https://gen.pollinations.ai/image/'));
+  const lastP = polliCall[polliCall.length - 1];
+  assert.ok(lastP.url.includes('width=1536'), 'Pollinations width 2x: ' + lastP.url);
+  assert.ok(lastP.url.includes('height=2304'), 'Pollinations height 2x');
+  ok('Pollinations: upscale=true -> ukuran 2x (1536x2304)');
 }
 
 console.log('Validasi (API key + provider salah):');
