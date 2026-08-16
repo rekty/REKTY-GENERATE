@@ -601,7 +601,7 @@ input[type=range]{cursor:pointer}
       <div id="mobtasks" class="flex-col">
         <div class="flex items-center gap-1.5 px-3 py-2 border-b bd bg-[#0d1117]/85 text-xs">
           <button class="mfbtn sel" data-f="all">All<i data-icon="caret-down" class="w-3 h-3"></i></button>
-          <button class="mfbtn" data-f="list">List<i data-icon="caret-down" class="w-3 h-3"></i></button>
+          <button class="mfbtn" data-f="grid">Grid<i data-icon="caret-down" class="w-3 h-3"></i></button>
           <button class="mfbtn" data-f="date">Date<i data-icon="caret-down" class="w-3 h-3"></i></button>
           <span class="flex-1"></span>
           <button id="mob-reload" class="mficon" title="Reload"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></button>
@@ -2821,7 +2821,60 @@ function mobDetailHTML(r){
     +'</div>';
   return h;
 }
+var _mobView='all'; // all | grid | date — tampilan tab Tasks mobile
+function mobSetView(v){
+  _mobView=v;
+  document.querySelectorAll('#mobtasks .mfbtn').forEach(function(b){
+    b.classList.toggle('sel', b.getAttribute('data-f')===v);
+  });
+  renderMobTasks();
+}
+/* Tampilan Grid: 4 hasil terakhir dalam 2x2 (ala Tensor.Art) */
+function renderMobGrid(){
+  var list=$('mobtasks-list'); if(!list) return;
+  list.innerHTML='';
+  var empty=$('mobtasks-empty');
+  if(empty) empty.classList.toggle('hidden', state.results.length>0);
+  if(!state.results.length) return;
+  var g=document.createElement('div');
+  g.className='grid grid-cols-2 gap-2 px-3 py-3';
+  state.results.slice(0,4).forEach(function(r,i){
+    var cell=document.createElement('div');
+    cell.className='relative rounded-xl overflow-hidden border bd bg-[#161b22] aspect-[3/4] cursor-zoom-in';
+    var img=document.createElement('img');
+    img.src=r.src; img.className='absolute inset-0 w-full h-full object-cover';
+    img.loading='lazy';
+    img.addEventListener('click',function(){ openMobView(r); });
+    cell.appendChild(img);
+    if(r.demo){
+      var bd=document.createElement('span');
+      bd.className='absolute top-1.5 left-1.5 flex items-center gap-1 text-[7px] font-medium tracking-[0.14em] bg-white/10 backdrop-blur-md border border-white/15 text-white/80 px-1.5 py-0.5 rounded-full z-20 pointer-events-none';
+      bd.innerHTML='<span class="w-1 h-1 rounded-full bg-[#27D4CD]"></span>DEMO';
+      cell.appendChild(bd);
+    }
+    if(r.dislike){
+      img.classList.add('blur-md','opacity-60');
+      var ov=document.createElement('div');
+      ov.className='absolute inset-0 flex items-center justify-center bg-[#0d1117]/80 z-10 cursor-pointer';
+      ov.innerHTML='<span class="text-[9px] text-neutral-300 text-center px-2">Dislike tersembunyi</span>';
+      ov.addEventListener('click',function(e){ e.stopPropagation(); openDislike(r); });
+      cell.appendChild(ov);
+    }
+    var nm=document.createElement('span');
+    nm.className='absolute bottom-1.5 left-1.5 text-[8px] text-white/85 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded truncate max-w-[55%] pointer-events-none';
+    nm.textContent=r.model||'';
+    cell.appendChild(nm);
+    var mn=document.createElement('button');
+    mn.className='absolute bottom-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-white/85 z-20';
+    mn.innerHTML='<i data-icon="dots-three-vertical" class="w-3.5 h-3.5"></i>';
+    mn.addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, mn, function(){ removeMobTask(i); }); });
+    cell.appendChild(mn);
+    g.appendChild(cell);
+  });
+  list.appendChild(g);
+}
 function renderMobTasks(){
+  if(_mobView==='grid'){ renderMobGrid(); return; }
   var list=$('mobtasks-list'); if(!list) return;
   list.innerHTML='';
   var empty=$('mobtasks-empty');
@@ -2955,6 +3008,9 @@ function closeMobDetail(){ $('mobdetail').classList.add('hidden'); $('mobdetail'
   }
   var mr=$('mob-reload');
   if(mr) mr.addEventListener('click',renderMobTasks);
+  document.querySelectorAll('#mobtasks .mfbtn').forEach(function(b){
+    b.addEventListener('click',function(){ mobSetView(b.getAttribute('data-f')); });
+  });
   var mm=$('mob-manage');
   if(mm) mm.addEventListener('click',function(){
     if(state.results.length&&confirm('Hapus SEMUA task?')){ state.results=[]; persistResults(); renderMobTasks(); renderGrid(); renderDetail(); renderRight(); }
