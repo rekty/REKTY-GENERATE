@@ -447,7 +447,7 @@ input[type=range]{cursor:pointer}
             <option value="tams">Tensor.Art (TAMS)</option>
             <option value="replicate">Replicate (SDXL)</option>
             <option value="fal">fal.ai (fast-sdxl)</option>
-            <option value="pollinations">Pollinations (GRATIS, tanpa key)</option>
+            <option value="pollinations">Pollinations AI</option>
             <option value="selfhost">Self-Host (Krea 2 + LoRA-mu)</option>
           </select>
         </div>
@@ -928,7 +928,7 @@ var LORA_LIBS = {
     { name:'Krea 2 LoRA (turbo)', base:'Krea 2', model:'fal-ai/krea-2/turbo/lora', tags:['krea2'], thumb:'krea', badge:'KREA2-LORA', views:'66K', ver:'V1', needUrl:true },
     { name:'REKTY ANJANY (Krea 2, siap pakai)', base:'Krea 2', model:'fal-ai/krea-2/turbo/lora', tags:['anjany','krea2','rekty'], thumb:'anjany', badge:'REKTY', views:'', ver:'V1', needUrl:true, defaultUrl:'https://huggingface.co/rekty1988/REKTY_ANJANY/resolve/main/rekty%20anjany.safetensors' },
   ],
-  pollinations: [], // LoRA tidak didukung — gratis, model bawaan saja
+  pollinations: [], // LoRA tidak didukung — model bawaan saja
   selfhost: [], // LoRA sudah di-inject di gateway (Krea 2 + REKTY ANJANY)
 };
 var LORA_LIB = LORA_LIBS.tams; // daftar aktif mengikuti provider
@@ -1827,7 +1827,7 @@ var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Gratis di tams.tensor.art — pakai daftar Model di UI.' },
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
   fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
-  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Gratis tanpa key (model otomatis). Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' },
+  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Tanpa key (model otomatis). Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' },
   selfhost:{ label:'Endpoint Self-Host (URL trycloudflare)', hint:'Tanpa API key. Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.' }
 };
 
@@ -1968,7 +1968,7 @@ function refreshPollinationsModels(){
 function updateApiStatus(){
   var el=$('api-status'); if(!el) return;
   if(settings.provider==='pollinations'){
-    el.textContent=settings.pollSession?'Pollinations · BYOP':'Pollinations · gratis';
+    el.innerHTML='<img src="https://pollinations.ai/favicon-32x32.png" alt="" onerror="this.style.display=&apos;none&apos;" class="w-3.5 h-3.5 inline rounded-full align-[-3px] mr-1"/>'+(settings.pollSession?'Pollinations AI · BYOP':'Pollinations AI');
     el.style.color=settings.pollSession?'#27D4CD':'#9a9aa2';
     return;
   }
