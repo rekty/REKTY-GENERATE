@@ -2489,10 +2489,15 @@ function demoResults(par){
   // Pollinations tolak seed > int32 (HTTP 500) — clamp ke rentang aman
   var seedRaw=parseInt(par.params.seed,10)||Math.floor(Math.random()*1e9);
   var seedBase=Math.max(1,seedRaw%2000000000);
+  // Pakai model Pollinations yang dipilih kalau valid untuk endpoint gambar
+  // (nama sederhana tanpa '/', mis. flux/zimage/krea — bukan byop/community path)
+  var mSel=state.model||{};
+  var _mName=mSel.model&&String(mSel.model).indexOf('/')<0?String(mSel.model):'';
+  var modelParam=(settings.provider==='pollinations'&&_mName)?('&model='+encodeURIComponent(_mName)):'';
   var urls=[];
   for(var i=0;i<state.ncol;i++){
     urls.push('https://image.pollinations.ai/prompt/'+encodeURIComponent(par.params.prompt)
-      +'?width='+w+'&height='+h+'&seed='+(seedBase+i)+'&nologo=true');
+      +'?width='+w+'&height='+h+'&seed='+(seedBase+i)+modelParam+'&nologo=true');
   }
   var done=false;
   function addDemoResults(srcs){
