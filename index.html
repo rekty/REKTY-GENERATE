@@ -719,6 +719,13 @@ input[type=range]{cursor:pointer}
       <button id="lb-dl" title="Download gambar" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-10 h-10 rounded-full bg-black/60 hover:bg-[#3b82f6] text-white flex items-center justify-center transition-colors">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
       </button>
+      <!-- pill Bagikan/Download/Dislike (desktop lightbox) — hanya tampil di layar besar -->
+      <div id="lb-pill" class="hidden lg:flex absolute top-3 right-3 items-center gap-0.5 bg-[#1c2128]/90 backdrop-blur rounded-full px-1 py-1 z-30 border border-white/15 shadow-lg">
+        <button class="tact" title="Bagikan ke Facebook"><i data-icon="paper-plane" class="w-4 h-4"></i></button>
+        <button class="tact" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>
+        <span class="w-px h-4 bg-white/30 mx-0.5"></span>
+        <button class="tact" title="Dislike"><i data-icon="thumbs-down" class="w-4 h-4"></i></button>
+      </div>
     </div>
     <!-- KANAN: identifikasi, mengikuti tinggi gambar (scroll bila lebih panjang) -->
     <div id="lb-meta" class="w-full lg:w-[21rem] shrink-0 lg:border-l bd p-4 space-y-2.5 text-xs text-neutral-400 overflow-y-auto hidebar max-h-[46vh] lg:max-h-[92vh] lg:self-stretch"></div>
@@ -1702,7 +1709,17 @@ function dlImage(src){
     }).catch(function(){ window.open(src,'_blank'); });
   }catch(e){ window.open(src,'_blank'); }
 }
+var _lbCur=null;
+function syncLbPill(r){
+  var img=$('lb-img'), p=$('lb-pill');
+  if(img){ img.classList.toggle('blur-md', !!r.dislike); img.classList.toggle('opacity-70', !!r.dislike); }
+  if(p){
+    var b=p.querySelectorAll('button');
+    if(b[2]){ b[2].classList.toggle('on', !!r.dislike); b[2].title=r.dislike?'Batal dislike (kembalikan)':'Dislike'; }
+  }
+}
 function openLightbox(r){
+  _lbCur=r;
   $('lb-img').src=r.src;
   var box=function(k,v){ return '<div class="flex justify-between gap-3"><span class="text-neutral-500 shrink-0">'+k+'</span><span class="text-neutral-200 text-right min-w-0 break-all">'+v+'</span></div>'; };
   var block=function(k,v){ return '<div><div class="text-neutral-500 mb-1">'+k+'</div><div class="bg-black/40 border bd rounded-lg p-2.5 text-neutral-200 leading-relaxed max-h-40 overflow-y-auto hidebar">'+v+'</div></div>'; };
@@ -1723,6 +1740,15 @@ function openLightbox(r){
   if(r.credits) h+=box('Credits', esc(r.credits));
   $('lb-meta').innerHTML=h;
   var dl=$('lb-dl'); if(dl) dl.onclick=function(e){ e.stopPropagation(); dlImage(r.src); };
+  // pill Bagikan/Download/Dislike — tombol tetap ada saat gambar dibesarkan (desktop)
+  var p=$('lb-pill');
+  if(p){
+    var pbtns=p.querySelectorAll('button');
+    pbtns[0].onclick=function(e){ e.stopPropagation(); shareImage(r); };
+    pbtns[1].onclick=function(e){ e.stopPropagation(); dlImage(r.src); };
+    pbtns[2].onclick=function(e){ e.stopPropagation(); if(r.dislike){ undoDislike(r); } else { openDislike(r); } };
+    syncLbPill(r);
+  }
   $('lightbox').classList.remove('hidden'); $('lightbox').classList.add('flex');
 }
 $('lb-close').addEventListener('click',function(){ $('lightbox').classList.add('hidden'); $('lightbox').classList.remove('flex'); });
@@ -2879,8 +2905,9 @@ function closeDislike(){ var m=$('mobdislike'); if(m){ m.classList.add('hidden')
 function applyDislike(reason){
   var r=_dislikeTarget; if(!r||!reason) return;
   r.dislike=reason; persistResults(); closeDislike(); renderMobTasks(); renderGrid();
+  if(typeof syncLbPill==='function') syncLbPill(r);
 }
-function undoDislike(r){ r.dislike=''; persistResults(); renderMobTasks(); renderGrid(); }
+function undoDislike(r){ r.dislike=''; persistResults(); renderMobTasks(); renderGrid(); if(typeof syncLbPill==='function') syncLbPill(r); }
 (function(){
   var m=$('mobdislike'); if(!m) return;
   var close=$('dl-close'); if(close) close.addEventListener('click',closeDislike);
