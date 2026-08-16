@@ -2022,8 +2022,9 @@ async function pollTask(taskId,onProg){
 
 /* --- Self-Host: generate langsung ke gateway ComfyUI (browser -> endpoint) --- */
 async function selfhostGenerate(par){
-  var url=(settings.selfhostUrl||'').trim().replace(/\/+$/,'');
+  var url=(settings.selfhostUrl||'').trim().replace(/\/+$/,'').replace(/\/v1$/i,'');
   if(!url) throw new Error('URL endpoint self-host belum diatur — isi di Pengaturan -> Endpoint Self-Host');
+  if(!/^https?:\/\//.test(url)) throw new Error('URL endpoint self-host harus diawali https://');
   var m=state.model||{};
   var body={
     model: m.model||'rekty1988/anjany',
@@ -2186,7 +2187,7 @@ async function doGenerate(){
   }catch(e){
     if(_pollStop&&e.message==='dibatalkan pengguna'){
       toast('Generate dibatalkan');
-    }else if(settings.mode==='auto'){
+    }else if(settings.mode==='auto'&&settings.provider!=='selfhost'){
       toast('Backend/API belum aktif ('+e.message+') — pakai simulasi demo');
       demoResults(par);
     }else{
