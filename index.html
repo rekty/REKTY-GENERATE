@@ -3079,12 +3079,18 @@ function openTaskMenu(r, anchor, onDelete){
   var m=document.createElement('div');
   m.className='fixed z-[80] min-w-[10.5rem] rounded-xl bg-[#1c2128] border border-white/15 shadow-2xl py-1.5 text-xs overflow-hidden';
   m.innerHTML='<button class="tm-item w-full flex items-center gap-2 px-3 py-2.5 text-neutral-200 hover:bg-[#21262d] transition-colors"><i data-icon="list" class="w-4 h-4 text-neutral-400"></i>View Detail</button>'
+    +'<button class="tm-item w-full flex items-center gap-2 px-3 py-2.5 text-neutral-200 hover:bg-[#21262d] transition-colors"><i data-icon="arrows-clockwise" class="w-4 h-4 text-neutral-400"></i>Remix</button>'
+    +'<button class="tm-item w-full flex items-center gap-2 px-3 py-2.5 text-neutral-200 hover:bg-[#21262d] transition-colors"><i data-icon="download" class="w-4 h-4 text-neutral-400"></i>Download</button>'
+    +'<button class="tm-item w-full flex items-center gap-2 px-3 py-2.5 text-neutral-200 hover:bg-[#21262d] transition-colors"><i data-icon="paper-plane" class="w-4 h-4 text-neutral-400"></i>Share</button>'
     +'<div class="h-px bg-white/10 mx-3"></div>'
     +'<button class="tm-item w-full flex items-center gap-2 px-3 py-2.5 text-red-300 hover:bg-red-500/10 transition-colors"><i data-icon="trash" class="w-4 h-4"></i>Delete</button>';
   document.body.appendChild(m);
   var b=m.querySelectorAll('button');
   b[0].addEventListener('click',function(){ closeTaskMenu(); openParams(r); });
-  b[1].addEventListener('click',function(){ closeTaskMenu(); if(onDelete) onDelete(); });
+  b[1].addEventListener('click',function(){ closeTaskMenu(); remixResult(r); });
+  b[2].addEventListener('click',function(){ closeTaskMenu(); dlImage(r.src); });
+  b[3].addEventListener('click',function(){ closeTaskMenu(); shareImage(r); });
+  b[4].addEventListener('click',function(){ closeTaskMenu(); if(onDelete) onDelete(); });
   // posisikan di bawah anchor, rata kanan; balik ke atas kalau mepet bawah
   var ar=anchor.getBoundingClientRect();
   var mw=m.offsetWidth, mh=m.offsetHeight;
