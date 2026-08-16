@@ -47,7 +47,7 @@ MODEL_NAMES = ["rekty1988/anjany", "krea2", "anjany", "rekty"]
 app = FastAPI(title="REKTY ComfyUI Gateway (OpenAI-compatible)")
 
 # CORS terbuka: endpoint publik — dipanggil langsung dari browser
-# (app REKTY di https://rekty-generator.pages.dev) untuk generate tanpa
+# (app REKTY di https://visualaiartwork.pages.dev) untuk generate tanpa
 # melewati proxy (menghindari batas timeout subrequest Cloudflare Workers).
 app.add_middleware(
     CORSMiddleware,

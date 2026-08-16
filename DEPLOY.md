@@ -87,13 +87,13 @@ keduanya. (Folder `functions/` tetap ada sebagai opsi deploy via dashboard Git.)
 ```bash
 npx wrangler login                                  # login browser (sekali)
 node scripts/build_worker.mjs                       # bangun _worker.js dari functions/api.js + index.html
-npx wrangler pages project create rekty-generator --production-branch main   # sekali saja
-npx wrangler pages deploy . --project-name rekty-generator --branch main
-npx wrangler pages secret put TENSORART_API_KEY --project-name rekty-generator    # token TAMS
-npx wrangler pages secret put REPLICATE_API_TOKEN --project-name rekty-generator  # token Replicate
-npx wrangler pages secret put FAL_API_KEY --project-name rekty-generator          # key fal.ai
-npx wrangler pages secret put POLLINATIONS_API_KEY --project-name rekty-generator # opsional (sk_*) — tanpa key pun gratis
-npx wrangler pages secret put POLLINATIONS_APP_KEY --project-name rekty-generator  # opsional (BYOP) — pk_* untuk login "bawa pollen sendiri"
+npx wrangler pages project create visualaiartwork --production-branch main   # sekali saja
+npx wrangler pages deploy . --project-name visualaiartwork --branch main
+npx wrangler pages secret put TENSORART_API_KEY --project-name visualaiartwork    # token TAMS
+npx wrangler pages secret put REPLICATE_API_TOKEN --project-name visualaiartwork  # token Replicate
+npx wrangler pages secret put FAL_API_KEY --project-name visualaiartwork          # key fal.ai
+npx wrangler pages secret put POLLINATIONS_API_KEY --project-name visualaiartwork # opsional (sk_*) — tanpa key pun gratis
+npx wrangler pages secret put POLLINATIONS_APP_KEY --project-name visualaiartwork  # opsional (BYOP) — pk_* untuk login "bawa pollen sendiri"
 ```
 
 **Generate Pollinations bersifat sinkron langsung** — `POST /api/generate`
@@ -115,7 +115,7 @@ dengan Pollinations** di panel API → authorize di enter.pollinations.ai
 (OAuth code flow + PKCE) → backend tukar kode → token `sk_*` scoped disimpan
 **di KV** (`oauth:<session>`; browser cuma pegang session id) → generate pakai
 token itu. Buat App Key `pk_*` di **enter.pollinations.ai/keys** dengan
-Redirect URI `https://<host>/callback` (mis. `https://rekty-generator.pages.dev/callback`
+Redirect URI `https://<host>/callback` (mis. `https://visualaiartwork.pages.dev/callback`
 + `http://localhost/callback` untuk tes lokal), simpan sebagai secret
 `POLLINATIONS_APP_KEY`. Endpoint backend: `/api/oauth/config`,
 `/api/oauth/token`, `/api/oauth/status`, `/api/oauth/logout`.
@@ -128,6 +128,11 @@ lokal via `.assetsignore`.
 
 Hasil: `https://<project>.pages.dev` — frontend + `/api/*` di origin yang sama,
 jadi tidak ada masalah CORS dan API key aman di server.
+
+> **Domain aktif:** `https://visualaiartwork.pages.dev` (project `visualaiartwork`).
+> Project lama `rekty-generator` (https://rekty-generator.pages.dev) sengaja
+> dipertahankan sebagai **backup** — deploy ke sana dengan `--project-name rekty-generator`.
+> Keduanya memakai namespace KV yang sama, jadi riwayat gambar tetap terbaca.
 
 **Cara alternatif — dashboard Git:** Cloudflare Pages → **Create project** →
 hubungkan repo GitHub → Build settings kosong, output dir `/` → Deploy.
@@ -151,8 +156,8 @@ permanen `/img/<nama>` (cache immutable).
 npx wrangler@3.90.0 kv namespace create REKTY_IMAGES   # sekali; catat id-nya
 # lalu taruh id-nya di wrangler.toml ([[kv_namespaces]] binding = "IMAGES")
 node scripts/build_worker.mjs
-npx wrangler@3.90.0 pages deploy . --project-name rekty-generator --branch main
-curl https://rekty-generator.pages.dev/api/health        # harus ada "storage": "kv"
+npx wrangler@3.90.0 pages deploy . --project-name visualaiartwork --branch main
+curl https://visualaiartwork.pages.dev/api/health        # harus ada "storage": "kv"
 ```
 
 **Catatan teknis:** namespace KV baru (`supports_url_encoding`) punya bug
