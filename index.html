@@ -2656,7 +2656,7 @@ function renderMobTasks(){
     img.addEventListener('click',function(){ openMobView(r); });
     wrap.appendChild(img);
     var pill=document.createElement('div');
-    pill.className='absolute top-3 right-3 flex items-center gap-0.5 bg-[#1c2128]/90 backdrop-blur rounded-full px-1 py-1 z-10 border border-white/15 shadow-lg';
+    pill.className='absolute top-3 right-3 flex items-center gap-0.5 bg-[#1c2128]/90 backdrop-blur rounded-full px-1 py-1 z-30 border border-white/15 shadow-lg';
     pill.innerHTML='<button class="tact" title="Bagikan ke Facebook"><i data-icon="paper-plane" class="w-4 h-4"></i></button>'
       +'<button class="tact" title="Download"><i data-icon="download" class="w-4 h-4"></i></button>'
       +'<span class="w-px h-4 bg-white/30 mx-0.5"></span>'
@@ -2667,7 +2667,9 @@ function renderMobTasks(){
       var ov=document.createElement('div');
       ov.className='absolute inset-0 flex flex-col items-center justify-center gap-1 bg-[#0d1117]/85 z-10 cursor-pointer';
       ov.innerHTML='<div class="text-sm font-semibold text-white">Unliked works hidden</div>'
-        +'<div class="text-[11px] text-neutral-400 max-w-[85%] text-center">'+esc(r.dislike)+'</div>';
+        +'<div class="text-[11px] text-neutral-400 max-w-[85%] text-center">'+esc(r.dislike)+'</div>'
+        +'<button class="tact mt-2 text-[11px] font-semibold text-white bg-[#21262d]/80 hover:bg-[#30363d] border border-white/20 rounded-full px-3 py-1">Kembalikan</button>';
+      ov.querySelector('button').addEventListener('click',function(e){ e.stopPropagation(); undoDislike(r); });
       ov.addEventListener('click',function(){ openDislike(r); });
       wrap.appendChild(ov);
     }
