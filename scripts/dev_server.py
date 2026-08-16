@@ -19,6 +19,8 @@ import os
 import sys
 import threading
 import time
+import urllib.parse
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +29,15 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
 # Simulasi status job per task id (tidak perlu thread-safe untuk uji coba).
 _jobs = {}
 _lock = threading.Lock()
+
+# BYOP OAuth: sesi yang ditukar lewat enter.pollinations.ai (disimpan di memori).
+_oauth = {}
+OAUTH_AUTHORIZE = 'https://enter.pollinations.ai/authorize'
+OAUTH_TOKEN = 'https://enter.pollinations.ai/api/oauth/token'
+# client_id (pk_*) = publishable key, memang untuk publik (identitas aplikasi).
+# Ganti dengan env POLLINATIONS_APP_KEY kalau mau key lain.
+OAUTH_CLIENT = os.environ.get('POLLINATIONS_APP_KEY') or 'pk_FHMW9oUu15wcKu8B'
+
 
 # Fallback daftar model image Pollinations (dipakai kalau proxy ke API asli gagal).
 _POLL_MODELS_FALLBACK = [
@@ -193,6 +204,31 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as exc:
                 print("[pollinations-models] proxy gagal, pakai fallback:", exc)
             return self._send(200, {"ok": True, "models": _POLL_MODELS_FALLBACK})
+        if path == "/api/oauth/config":
+            host = self.headers.get("Host", f"127.0.0.1:{PORT}")
+            proto = "http" if "localhost" in host or "127.0.0.1" in host else "https"
+            # loopback OAuth Pollinations: gunakan 'localhost' (bebas port), bukan 127.0.0.1
+            if host.startswith("127.0.0.1:"):
+                host = "localhost:" + host.split(":", 1)[1]
+            return self._send(200, {
+                "ok": True, "clientId": OAUTH_CLIENT,
+                "authorizeBase": OAUTH_AUTHORIZE,
+                "tokenEndpoint": OAUTH_TOKEN,
+                "redirectUri": proto + "://" + host + "/callback",
+            })
+        if path == "/api/oauth/status":
+            sid = ""
+            for part in self.path.split("?")[1:]:
+                for kv in part.split("&"):
+                    k, _, v = kv.partition("=")
+                    if k == "session":
+                        sid = v
+            rec = _oauth.get(sid)
+            if not rec or rec.get("expiresAt", 0) <= time.time() * 1000:
+                return self._send(200, {"ok": True, "connected": False})
+            return self._send(200, {"ok": True, "connected": True,
+                                    "expiresIn": max(0, int((rec["expiresAt"] - time.time() * 1000) / 1000)),
+                                    "balance": rec.get("balance")})
         if path == "/api/task":
             task_id = ""
             for part in self.path.split("?")[1:]:
@@ -204,6 +240,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, {"error": "Parameter id wajib diisi"})
             return self._send(200, _mock_task(task_id))
         if path == "/":
+            path = "/index.html"
+        if path == "/callback":
             path = "/index.html"
         fp = os.path.join(ROOT, path.lstrip("/"))
         if os.path.isfile(fp):
@@ -247,6 +285,48 @@ class Handler(BaseHTTPRequestHandler):
                 st["size"] = (768, 1152)
                 st["count"] = 1
             return self._send(200, {"ok": True, "provider": provider, "taskId": task_id})
+        if path == "/api/oauth/token":
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw)
+            except Exception:
+                return self._send(400, {"error": "JSON tidak valid"})
+            code = (body or {}).get("code") or ""
+            verifier = (body or {}).get("code_verifier") or ""
+            if not code or not verifier:
+                return self._send(400, {"error": "Parameter code dan code_verifier wajib diisi"})
+            form = ("grant_type=authorization_code&code=" + urllib.parse.quote(code)
+                    + "&client_id=" + urllib.parse.quote(OAUTH_CLIENT)
+                    + "&code_verifier=" + urllib.parse.quote(verifier)
+                    + "&redirect_uri=" + urllib.parse.quote((body or {}).get("redirect_uri") or ("http://127.0.0.1:%d/callback" % PORT)))
+            try:
+                req = urllib.request.Request(OAUTH_TOKEN, data=form.encode("utf-8"),
+                                             headers={"Content-Type": "application/x-www-form-urlencoded",
+                                                      "User-Agent": "rekty-dev-server"}, method="POST")
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    d = json.loads(resp.read().decode("utf-8"))
+            except Exception as exc:
+                return self._send(502, {"error": "OAuth gagal: " + str(exc)})
+            if not d.get("access_token"):
+                return self._send(502, {"error": "OAuth gagal: " + str(d.get("error_description") or d.get("error") or "unknown")})
+            import uuid
+            sid = str(uuid.uuid4())
+            expiresIn = int(d.get("expires_in") or 604800)
+            _oauth[sid] = {"token": d["access_token"], "scope": d.get("scope") or "",
+                           "expiresAt": int(time.time() * 1000) + expiresIn * 1000, "balance": None}
+            return self._send(200, {"ok": True, "session": sid, "expiresIn": expiresIn, "scope": _oauth[sid]["scope"]})
+        if path == "/api/oauth/logout":
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw)
+            except Exception:
+                body = {}
+            sid = (body or {}).get("session") or ""
+            if sid in _oauth:
+                del _oauth[sid]
+            return self._send(200, {"ok": True})
         self._send(404, {"error": "not found"})
 
 
