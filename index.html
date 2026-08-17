@@ -233,6 +233,8 @@ body.chat-mode .chat-marquee{margin-top:.75rem;padding-top:.5rem;border-top:1px 
 .mobtab:hover{color:#fff}
 .mobtab.sel{color:#27D4CD;border-bottom-color:#27D4CD}
 #mobtasks{display:none!important}
+/* Kartu Generating mobile hanya untuk layar <1024px (desktop pakai submitcard) */
+@media (min-width:1024px){#mobgen{display:none!important}}
 .mfbtn{display:inline-flex;align-items:center;gap:4px;border:1px solid #30363d;border-radius:8px;padding:5px 10px;font-size:11px;color:#9ca3af;background:#1c2128;cursor:pointer;white-space:nowrap;transition:.12s}
 .mfbtn:hover{color:#fff;border-color:#3d444d}
 .mfbtn.sel{color:#fff;border-color:#3d444d;background:#21262d}
@@ -269,6 +271,13 @@ body.chat-mode .chat-marquee{margin-top:.75rem;padding-top:.5rem;border-top:1px 
   body.mob-tasks #mobtasks{display:flex!important}
   /* Chat-mode harus menang atas Tasks (spesifisitas lebih tinggi) */
   body.chat-mode #mobtasks,body.chat-mode.mob-tasks #mobtasks{display:none!important}
+  /* Kartu Generating mobile: FIXED di atas layar saat task berjalan, tampil di
+     tab mana pun (Workspace/Tasks/Chat) supaya progress tidak hilang saat
+     user pindah tab di tengah generate. Hidden di desktop (pakai submitcard). */
+  #mobgen:not(.hidden){display:block;position:fixed;top:6.5rem;left:.75rem;right:.75rem;z-index:45;box-shadow:0 12px 34px rgba(0,0,0,.6)}
+  /* #canvas>div{display:contents} bisa menimpa class hidden Tailwind (spesifisitas
+     lebih tinggi) — paksa hidden menang supaya kartu benar-benar hilang saat selesai */
+  #mobgen.hidden{display:none!important}
   /* Tombol Generate tunggal di bottom bar; sembunyikan yang di prompt bar */
   #promptbar #btn-go,#promptbar #ncount{display:none}
   /* Mobile: kotak prompt diperbesar dengan pinch 2 jari (bukan handle pojok) */
@@ -820,26 +829,29 @@ input[type=range]{cursor:pointer}
           <button id="mob-reload" class="mficon" title="Reload"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></button>
           <button id="mob-manage" class="mficon" title="Manage"><i data-icon="squares-four" class="w-4 h-4"></i></button>
         </div>
-        <!-- Kartu Generating mobile (ala Tensor.Art): tampil di tab Tasks saat task berjalan -->
-        <div id="mobgen" class="hidden mx-3 mt-3 border border-[#3d2f6e] rounded-2xl bg-[#252033] p-4 space-y-3">
-          <div class="flex items-start justify-between gap-2">
-            <div class="text-lg font-bold text-white">Generating</div>
-            <span id="mobgen-task" class="text-[10px] text-neutral-400 truncate max-w-[55%]" title="Task ID"></span>
-          </div>
-          <div class="relative h-2 bg-white/10 rounded-full overflow-hidden">
-            <div id="mobgen-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(90deg,#6F5DFF,#27D4CD);transition:width .3s"></div>
-          </div>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-              <span id="mobgen-count" class="flex items-center gap-1 text-[11px] text-neutral-300 bg-white/10 rounded-full px-2 py-0.5"><i data-icon="image-square" class="w-3.5 h-3.5"></i><span>x1</span></span>
-              <span id="mobgen-size" class="flex items-center gap-1 text-[11px] text-neutral-300 bg-white/10 rounded-full px-2 py-0.5"><i data-icon="phone" class="w-3.5 h-3.5"></i><span>830x1536</span></span>
-            </div>
-            <span id="mobgen-pct" class="text-sm font-semibold text-white">0%</span>
-          </div>
-        </div>
         <p id="mobtasks-empty" class="hidden text-center text-neutral-600 text-sm py-20 px-4">Belum ada task — buat gambar di tab Workspace.</p>
         <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
         <div class="py-4 text-center"><span class="vaia-pill" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></span></div>
+      </div>
+
+      <!-- Kartu Generating mobile (ala Tensor.Art): FIXED di atas layar saat task berjalan,
+           tampil di tab mana pun (Workspace/Tasks/Chat) supaya progress tidak "hilang"
+           saat user pindah tab di tengah generate. -->
+      <div id="mobgen" class="hidden border border-[#3d2f6e] rounded-2xl bg-[#252033] p-4 space-y-3">
+        <div class="flex items-start justify-between gap-2">
+          <div class="text-lg font-bold text-white">Generating</div>
+          <span id="mobgen-task" class="text-[10px] text-neutral-400 truncate max-w-[55%]" title="Task ID"></span>
+        </div>
+        <div class="relative h-2 bg-white/10 rounded-full overflow-hidden">
+          <div id="mobgen-bar" class="absolute inset-y-0 left-0 w-0 rounded-full" style="background:linear-gradient(90deg,#6F5DFF,#27D4CD);transition:width .3s"></div>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span id="mobgen-count" class="flex items-center gap-1 text-[11px] text-neutral-300 bg-white/10 rounded-full px-2 py-0.5"><i data-icon="image-square" class="w-3.5 h-3.5"></i><span>x1</span></span>
+            <span id="mobgen-size" class="flex items-center gap-1 text-[11px] text-neutral-300 bg-white/10 rounded-full px-2 py-0.5"><i data-icon="phone" class="w-3.5 h-3.5"></i><span>830x1536</span></span>
+          </div>
+          <span id="mobgen-pct" class="text-sm font-semibold text-white">0%</span>
+        </div>
       </div>
   </main>
 
