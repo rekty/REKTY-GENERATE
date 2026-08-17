@@ -1543,6 +1543,28 @@ export async function onRequest(context) {
       return json({ ok: true, deleted: name });
     }
 
+    if (method === 'POST' && url.pathname === '/api/admin/delete-all') {
+      if (!pinOk(request)) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      if (!body || body.all !== true) return json({ error: 'Konfirmasi hapus-semu wajib (all:true)' }, 400);
+      const IMG_EXT = /^[a-zA-Z0-9-]+\.(png|jpe?g|webp|gif|avif|svg)$/;
+      let keys = [];
+      let cursor;
+      do {
+        const page = await env.IMAGES.list({ cursor, limit: 1000 });
+        keys = keys.concat(page.keys || []);
+        cursor = page.cursor;
+      } while (cursor);
+      const imgs = keys.filter(function (k) { return IMG_EXT.test(k.name); });
+      let deleted = 0;
+      for (const k of imgs) {
+        try { await env.IMAGES.delete(k.name); deleted++; } catch (e) { /* lewati yang gagal */ }
+      }
+      return json({ ok: true, deleted });
+    }
+
     // ---- sajikan gambar arsip (URL permanen /img/<nama>) ----
     if (method === 'GET' && url.pathname.startsWith('/img/')) {
       const name = url.pathname.slice(5);

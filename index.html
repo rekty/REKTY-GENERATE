@@ -5434,6 +5434,14 @@ if(typeof updateBalPill==='function') updateBalPill();
         <span id="kvadmin-count">0 gambar</span>
         <span class="text-neutral-700">|</span>
         <span>PIN tersimpan di <code class="text-[#27D4CD]">localStorage</code></span>
+        <span class="flex-1"></span>
+        <button id="kvadmin-delall" class="btn h-8 px-3 text-[11px] border border-red-500/40 text-red-400 hover:bg-red-500/10" title="Hapus SEMUA gambar arsip dari KV (tidak bisa dikembalikan)">🗑️ Hapus Semua</button>
+      </div>
+      <div id="kvadmin-delall-confirm" class="hidden mb-3 border border-red-500/50 rounded-xl bg-red-500/10 p-3 flex items-center gap-2 text-xs text-red-300">
+        <span>⚠️ Yakin hapus <b id="kvadmin-delall-n">semua</b> gambar arsip dari KV? Ini permanen.</span>
+        <span class="flex-1"></span>
+        <button id="kvadmin-delall-no" class="btn h-8 px-3 text-[11px] border bd text-neutral-300 hover:bg-[#21262d]">Batal</button>
+        <button id="kvadmin-delall-yes" class="btn h-8 px-3 text-[11px] bg-red-600 text-white hover:bg-red-500">Ya, Hapus Semua</button>
       </div>
       <div id="kvadmin-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
       <div id="kvadmin-empty" class="hidden text-center text-neutral-600 text-sm py-16">Tidak ada gambar arsip di KV.</div>
@@ -5546,6 +5554,25 @@ if(typeof updateBalPill==='function') updateBalPill();
     }).catch(function(){ setErr('Gagal ambil data arsip'); });
   }
   $('kvadmin-refresh').addEventListener('click',loadAdmin);
+  /* Hapus Semua — konfirmasi dua tahap */
+  var delAllBtn=$('kvadmin-delall'), delAllCf=$('kvadmin-delall-confirm');
+  delAllBtn.addEventListener('click',function(){
+    var n=document.querySelectorAll('#kvadmin-grid > div').length;
+    $('kvadmin-delall-n').textContent=n>0?String(n):'semua';
+    delAllCf.classList.remove('hidden');
+  });
+  $('kvadmin-delall-no').addEventListener('click',function(){ delAllCf.classList.add('hidden'); });
+  $('kvadmin-delall-yes').addEventListener('click',function(){
+    var yes=$('kvadmin-delall-yes');
+    yes.disabled=true; yes.textContent='Menghapus...';
+    // Minta backend menghapus SEMUA gambar arsip (bukan satu per satu)
+    fetch('/api/admin/delete-all',{method:'POST',headers:{'Content-Type':'application/json','x-admin-pin':pin()},body:JSON.stringify({all:true})}).then(function(r){ return r.json(); }).then(function(d2){
+      yes.disabled=false; yes.textContent='Ya, Hapus Semua';
+      delAllCf.classList.add('hidden');
+      if(d2&&d2.ok){ toast('Semua gambar dihapus ('+(d2.deleted||0)+') ✓'); loadAdmin(); }
+      else toast('Gagal hapus semua: '+((d2&&d2.error)||'?'));
+    }).catch(function(){ yes.disabled=false; yes.textContent='Ya, Hapus Semua'; toast('Gagal hapus semua'); });
+  });
   // Buka panel kalau URL mengandung ?admin=1
   var qs=new URLSearchParams(location.search);
   if(qs.get('admin')==='1') openAdmin();

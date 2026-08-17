@@ -320,6 +320,20 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(400, {"error": "Hanya file gambar arsip yang bisa dihapus"})
             print("=== admin delete ===", name)
             return self._send(200, {"ok": True, "deleted": name})
+        if path == "/api/admin/delete-all":
+            pin = self.headers.get("X-Admin-Pin", "")
+            if pin != "test123":
+                return self._send(403, {"error": "PIN salah atau tidak disertakan"})
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw or b"{}")
+            except Exception:
+                body = {}
+            if body.get("all") is not True:
+                return self._send(400, {"error": "Konfirmasi hapus-semu wajib (all:true)"})
+            print("=== admin delete-all (mock) ===")
+            return self._send(200, {"ok": True, "deleted": 2})
         if path == "/api/oauth/token":
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"
