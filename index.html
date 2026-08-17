@@ -5408,6 +5408,134 @@ renderDetail();
 renderRight();
 if(typeof updateBalPill==='function') updateBalPill();
 </script>
+
+<!-- ============ ADMIN PANEL KV (tersembunyi: ?admin=1 di URL) ============ -->
+<div id="kvadmin" class="hidden fixed inset-0 z-[60] bg-[#0d1117] overflow-y-auto">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <div class="text-lg font-bold text-white">🗂️ Arsip KV — Panel Admin</div>
+        <div class="text-[11px] text-neutral-500 mt-0.5">Gambar hasil generate yang diarsip permanen di Cloudflare KV (binding IMAGES)</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="kvadmin-refresh" class="btn btn-ghost h-9 px-3 border bd text-xs">⟳ Muat Ulang</button>
+        <button id="kvadmin-close" class="btn btn-blue h-9 px-4 text-xs">✕ Tutup</button>
+      </div>
+    </div>
+    <div id="kvadmin-login" class="border bd rounded-2xl bg-[#161b22] p-6 max-w-sm">
+      <div class="text-sm font-semibold text-white mb-1">Masukkan PIN Admin</div>
+      <p class="text-[11px] text-neutral-500 mb-3">Panel ini dilindungi PIN. Hubungi developer untuk mendapatkannya.</p>
+      <input id="kvadmin-pin" type="password" class="inp" placeholder="PIN admin..." autocomplete="off"/>
+      <button id="kvadmin-unlock" class="btn btn-turq w-full h-10 mt-3 text-sm">🔓 Buka Panel</button>
+      <div id="kvadmin-err" class="hidden text-[11px] text-red-400 mt-2"></div>
+    </div>
+    <div id="kvadmin-body" class="hidden">
+      <div class="flex items-center gap-3 mb-3 text-xs text-neutral-400">
+        <span id="kvadmin-count">0 gambar</span>
+        <span class="text-neutral-700">|</span>
+        <span>PIN tersimpan di <code class="text-[#27D4CD]">localStorage</code></span>
+      </div>
+      <div id="kvadmin-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
+      <div id="kvadmin-empty" class="hidden text-center text-neutral-600 text-sm py-16">Tidak ada gambar arsip di KV.</div>
+    </div>
+  </div>
+</div>
+<script>
+/* ===== Admin panel KV ===== */
+(function(){
+  var PIN_KEY='vaia-admin-pin';
+  var $=function(id){ return document.getElementById(id); };
+  var adminEl=$('kvadmin');
+  if(!adminEl) return;
+  var pin=function(){ try{ return localStorage.getItem(PIN_KEY)||''; }catch(e){ return ''; } };
+  var hasPin=function(){ return !!pin(); };
+  function setErr(m){ var e=$('kvadmin-err'); if(e){ e.textContent=m; e.classList.remove('hidden'); } }
+  function clearErr(){ var e=$('kvadmin-err'); if(e) e.classList.add('hidden'); }
+  function openAdmin(){
+    adminEl.classList.remove('hidden');
+    $('kvadmin-login').classList.toggle('hidden', hasPin());
+    $('kvadmin-body').classList.toggle('hidden', !hasPin());
+    if(hasPin()) loadAdmin();
+  }
+  function closeAdmin(){
+    adminEl.classList.add('hidden');
+    var q=new URLSearchParams(location.search); q.delete('admin');
+    var nq=q.toString(); history.replaceState(null,'','?'+nq);
+  }
+  $('kvadmin-close').addEventListener('click',closeAdmin);
+  $('kvadmin-unlock').addEventListener('click',function(){
+    var v=$('kvadmin-pin').value.trim();
+    if(!v){ setErr('PIN wajib diisi'); return; }
+    // Verifikasi PIN lewat backend (401/403 = salah)
+    fetch('/api/admin?pin='+encodeURIComponent(v),{headers:{'x-admin-pin':v}}).then(function(r){
+      if(!r.ok){ setErr('PIN salah'); return; }
+      try{ localStorage.setItem(PIN_KEY,v); }catch(e){}
+      clearErr();
+      $('kvadmin-login').classList.add('hidden');
+      $('kvadmin-body').classList.remove('hidden');
+      loadAdmin();
+    }).catch(function(){ setErr('Gagal hubungi backend'); });
+  });
+  function loadAdmin(){
+    var grid=$('kvadmin-grid'); grid.innerHTML='';
+    $('kvadmin-body').classList.remove('hidden');
+    $('kvadmin-login').classList.add('hidden');
+    fetch('/api/admin',{headers:{'x-admin-pin':pin()}}).then(function(r){ return r.json(); }).then(function(d){
+      if(!d||!d.ok){ setErr('Sesi kedaluwarsa — masukkan PIN lagi'); $('kvadmin-login').classList.remove('hidden'); $('kvadmin-body').classList.add('hidden'); return; }
+      $('kvadmin-count').textContent=(d.imageCount||0)+' gambar dari '+(d.totalKeys||0)+' total key KV';
+      $('kvadmin-empty').classList.toggle('hidden', !!(d.images&&d.images.length));
+      (d.images||[]).forEach(function(im){
+        var c=document.createElement('div');
+        c.className='border bd rounded-xl overflow-hidden bg-[#161b22]';
+        var img=document.createElement('img');
+        img.src=im.url; img.className='w-full aspect-[3/4] object-cover'; img.loading='lazy';
+        img.onerror=function(){ img.style.background='#1c2128'; img.style.display='flex'; };
+        c.appendChild(img);
+        var meta=document.createElement('div');
+        meta.className='px-2 py-1.5 space-y-1';
+        var sz=document.createElement('div');
+        sz.className='text-[10px] text-neutral-500 truncate';
+        sz.textContent=im.name+' · '+(im.size?((im.size/1024).toFixed(1)+' KB'):'?');
+        sz.title=im.name;
+        meta.appendChild(sz);
+        var row=document.createElement('div');
+        row.className='flex gap-1.5';
+        var open=document.createElement('a');
+        open.href=im.url; open.target='_blank'; open.className='btn btn-ghost flex-1 h-8 border bd text-[10px]'; open.textContent='Buka';
+        var del=document.createElement('button');
+        del.className='btn flex-1 h-8 text-[10px] border border-red-500/40 text-red-400 hover:bg-red-500/10'; del.textContent='Hapus';
+        del.addEventListener('click',function(){
+          if(!confirm('Hapus '+im.name+' dari KV?\nGambar ini tidak bisa dikembalikan.')) return;
+          del.disabled=true; del.textContent='...';
+          fetch('/api/admin/delete',{method:'POST',headers:{'Content-Type':'application/json','x-admin-pin':pin()},body:JSON.stringify({name:im.name})}).then(function(r){ return r.json(); }).then(function(d2){
+            if(d2&&d2.ok){ toast('Gambar dihapus ✓'); c.remove(); loadAdmin(); }
+            else { del.disabled=false; del.textContent='Hapus'; toast('Gagal hapus: '+((d2&&d2.error)||'?')); }
+          }).catch(function(){ del.disabled=false; del.textContent='Hapus'; toast('Gagal hapus'); });
+        });
+        row.appendChild(open); row.appendChild(del);
+        meta.appendChild(row);
+        c.appendChild(meta);
+        grid.appendChild(c);
+      });
+    }).catch(function(){ setErr('Gagal ambil data arsip'); });
+  }
+  $('kvadmin-refresh').addEventListener('click',loadAdmin);
+  // Buka panel kalau URL mengandung ?admin=1
+  var qs=new URLSearchParams(location.search);
+  if(qs.get('admin')==='1') openAdmin();
+  // Tombol akses cepat: klik 5x logo VAIA di header mobile/desktop membuka panel
+  var _c=0, _t=null;
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var brand=t.closest?t.closest('.glass-brand,.brand-txt,#mobnavtabs .glass-brand'):null;
+    if(!brand) return;
+    _c++;
+    if(_t) clearTimeout(_t);
+    _t=setTimeout(function(){ _c=0; },1200);
+    if(_c>=5){ _c=0; openAdmin(); toast('Panel admin dibuka'); }
+  });
+})();
+</script>
 </body>
 </html>
 

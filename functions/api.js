@@ -1485,6 +1485,53 @@ export async function onRequest(context) {
       return json({ ok: true, images: out });
     }
 
+    // ---- panel admin KV: daftar + hapus gambar arsip ----
+    // PIN dari env ADMIN_PIN (fallback default lokal). Endpoint dilindungi PIN
+    // supaya sembarang orang tidak bisa membuka daftar gambar user.
+    const ADMIN_PIN = (env && env.ADMIN_PIN) || 'vaia-admin-2026';
+    function pinOk(req) {
+      const h = req.headers.get('x-admin-pin') || '';
+      const q = new URL(req.url).searchParams.get('pin') || '';
+      return h === ADMIN_PIN || q === ADMIN_PIN;
+    }
+    if (method === 'GET' && url.pathname === '/api/admin') {
+      if (!pinOk(request)) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
+      // Key arsip gambar = nama file dengan ekstensi gambar (UUID.jpg/png/webp/...),
+      // tanpa prefix. Key task:/oauth: adalah status internal, bukan gambar.
+      const IMG_EXT = /^[a-zA-Z0-9-]+\.(png|jpe?g|webp|gif|avif|svg)$/;
+      let keys = [];
+      let cursor;
+      do {
+        const page = await env.IMAGES.list({ cursor, limit: 1000 });
+        keys = keys.concat(page.keys || []);
+        cursor = page.cursor;
+      } while (cursor);
+      const images = keys
+        .filter(function (k) { return IMG_EXT.test(k.name); })
+        .map(function (k) {
+          return {
+            name: k.name,
+            size: (k.metadata && k.metadata.size) || 0,
+            url: '/img/' + k.name,
+          };
+        });
+      return json({ ok: true, pin: true, images, totalKeys: keys.length, imageCount: images.length });
+    }
+    if (method === 'POST' && url.pathname === '/api/admin/delete') {
+      if (!pinOk(request)) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
+      let body = {};
+      try { body = await request.json(); } catch (e) {}
+      const name = String(body.name || '').trim();
+      if (!name) return json({ error: 'Nama key wajib diisi' }, 400);
+      // Amankan: hanya boleh hapus nama file gambar (UUID.ext), bukan task:/oauth:
+      const allowed = /^[a-zA-Z0-9-]+\.(png|jpe?g|webp|gif|avif|svg)$/.test(name);
+      if (!allowed) return json({ error: 'Hanya file gambar arsip yang bisa dihapus' }, 400);
+      await env.IMAGES.delete(name);
+      return json({ ok: true, deleted: name });
+    }
+
     // ---- sajikan gambar arsip (URL permanen /img/<nama>) ----
     if (method === 'GET' && url.pathname.startsWith('/img/')) {
       const name = url.pathname.slice(5);

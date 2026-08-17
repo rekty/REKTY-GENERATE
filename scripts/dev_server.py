@@ -188,6 +188,20 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/api/health":
             return self._send(200, {"ok": True, "hasKeys": {"tams": False, "replicate": False, "fal": False, "pollinations": True}, "tams": "mock"})
+        if path == "/api/admin":
+            # Mock panel admin KV untuk pengembangan lokal (PIN: test123)
+            pin = self.headers.get("X-Admin-Pin", "")
+            if pin != "test123" and "pin=test123" not in self.path:
+                return self._send(403, {"error": "PIN salah atau tidak disertakan"})
+            return self._send(200, {
+                "ok": True, "pin": True,
+                "images": [
+                    {"name": "demo-a1b2c3.jpg", "size": 138541, "url": "/img/demo-a1b2c3.jpg"},
+                    {"name": "demo-d4e5f6.png", "size": 245000, "url": "/img/demo-d4e5f6.png"},
+                ],
+                "totalKeys": 5, "imageCount": 2,
+            })
+
         if path == "/api/pollinations-models":
             # Proxy ke katalog asli Pollinations; fallback ke daftar statis lokal
             # supaya dropdown Model tetap lengkap walau jaringan/blokir.
@@ -291,6 +305,21 @@ class Handler(BaseHTTPRequestHandler):
                 st["size"] = (768, 1152)
                 st["count"] = 1
             return self._send(200, {"ok": True, "provider": provider, "taskId": task_id})
+        if path == "/api/admin/delete":
+            pin = self.headers.get("X-Admin-Pin", "")
+            if pin != "test123":
+                return self._send(403, {"error": "PIN salah atau tidak disertakan"})
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw or b"{}")
+            except Exception:
+                body = {}
+            name = str(body.get("name", "")).strip()
+            if not name or "." not in name:
+                return self._send(400, {"error": "Hanya file gambar arsip yang bisa dihapus"})
+            print("=== admin delete ===", name)
+            return self._send(200, {"ok": True, "deleted": name})
         if path == "/api/oauth/token":
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"
