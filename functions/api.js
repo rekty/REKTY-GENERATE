@@ -1090,11 +1090,16 @@ export async function onRequest(context) {
         ],
         max_tokens: 320,
       };
-      const res = await fetchWithTimeout(GEN_POLLINATIONS_CHAT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
-        body: JSON.stringify(payload),
-      }, 45000);
+      let res;
+      try {
+        res = await fetchWithTimeout(GEN_POLLINATIONS_CHAT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + apiKey },
+          body: JSON.stringify(payload),
+        }, 25000);
+      } catch (e) {
+        return json({ error: 'Server AI sedang lambat. Coba lagi beberapa detik lagi.' }, 504);
+      }
       const j = safeJson(await res.text());
       if (!res.ok || !j) {
         const msg = (j && j.error && (j.error.message || j.error)) || 'Refine gagal (saldo pollen?)';
@@ -1119,6 +1124,8 @@ export async function onRequest(context) {
         : '\n\nMODE VARIASI: KREATIF (wild). Saat user meminta prompt gambar, Prompt 1 = prompt utama yang setia pada permintaan user, sedangkan Prompt 2-3 = VARIASI LIAR yang benar-benar berbeda: boleh mengubah gaya artistik (realistis vs anime vs fantasy vs cyberpunk), sudut/lighting/atmosfer yang berlawanan, atau menambah elemen dramatis/magis — selama subjek INTI (siapa/apa yang user minta) tetap jelas terlihat. Negative Prompt boleh menyesuaikan per gaya (tetap satu blok Negative Prompt di baris terakhir, isi umum yang aman untuk semua variasi).';
       const modeMsg = { role: 'system', content: MODE_PROMPT };
       const apiKey = await pickPollKey(env, request, body);
+      const sidHeader = String((request && request.headers && request.headers.get('x-session')) || (body && body.session) || '').trim();
+      const keyDariSesi = !!(sidHeader && apiKey && apiKey.indexOf('sk_') === 0);
       // Baca teks/kode panjang: ambil 60 pesan terakhir, sisakan maks ~90rb karakter
       // (buang pesan tertua dulu; pesan terbaru — biasanya berisi kode/teks user — selalu utuh).
       const CHAT_BUDGET = 90000;
@@ -1183,9 +1190,9 @@ export async function onRequest(context) {
         + VAIA_SKILLS.map(function (g) { return '— ' + g[0] + ': ' + g[1]; }).join('\n')
         + '\n\nPanduan teks/kode panjang (seperti Claude): saat menerima kode, file, atau teks panjang, BACA SELURUHNYA dengan teliti tanpa memotong; berikan analisis mendalam; tampilkan kode utuh bila diminta; jangan meringkas kode kecuali diminta.'
         + '\n\nAturan Web Researcher (skill riset web): jika pertanyaan user membutuhkan informasi AKTUAL/TERBARU dari internet (berita, harga terkini, peristiwa terbaru, riset terbaru, data terkini, skor pertandingan, dll), JAWAB dengan mengeluarkan PERSIS satu baris di awal jawaban, tanpa teks lain apa pun: [WEB_SEARCH: query singkat dalam bahasa Inggris] lalu BERHENTI — sistem akan mencari di web dan melanjutkan jawabanmu. Jika tidak butuh pencarian web, jawab langsung seperti biasa tanpa baris itu.'
-        + '\n\nKamu menguasai SEMUA bahasa pemrograman yang ada (lihat kategori PROGRAMMING LANGUAGES — C, C++, Go, Rust, Kotlin, Swift, Java, Python, Ruby, PHP, Perl, R, MATLAB, Julia, SQL, Haskell, Erlang, Elixir, Prolog, Ada, Pascal, Fortran, COBOL, Assembly, Bash, PowerShell, Solidity, Verilog, dll) beserta sintaks, framework, ekosistem, dan best practices-nya. Kamu juga menguasai SEMUA framework & pustaka populer (lihat kategori WEB & APP FRAMEWORKS — React, Vue, Angular, Next.js, Django, Flask, FastAPI, Laravel, Spring Boot, ASP.NET, Flutter, React Native, Tailwind, Prisma, dan lainnya) termasuk versi terbaru, cara setup, struktur proyek, pola terbaik, dan contoh kode idiomatiknya. Saat diminta kode dalam bahasa atau framework apa pun, berikan kode yang benar, lengkap, dan idiomatik.'
+        + '\n\nKamu menguasai SEMUA bahasa pemrograman, framework, dan pustaka yang terdaftar di atas (kategori PROGRAMMING LANGUAGES, WEB & APP FRAMEWORKS, MOBILE DEVELOPMENT) — termasuk sintaks, versi terbaru, cara setup, struktur proyek, pola terbaik, dan kode idiomatik. Saat diminta kode dalam bahasa/framework apa pun, berikan kode yang benar, lengkap, dan idiomatik.'
         + '\n\nAturan Ahli Prompt Gambar (Image Prompt Engineer / AI Art Prompt Engineer): saat diminta membuat atau memperbaiki prompt gambar, WAJIB MEMPERTAHANKAN 100% permintaan user: (1) JANGAN mengubah subjek, orang/karakter, pose, pakaian, ekspresi, objek, adegan, lokasi, waktu, gaya, atau framing yang user minta — pertahankan persis apa adanya. (2) Jika user menyebut ukuran/aspek rasio (mis. 832x1536, portrait, landscape, 1:1), sesuaikan deskripsi framing dengan itu tanpa mengubah isi. (3) Perkaya hanya dengan detail yang TIDAK bertentangan: kualitas (masterpiece, best quality, ultra detailed, 8k), pencahayaan, sudut kamera, warna, tekstur, dan gaya artistik bila relevan. (4) JANGAN menambah elemen yang mengubah makna (mis. user minta "wanita di taman bunga" — jangan menambahkan pria, jangan pindahkan ke pantai). (5) Hasilkan prompt final dalam bahasa Inggris (kecuali diminta bahasa lain), bersih, tanpa tanda kutip berlebih, siap tempel ke generator gambar. (6) Boleh tawarkan 2-3 variasi kecil gaya, tetapi subjek utama tetap identik dengan permintaan user. (7) JADILAH KREATIF DAN BERANI: prompt final yang setia pada permintaan user itu hanyalah dasar — perkaya dengan imajinasi seluas-luasnya selama TIDAK mengubah subjek inti (siapa/apa yang user minta tetap persis): kombinasikan gaya, mood, pencahayaan dramatis, sudut kamera sinematik, palet warna yang berani, detail material yang kaya, dan sentuhan artistik yang mengejutkan. Setelah prompt utama, tawarkan juga 2-3 VARIASI KREATIF yang benar-benar berbeda (mis. versi realistis vs anime vs fantasy, atau sudut/lighting/atmosfer yang berlawanan) sebagai opsi pilihan. (8) Jika user meminta "kreatif", "imajinatif", "beda", atau "wow", bebas berimajinasi liar (elemen magis, sinematik, dramatis, konsep tak terduga) — tetapi tetap jangan menghilangkan identitas permintaan awal user: semua variasi harus jelas masih tentang subjek yang user minta, hanya dibingkai lebih kreatif. (9) FORMAT OUTPUT WAJIB: keluarkan prompt-prompt sebagai DAFTAR BERNOMOR yang bersih dan TERPISAH — tulis baris \"Prompt 1: <isi prompt lengkap>\", lalu baris \"Prompt 2: <isi prompt lengkap>\", \"Prompt 3: <isi prompt lengkap>\", dst. (jumlah sesuai permintaan user; default 3 prompt: Prompt 1 = prompt utama yang setia pada permintaan, Prompt 2-3 = variasi kreatif yang benar-benar berbeda). SETIAP prompt di paragraf/barisnya sendiri, terpisah jelas satu sama lain. JANGAN tulis teks pengantar seperti \"Berikut prompt...\" atau \"siap digunakan\"; JANGAN pakai header markdown (###, **); JANGAN sertakan blok \"Parameter Opsional\" atau penjelasan tambahan apa pun — keluarkan HANYA baris-baris \"Prompt N:\" yang berisi prompt lengkap siap tempel ke generator gambar. (10) NEGATIVE PROMPT WAJIB & JELAS: setiap membuat prompt gambar, SELALU sertakan Negative Prompt dengan label persis \"Negative Prompt:\" yang DITULIS DI AWAL BARIS SENDIRI di baris/paragraf TERAKHIR setelah semua Prompt N (satu blok negative untuk semua variasi). Isi negative prompt = hal yang HARUS DIHINDARI generator (mis. blurry, low quality, extra fingers, bad anatomy, deformed hands, watermark, text, logo). NEGATIVE PROMPT TIDAK BOLEH pernah tercampur ke dalam isi Prompt N mana pun, dan TIDAK BOLEH memakai header markdown — tulis persis: \"Negative Prompt: <isi negative, dipisah koma>\" supaya aplikasi otomatis menaruhnya ke kolom Negative di generator.'
-        + '\n\nIMAGE PROMPT ENGINEER — COMPLETE SKILLSET (lihat 25 kategori IMAGE PROMPT · ... di atas). Terapkan SEMUA pengetahuan berikut saat user minta membuat/memperbaiki/menganalisis prompt gambar: (A) STRUKTUR PROMPT — susun prompt final berurutan: [Subject] + [Character/Object Details] + [Action/Pose] + [Environment] + [Composition] + [Camera] + [Lens] + [Lighting] + [Color Palette] + [Material/Texture] + [Art Style] + [Mood/Atmosphere] + [Quality/Detail] + [Technical Parameters] + [Negative Prompt]. (B) PILIH elemen dari kategori yang relevan: Visual Styles, Anime & Illustration Specialization (modern/shonen/seinen/mecha/cel shading dll), Photography, Camera & Lens, Camera Angles, Composition (rule of thirds, leading lines, golden ratio dll), Lighting (golden hour, rim light, volumetric, neon dll), Color & Grading (teal and orange, monochrome, pastel dll), Materials & Textures, Environment, Character Design, Poses & Expressions, Cinematic Language, Era & Cultural Aesthetics, Art Techniques, 3D & CGI, Quality & Detail, Generation Control, Consistency Engine. (C) CREATIVE MODE — jika user hanya memberi ide singkat (mis. "gadis di kota cyberpunk saat hujan"), kembangkan lengkap: subject, penampilan, outfit, pose, environment, cuaca, lighting, camera, komposisi, palet warna, atmosfer, gaya seni, tingkat detail — TANPA mengubah ide inti user. (D) OPTIMIZATION — perbaiki prompt lemah, buang instruksi konflik, prioritaskan elemen visual penting, buat versi pendek/sedang/detail, deteksi deskripsi ambigu, resolve gaya bertabrakan. (E) GENERATOR ADAPTATION — sesuaikan konvensi prompt dengan generator yang dituju (Stable Diffusion/Flux/Midjourney/ComfyUI/API), jangan paksa satu sintaks universal. (F) VISUAL ANALYSIS — jika diberi gambar: analisis subjek, gaya, komposisi, sudut kamera, kesan lensa, lighting, palet warna, material, lingkungan, mood, pakaian, pose, latar, teknik render, lalu rekonstruksi prompt deskriptif berguna tanpa mengaku tahu parameter tersembunyi. (G) SAFETY & QUALITY — hindari impersonasi orang nyata yang tidak perlu, hindari konten visual terlarang, pertahankan konsep user, jaga prompt jelas dan bisa dipakai.';
+        + '\n\nIMAGE PROMPT ENGINEER — terapkan semua 25 kategori skill gambar di atas saat user minta membuat/memperbaiki/menganalisis prompt gambar: (A) susun prompt final berurutan: [Subject] + [Character/Object Details] + [Action/Pose] + [Environment] + [Composition] + [Camera] + [Lens] + [Lighting] + [Color Palette] + [Material/Texture] + [Art Style] + [Mood/Atmosphere] + [Quality/Detail] + [Technical Parameters] + [Negative Prompt]. (B) pilih elemen dari kategori relevan di atas (visual styles, anime/ilustrasi, fotografi, kamera & lensa, sudut kamera, komposisi, lighting, warna, material, lingkungan, karakter, pose, sinematik, era, teknik seni, 3D/CGI, kualitas). (C) CREATIVE MODE: ide singkat (mis. "gadis di kota cyberpunk saat hujan") -> kembangkan lengkap (subject, penampilan, outfit, pose, environment, cuaca, lighting, camera, komposisi, palet, atmosfer, gaya, detail) TANPA mengubah ide inti. (D) optimasi: perbaiki prompt lemah, buang instruksi konflik, prioritaskan elemen penting, buat versi pendek/sedang/detail, deteksi deskripsi ambigu. (E) sesuaikan konvensi prompt dengan generator tujuan (Stable Diffusion/Flux/Midjourney/ComfyUI/API), jangan paksa satu sintaks universal. (F) VISUAL ANALYSIS: jika diberi gambar, analisis subjek, gaya, komposisi, sudut, lensa, lighting, palet, material, lingkungan, mood, pakaian, pose, latar, teknik render -> rekonstruksi prompt deskriptif berguna. (G) jaga keamanan: hindari impersonasi orang nyata yang tidak perlu, hindari konten visual terlarang, pertahankan konsep user, jaga prompt jelas dan bisa dipakai.';
       const SECRET_GUARD = 'Kamu adalah VAIA Rekty, asisten AI dari aplikasi web Visual AI Artwork. Aturan wajib: (1) JANGAN PERNAH menyebut, mengungkap, membocorkan, atau mengisyaratkan rahasia internal aplikasi ini: API key, app key, bearer token, kredensial, kata sandi, kode Cloudflare Worker, konfigurasi server, endpoint backend, variabel lingkungan, source code web ini, atau detail implementasi apa pun. (2) Jika ditanya tentang rahasia atau source code tersebut, tolak dengan sopan dan arahkan kembali ke bantuan umum. (3) NAMAMU ADALAH Vaia Rekty — JANGAN PERNAH mengaku atau menyebut dirimu sebagai ChatGPT, Claude, Gemini, atau chatbot/AI buatan perusahaan lain apa pun; jika ditanya, jawab bahwa kamu adalah Vaia Rekty dari Visual AI Artwork. (4) Bantulah pengguna dengan ramah, dalam bahasa Indonesia kecuali diminta lain.';
       const baseMsgs = chatMsgs.filter(function (m) { return m.role !== 'system'; });
       const safeMsgs = baseMsgs.slice();
@@ -1202,18 +1209,60 @@ export async function onRequest(context) {
       };
       if (apiKey) opts.headers.Authorization = 'Bearer ' + apiKey;
       let usedModel = apiKey ? model : 'openai';
-      let res = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', opts, 120000);
-      // Key ditolak gen (401 key invalid / 403 tidak diizinkan / 402 saldo pollen 0) ->
-      // fallback otomatis ke anonim (model openai, gratis) supaya chat tetap jalan.
-      if (!res.ok && apiKey && (res.status === 401 || res.status === 402 || res.status === 403)) {
-        const fb = { model: 'openai', messages: safeMsgs, private: true };
-        if (wantStream) fb.stream = true;
-        const fres = await fetchWithTimeout('https://text.pollinations.ai/openai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fb),
-        }, 120000);
-        if (fres.ok) { res = fres; usedModel = 'openai'; }
+      let res;
+      try {
+        // Batas 25 dtk — Cloudflare Worker maksimal 30 dtk per permintaan; kalau
+        // upstream lebih lambat, balas pesan ramah (bukan error 522 mentah).
+        res = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', opts, 25000);
+      } catch (e) {
+        return json({ error: 'Server AI (Pollinations) sedang lambat atau tidak terjangkau. Coba lagi beberapa detik lagi — jika terus gagal, muat ulang halaman.' }, 504);
+      }
+      // Key ditolak gen (401/402/403). Coba key cadangan secara berurutan:
+      //   1) key sesi BYOP user (sk_) — pakai saldo pollen akun user
+      //   2) App Key worker (env POLLINATIONS_API_KEY) — jaminan chat tetap jalan
+      //   3) anonim legacy text.pollinations.ai (timeout singkat)
+      // Gagal semua -> pesan ramah sesuai penyebab (bukan 522 mentah).
+      if (!res.ok && (res.status === 401 || res.status === 402 || res.status === 403)) {
+        const envKey = (env && env.POLLINATIONS_API_KEY) ? String(env.POLLINATIONS_API_KEY) : '';
+        const coba = [];
+        if (keyDariSesi && apiKey) coba.push(apiKey);
+        if (envKey && envKey !== apiKey) coba.push(envKey);
+        if (!keyDariSesi && apiKey && !envKey) coba.push(apiKey);
+        for (let k of coba) {
+          const fb = { model: model, messages: safeMsgs, private: true };
+          if (wantStream) fb.stream = true;
+          const fo = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fb) };
+          fo.headers.Authorization = 'Bearer ' + k;
+          let fres = null;
+          try { fres = await fetchWithTimeout(GEN_POLLINATIONS_CHAT, fo, 25000); } catch (e) { fres = null; }
+          if (fres && fres.ok) { res = fres; usedModel = model; break; }
+        }
+        if (!res.ok && !keyDariSesi) {
+          // App Key juga gagal / tidak ada -> coba anonim sekali (timeout singkat)
+          const fb = { model: 'openai', messages: safeMsgs, private: true };
+          if (wantStream) fb.stream = true;
+          let fres = null;
+          try {
+            fres = await fetchWithTimeout('https://text.pollinations.ai/openai', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(fb),
+            }, 12000);
+          } catch (e) { fres = null; }
+          if (fres && fres.ok) { res = fres; usedModel = 'openai'; }
+        }
+        if (!res.ok) {
+          const j = safeJson(await res.text());
+          let msg = String((j && j.error && (j.error.message || j.error)) || ('Chat gagal (HTTP ' + res.status + ')')).trim();
+          if (keyDariSesi) {
+            if (res.status === 402) msg += ' — saldo pollen akunmu habis. Kumpulkan pollen lewat quest di enter.pollinations.ai atau top up.';
+            else if (res.status === 403) msg += ' — akunmu tidak diizinkan memakai model ini (cek paket di enter.pollinations.ai).';
+            else if (res.status === 401) msg += ' — sesi login Pollinations kadaluarsa. Login ulang lewat tombol BYOP.';
+          } else {
+            msg = 'Chat butuh login Pollinations (BYOP) — klik tombol \u201cLogin dengan Pollinations\u201d di Pengaturan API, atau pastikan App Key di worker valid. Detail: ' + msg;
+          }
+          return json({ error: msg }, 502);
+        }
       }
       if (!res.ok) {
         const j = safeJson(await res.text());
@@ -1221,6 +1270,9 @@ export async function onRequest(context) {
         if (res.status === 401) msg += ' — perlu login Pollinations (BYOP) atau API key di Pengaturan.';
         else if (res.status === 402) msg += ' — saldo pollen tidak cukup. Kumpulkan pollen lewat quest di enter.pollinations.ai.';
         else if (res.status === 403) msg += ' — model tidak diizinkan untuk key ini (cek saldo/paket di enter.pollinations.ai).';
+        else if (res.status >= 500 || /522|524|529|timed? ?out|overload|tidak tersedia/i.test(msg)) {
+          msg = 'Server AI (Pollinations) sedang sibuk — coba lagi beberapa detik lagi.';
+        }
         return json({ error: msg }, 502);
       }
       if (wantStream) {
@@ -1284,7 +1336,12 @@ export async function onRequest(context) {
         const payload2 = { model: apiKey ? model : 'openai', messages: p2, private: true, stream: true };
         const opts2 = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload2) };
         if (apiKey) opts2.headers.Authorization = 'Bearer ' + apiKey;
-        const res2 = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', opts2, 120000);
+        let res2;
+        try {
+          res2 = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', opts2, 25000);
+        } catch (e) {
+          return json({ error: 'Riset web selesai, tapi server AI tidak merespons tepat waktu. Coba lagi.' }, 504);
+        }
         if (!res2.ok) return json({ error: 'Riset web selesai, tapi jawaban gagal dibuat (HTTP ' + res2.status + ').' }, 502);
         return new Response(sseClean(res2.body), { headers: SSE_H });
       }
@@ -1301,12 +1358,15 @@ export async function onRequest(context) {
           { role: 'system', content: MODE_PROMPT },
           { role: 'system', content: SECRET_GUARD },
         ]);
-        const res2 = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: 'Bearer ' + apiKey } : {}) },
-          body: JSON.stringify({ model: apiKey ? model : 'openai', messages: p2, private: true }),
-        }, 120000);
-        if (res2.ok) {
+        let res2 = null;
+        try {
+          res2 = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: 'Bearer ' + apiKey } : {}) },
+            body: JSON.stringify({ model: apiKey ? model : 'openai', messages: p2, private: true }),
+          }, 25000);
+        } catch (e) { res2 = null; }
+        if (res2 && res2.ok) {
           const j2 = safeJson(await res2.text());
           const t2 = stripMarkers(String((j2 && j2.choices && j2.choices[0] && j2.choices[0].message && j2.choices[0].message.content) || ''));
           if (t2) return json({ ok: true, text: t2, model: usedModel, researched: mm[1].trim() });

@@ -2106,6 +2106,11 @@ function saveLastPrompt(){
       neg: $('negprompt').value||'',
       negCheck: !!($('negcheck')&&$('negcheck').checked),
       model: state.model?state.model.name:'',
+      w: parseInt($('width').value)||768,
+      h: parseInt($('height').value)||1152,
+      aspect: state.aspect||'custom',
+      steps: parseInt($('steps').value)||10,
+      seed: ($('seed').value||'').trim(),
       ts: Date.now()
     }));
   }catch(e){}
@@ -2117,6 +2122,12 @@ function applyLastPrompt(){
     if($('prompt')) $('prompt').value=s.prompt;
     if($('negprompt')) $('negprompt').value=s.neg||'';
     if($('negcheck')) $('negcheck').checked=!!s.negCheck;
+    if($('width')&&s.w) $('width').value=s.w;
+    if($('height')&&s.h) $('height').value=s.h;
+    if(typeof updWH==='function') updWH();
+    if(s.aspect){ state.aspect=s.aspect; if(typeof setArActive==='function') setArActive(s.aspect); }
+    if($('steps')&&s.steps){ $('steps').value=s.steps; if($('sv')) $('sv').textContent=s.steps; }
+    if($('seed')&&s.seed){ $('seed').value=s.seed; if(typeof persistSeed==='function') persistSeed(s.seed); }
     renderTriggers();
   }catch(e){}
 }
@@ -2333,9 +2344,19 @@ function updateChatBalance(){
     if(d&&d.connected&&d.balance){
       var b=d.balance;
       var bv=b.pollenBalance!=null?b.pollenBalance:(b.balance!=null?b.balance:null);
-      txt.textContent=(bv!=null?Number(bv).toFixed(1):'?')+' pollen';
-      pill.title='Saldo pollen — klik untuk kumpulkan pollen lewat quest';
-      pill.style.borderColor='rgba(39,212,205,.5)';
+      if(bv!=null&&Number(bv)<=0){
+        // Peringatan saldo habis: pill merah + klik langsung ke halaman quest
+        txt.textContent='0 pollen · Top up';
+        pill.title='Saldo pollen 0 — klik untuk kumpulkan pollen lewat quest (gratis)';
+        pill.style.borderColor='rgba(239,68,68,.7)';
+        pill.style.background='rgba(239,68,68,.14)';
+        var ic=pill.querySelector('i'); if(ic) ic.style.color='#ef4444';
+      } else {
+        txt.textContent=(bv!=null?Number(bv).toFixed(1):'?')+' pollen';
+        pill.title='Saldo pollen — klik untuk kumpulkan pollen lewat quest';
+        pill.style.borderColor='rgba(39,212,205,.5)'; pill.style.background='';
+        var ic2=pill.querySelector('i'); if(ic2) ic2.style.color='';
+      }
     } else { txt.textContent='Gratis'; pill.title='Sesi Pollinations berakhir — klik untuk login ulang (BYOP)'; pill.style.borderColor=''; }
   }).catch(function(){ txt.textContent='Gratis'; pill.title='Saldo tidak tersedia'; });
 }
@@ -5030,13 +5051,24 @@ function chatSendText(txt){
     else chatError(content || 'Respons kosong dari server.');
   };
   function stream(){
+    // Kirim x-session (BYOP) + x-api-key supaya worker memakai key akun user
+    // (key app pk_ ditolak gateway untuk chat — tanpa session -> 522/504).
+    var hdrs={'Content-Type':'application/json'};
+    if(settings.pollSession) hdrs['x-session']=settings.pollSession;
+    if(typeof buildApiKey==='function') hdrs['x-api-key']=buildApiKey();
     return fetch('/api/chat',{
-      method:'POST', headers:{'Content-Type':'application/json'},
+      method:'POST', headers:hdrs,
       body:JSON.stringify({ messages: msgs, model:'gpt-5.6-luna', stream:true, mode: chatState.mode }),
       signal: ac.signal
     }).then(function(res){
       if(!res.ok){
-        return res.json().catch(function(){ return null; }).then(function(j){ done(false, (j&&j.error)||('Chat gagal (HTTP '+res.status+')')); });
+        return res.json().catch(function(){ return null; }).then(function(j){
+          var msg=(j&&j.error)||('Chat gagal (HTTP '+res.status+')');
+          if(!j&&(res.status===522||res.status===504||res.status===524||res.status===529)){
+            msg='Server AI sedang sibuk (HTTP '+res.status+'). Tunggu sebentar lalu coba lagi — atau muat ulang halaman.';
+          }
+          done(false, msg);
+        });
       }
       var reader=res.body && res.body.getReader ? res.body.getReader() : null;
       if(!reader){ return res.json().then(function(j){ done(!!(j&&j.ok), (j&&j.ok)?j.text:((j&&j.error)||'Chat gagal')); }); }
