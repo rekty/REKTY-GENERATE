@@ -814,8 +814,8 @@ input[type=range]{cursor:pointer}
         <button class="gfil" data-f="image">Image</button>
         <button class="gfil" data-f="audio">Audio</button>
         <span class="flex-1"></span>
-        <span class="text-neutral-600 p-1" title="List"><i data-icon="list" class="w-4 h-4"></i></span>
-        <span class="text-neutral-600 p-1" title="Grid"><i data-icon="squares-four" class="w-4 h-4"></i></span>
+        <button id="dview-list" class="p-1 text-neutral-500 hover:text-white" title="List — hasil membawah"><i data-icon="list" class="w-4 h-4"></i></button>
+        <button id="dview-grid" class="p-1 text-neutral-500 hover:text-white" title="Grid — 4 hasil terakhir"><i data-icon="squares-four" class="w-4 h-4"></i></button>
       </div>
       <div id="grid" class="gcols gcols-2"></div>
     </div>
@@ -1779,6 +1779,7 @@ function persistResults(){
    tiap kartu = HANYA gambar (aspect ratio asli, di tengah). Semua detail
    (Input, Task ID, Credits, Negative, params) ada di panel kanan. */
 var _viewIdx=0; // index ke state.results (0 = terbaru)
+var _dView='all'; // desktop: 'all' = list membawah, 'grid' = 2x2 4 hasil terakhir
 function makeGalleryRow(r,i){
   var row=document.createElement('div');
   row.className='relative group border bd rounded-2xl bg-[#161b22] overflow-hidden cursor-zoom-in';
@@ -1833,15 +1834,74 @@ function makeGalleryRow(r,i){
 }
 function renderGrid(){
   var grid=$('grid'); grid.innerHTML='';
-  grid.className='gcols gcols-'+(state.ncols>=2&&state.ncols<=4?state.ncols:2);
   var fil=$('gfilter');
   if(!state.results.length){ $('empty').style.display=''; if(fil) fil.classList.add('hidden'); return; }
   $('empty').style.display='none';
   if(fil) fil.classList.remove('hidden');
   if(_viewIdx>=state.results.length) _viewIdx=state.results.length-1;
+  // Mode Grid (desktop): 4 hasil terakhir dalam 2x2 (ala Tensor.Art/mobile)
+  if(_dView==='grid'){ renderDGrid(); return; }
+  grid.className='gcols gcols-'+(state.ncols>=2&&state.ncols<=4?state.ncols:2);
   var arr=state.results.slice(); // terbaru duluan (index 0)
   arr.forEach(function(r,i){ grid.appendChild(makeGalleryRow(r,i)); });
 }
+/* Tampilan Grid desktop: 4 hasil terakhir dalam 2x2 (ala mobile/Tensor.Art) */
+function renderDGrid(){
+  var grid=$('grid'); grid.innerHTML='';
+  grid.className='grid grid-cols-2 gap-3';
+  state.results.slice(0,4).forEach(function(r,i){
+    var cell=document.createElement('div');
+    cell.className='relative rounded-xl overflow-hidden border bd bg-[#161b22] aspect-[3/4] cursor-zoom-in';
+    var img=document.createElement('img');
+    img.src=r.src; img.className='absolute inset-0 w-full h-full object-cover';
+    img.loading='lazy';
+    img.addEventListener('click',function(){ _viewIdx=i; renderGrid(); renderDetail(); openLightbox(r); });
+    cell.appendChild(img);
+    if(r.demo){
+      var bd=document.createElement('span');
+      bd.className='absolute top-1.5 left-1.5 flex items-center gap-1 text-[7px] font-medium tracking-[0.14em] bg-white/10 backdrop-blur-md border border-white/15 text-white/80 px-1.5 py-0.5 rounded-full z-20 pointer-events-none';
+      bd.innerHTML='<span class="w-1 h-1 rounded-full bg-[#27D4CD]"></span>DEMO';
+      cell.appendChild(bd);
+    }
+    if(r.dislike){
+      img.classList.add('blur-md','opacity-60');
+      var ov=document.createElement('div');
+      ov.className='absolute inset-0 flex items-center justify-center bg-[#0d1117]/80 z-10 cursor-pointer';
+      ov.innerHTML='<span class="text-[9px] text-neutral-300 text-center px-2">Dislike tersembunyi</span>';
+      ov.addEventListener('click',function(e){ e.stopPropagation(); openDislike(r); });
+      cell.appendChild(ov);
+    }
+    var nm=document.createElement('span');
+    nm.className='absolute bottom-1.5 left-1.5 text-[8px] text-white/85 bg-black/40 backdrop-blur-sm px-1.5 py-0.5 rounded truncate max-w-[55%] pointer-events-none';
+    nm.textContent=r.model||'';
+    cell.appendChild(nm);
+    var mn=document.createElement('button');
+    mn.className='absolute bottom-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-white/85 z-20';
+    mn.innerHTML='<i data-icon="dots-three-vertical" class="w-3.5 h-3.5"></i>';
+    mn.addEventListener('click',function(e){ e.stopPropagation(); openTaskMenu(r, mn, function(){ removeResult(i); }); });
+    cell.appendChild(mn);
+    grid.appendChild(cell);
+  });
+}
+function dSetView(v){
+  _dView=v;
+  var lb=$('dview-list'), gb=$('dview-grid');
+  if(lb) lb.classList.toggle('text-white', v==='all');
+  if(gb) gb.classList.toggle('text-white', v==='grid');
+  try{ localStorage.setItem('vaia-dview', v); }catch(e){}
+  renderGrid();
+}
+(function(){
+  try{
+    var s=localStorage.getItem('vaia-dview');
+    if(s==='grid'||s==='all') _dView=s;
+  }catch(e){}
+  var lb=$('dview-list'), gb=$('dview-grid');
+  if(lb) lb.addEventListener('click',function(){ dSetView('all'); });
+  if(gb) gb.addEventListener('click',function(){ dSetView('grid'); });
+  if(lb) lb.classList.toggle('text-white', _dView==='all');
+  if(gb) gb.classList.toggle('text-white', _dView==='grid');
+})();
 function addResult(r){
   state.results.unshift(r);
   if(state.results.length>60) state.results.length=60;
