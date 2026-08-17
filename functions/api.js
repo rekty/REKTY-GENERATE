@@ -1490,16 +1490,27 @@ export async function onRequest(context) {
     }
 
     // ---- panel admin KV: daftar + hapus gambar arsip ----
-    // PIN dari env ADMIN_PIN (fallback default lokal). Endpoint dilindungi PIN
-    // supaya sembarang orang tidak bisa membuka daftar gambar user.
-    const ADMIN_PIN = (env && env.ADMIN_PIN) || 'vaia-admin-2026';
-    function pinOk(req) {
-      const h = req.headers.get('x-admin-pin') || '';
-      const q = new URL(req.url).searchParams.get('pin') || '';
-      return h === ADMIN_PIN || q === ADMIN_PIN;
+    // PIN tidak pernah disimpan/dibandingkan sebagai teks polos — yang disimpan
+    // hanya SHA-256 hash (hex). Set env ADMIN_PIN_HASH dengan hash PIN sendiri:
+    //   echo -n "PIN-RAHASIA" | sha256sum
+    // Fallback: hash dari PIN default (hanya untuk dev; ganti di production!).
+    const ADMIN_PIN_HASH = (env && env.ADMIN_PIN_HASH) || 'e4ff6175c874a4ff4d6c5799091820a10f59580a99eec052906619851680700c';
+    async function sha256hex(str) {
+      try {
+        const data = new TextEncoder().encode(str);
+        const buf = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      } catch (e) { return ''; }
+    }
+    async function pinOk(req) {
+      const h = (req.headers.get('x-admin-pin') || '').trim();
+      const q = (new URL(req.url).searchParams.get('pin') || '').trim();
+      if (!h && !q) return false;
+      const candidate = await sha256hex(h || q);
+      return candidate === ADMIN_PIN_HASH;
     }
     if (method === 'GET' && url.pathname === '/api/admin') {
-      if (!pinOk(request)) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
       // Key arsip gambar = nama file dengan ekstensi gambar (UUID.jpg/png/webp/...),
       // tanpa prefix. Key task:/oauth: adalah status internal, bukan gambar.
@@ -1530,7 +1541,7 @@ export async function onRequest(context) {
       return json({ ok: true, pin: true, images, totalKeys: keys.length, imageCount: images.length });
     }
     if (method === 'POST' && url.pathname === '/api/admin/delete') {
-      if (!pinOk(request)) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
       let body = {};
       try { body = await request.json(); } catch (e) {}
@@ -1544,7 +1555,7 @@ export async function onRequest(context) {
     }
 
     if (method === 'POST' && url.pathname === '/api/admin/delete-all') {
-      if (!pinOk(request)) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
       let body = {};
       try { body = await request.json(); } catch (e) {}

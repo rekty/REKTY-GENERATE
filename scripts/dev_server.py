@@ -14,6 +14,7 @@ klik Generate -> lihat progress lalu gambar hasil (picsum).
 
 Untuk generate asli: deploy fungsi /api (lihat DEPLOY.md) dan isi API key TAMS.
 """
+import hashlib
 import json
 import os
 import sys
@@ -22,6 +23,24 @@ import time
 import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+# Mock admin: PIN dibandingkan sebagai SHA-256 hash (sama seperti backend api.js),
+# bukan teks polos. PIN mock untuk dev lokal: test123
+MOCK_ADMIN_PIN_HASH = 'ecd71870d1963316a97e3ac3408c9835ad8cf0f3c1bc703527c30265534f75ae'
+
+
+def _pin_ok(handler):
+    h = (handler.headers.get('X-Admin-Pin', '') or '').strip()
+    q = ''
+    for part in handler.path.split('?')[1:]:
+        for kv in part.split('&'):
+            k, _, v = kv.partition('=')
+            if k == 'pin':
+                q = urllib.parse.unquote(v)
+    if not h and not q:
+        return False
+    cand = hashlib.sha256((h or q).encode('utf-8')).hexdigest()
+    return cand == MOCK_ADMIN_PIN_HASH
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
@@ -189,9 +208,8 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/health":
             return self._send(200, {"ok": True, "hasKeys": {"tams": False, "replicate": False, "fal": False, "pollinations": True}, "tams": "mock"})
         if path == "/api/admin":
-            # Mock panel admin KV untuk pengembangan lokal (PIN: test123)
-            pin = self.headers.get("X-Admin-Pin", "")
-            if pin != "test123" and "pin=test123" not in self.path:
+            # Mock panel admin KV untuk pengembangan lokal (PIN: test123, dibandingkan via hash)
+            if not _pin_ok(self):
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
             return self._send(200, {
                 "ok": True, "pin": True,
@@ -306,8 +324,7 @@ class Handler(BaseHTTPRequestHandler):
                 st["count"] = 1
             return self._send(200, {"ok": True, "provider": provider, "taskId": task_id})
         if path == "/api/admin/delete":
-            pin = self.headers.get("X-Admin-Pin", "")
-            if pin != "test123":
+            if not _pin_ok(self):
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"
@@ -321,8 +338,7 @@ class Handler(BaseHTTPRequestHandler):
             print("=== admin delete ===", name)
             return self._send(200, {"ok": True, "deleted": name})
         if path == "/api/admin/delete-all":
-            pin = self.headers.get("X-Admin-Pin", "")
-            if pin != "test123":
+            if not _pin_ok(self):
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"
