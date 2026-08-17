@@ -220,6 +220,28 @@ async function fetchWithTimeout(url, opts, ms = 45000) {
   }
 }
 
+// ---- Turnstile anti-bot: verifikasi token ke Cloudflare (aktif kalau TURNSTILE_SECRET diset).
+// Dipakai oleh generate, chat, dan archive. bodyOrToken bisa berupa objek body atau string token.
+async function verifyTurnstile(env, request, bodyOrToken) {
+  if (!(env && env.TURNSTILE_SECRET)) return { ok: true };
+  const token = typeof bodyOrToken === 'string'
+    ? bodyOrToken
+    : String((bodyOrToken && bodyOrToken.turnstileToken) || '').trim();
+  if (!token) return { ok: false, code: 400, error: 'Verifikasi keamanan gagal — muat ulang halaman lalu coba lagi' };
+  const form = new URLSearchParams();
+  form.set('secret', env.TURNSTILE_SECRET);
+  form.set('response', token);
+  form.set('remoteip', rlIp(request));
+  const vr = await fetchWithTimeout('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString(),
+  }, 15000).catch(() => null);
+  const vd = vr && vr.ok ? safeJson(await vr.text()) : null;
+  if (!vd || !vd.success) return { ok: false, code: 403, error: 'Verifikasi keamanan gagal — coba lagi (Turnstile)' };
+  return { ok: true };
+}
+
 // ---- Web Researcher: riset web tanpa API key (Wikipedia + DuckDuckGo) ----
 const SSE_H = { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' };
 const WEB_UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) VAIA-Chatbot/1.0' };
@@ -1193,6 +1215,11 @@ export async function onRequest(context) {
     // Tanpa key: fallback anonim ke text.pollinations.ai (model openai, gratis).
     if (method === 'POST' && url.pathname === '/api/chat') {
       const body = safeJson(await request.text());
+      // ---- Turnstile anti-bot untuk chat (aktif kalau TURNSTILE_SECRET diset) ----
+      {
+        const v = await verifyTurnstile(env, request, body);
+        if (!v.ok) return json({ error: v.error }, v.code);
+      }
       const msgs = Array.isArray(body && body.messages) ? body.messages : [];
       if (!msgs.length) return json({ error: 'Pesan kosong' }, 400);
       // Model chat: default openai-fast (stabil). gpt-5.6-luna hanya bila
@@ -1476,22 +1503,9 @@ export async function onRequest(context) {
       if (!body) return json({ error: 'JSON tidak valid' }, 400);
 
       // ---- Turnstile anti-bot (aktif kalau TURNSTILE_SECRET diset di backend) ----
-      if (env && env.TURNSTILE_SECRET) {
-        const token = String(body.turnstileToken || '').trim();
-        if (!token) return json({ error: 'Verifikasi keamanan gagal — muat ulang halaman lalu coba lagi' }, 400);
-        const form = new URLSearchParams();
-        form.set('secret', env.TURNSTILE_SECRET);
-        form.set('response', token);
-        form.set('remoteip', rlIp(request));
-        const vr = await fetchWithTimeout('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: form.toString(),
-        }, 15000).catch(() => null);
-        const vd = vr && vr.ok ? safeJson(await vr.text()) : null;
-        if (!vd || !vd.success) {
-          return json({ error: 'Verifikasi keamanan gagal — coba lagi (Turnstile)' }, 403);
-        }
+      {
+        const v = await verifyTurnstile(env, request, body);
+        if (!v.ok) return json({ error: v.error }, v.code);
       }
 
       const provider = String(body.provider || 'tams').toLowerCase();
@@ -1569,6 +1583,11 @@ export async function onRequest(context) {
       }
       const body = safeJson(await request.text());
       if (!body) return json({ error: 'JSON tidak valid' }, 400);
+      // ---- Turnstile anti-bot untuk upload/arsip gambar (aktif kalau TURNSTILE_SECRET diset) ----
+      {
+        const v = await verifyTurnstile(env, request, body);
+        if (!v.ok) return json({ error: v.error }, v.code);
+      }
       const items = Array.isArray(body.images) ? body.images : [];
       if (!items.length) return json({ error: 'Field images wajib diisi (array base64)' }, 400);
       const out = [];

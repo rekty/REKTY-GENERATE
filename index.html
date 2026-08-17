@@ -2852,7 +2852,13 @@ async function selfhostGenerate(par){
   // Arsip permanen ke KV backend -> URL /img/... (riwayat tetap ada walau sesi mati)
   var out=[];
   try{
-    var arc=await fetch('/api/archive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:b64s.map(function(b){return {b64:b};})})}).then(function(r){return r.json();}).catch(function(){return null;});
+    var arc=await new Promise(function(res){
+      // Token Turnstile segar (invisible/senyap) sebelum arsip — verifikasi anti-bot
+      window.vaiaToken(function(token){
+        fetch('/api/archive',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({images:b64s.map(function(b){return {b64:b};}),turnstileToken:token||undefined})})
+          .then(function(r){return r.json();}).then(function(j){res(j);}).catch(function(){res(null);});
+      });
+    });
     if(arc&&Array.isArray(arc.images)) out=arc.images.filter(Boolean);
   }catch(e){}
   if(!out.length) out=b64s.map(function(b){ return 'data:image/png;base64,'+b; }); // fallback data URL
@@ -4530,12 +4536,18 @@ function chatWd14TagNow(){
   var d=_wd14Dlg; if(!d) return;
   var cur=_wd14Cur||{};
   if(!cur.img){ toast('Pilih / drop gambar dulu'); return; }
-  var model=d.querySelector('input[name="wd14-model"]:checked').value;
-  var st=d.querySelector('#wd14-status'), pr=d.querySelector('#wd14-prog'), ta=d.querySelector('#wd14-tags');
-  var needDl=!(_wd14Models[model] && _wd14Models[model].session);
-  st.innerHTML= needDl ? 'Menyiapkan model '+WD14_MODELS[model].label+' ('+WD14_MODELS[model].size+' — unduh sekali saja, berikutnya dari cache)...' : 'Mendeteksi tag ('+WD14_MODELS[model].label+')...';
-  pr.style.width='0%';
-  chatWd14EnsureModel(model, function(p){ pr.style.width=Math.round(p*100)+'%'; })
+  // Verifikasi anti-bot (Turnstile invisible/senyap) sebelum deteksi — token '' kalau belum dikonfigurasi
+  window.vaiaToken(function(){
+    if(!_wd14Dlg) return;
+    var dd=_wd14Dlg;
+    var cur=_wd14Cur||{};
+    if(!cur.img){ toast('Pilih / drop gambar dulu'); return; }
+    var model=dd.querySelector('input[name="wd14-model"]:checked').value;
+    var st=dd.querySelector('#wd14-status'), pr=dd.querySelector('#wd14-prog'), ta=dd.querySelector('#wd14-tags');
+    var needDl=!(_wd14Models[model] && _wd14Models[model].session);
+    st.innerHTML= needDl ? 'Menyiapkan model '+WD14_MODELS[model].label+' ('+WD14_MODELS[model].size+' — unduh sekali saja, berikutnya dari cache)...' : 'Mendeteksi tag ('+WD14_MODELS[model].label+')...';
+    pr.style.width='0%';
+    chatWd14EnsureModel(model, function(p){ pr.style.width=Math.round(p*100)+'%'; })
     .then(function(state){
       st.innerHTML='Memproses...'; pr.style.width='100%';
       return chatWd14Prep(cur.img).then(function(input){
@@ -4554,6 +4566,7 @@ function chatWd14TagNow(){
       st.innerHTML='Gagal: '+String(err&&err.message||err).slice(0,140);
       pr.style.width='0%';
     });
+  });
 }
 /* ===== Riwayat deteksi WD14: simpan hasil per gambar (satu per model) untuk dibandingkan ===== */
 var WD14_HIST_KEY='vaia-wd14-history';
@@ -5302,6 +5315,13 @@ function chatSendText(txt){
     stream();
   }
   function stream(){
+    // Ambil token Turnstile segar (invisible/senyap; '' kalau belum dikonfigurasi)
+    vaiaToken(function(token){
+      if(stopped) return;
+      doStream(token);
+    });
+  }
+  function doStream(token){
     // Kirim x-session (BYOP) + x-api-key supaya worker memakai key akun user
     // (key app pk_ ditolak gateway untuk chat — tanpa session -> 522/504).
     var hdrs={'Content-Type':'application/json'};
@@ -5309,7 +5329,7 @@ function chatSendText(txt){
     if(typeof buildApiKey==='function') hdrs['x-api-key']=buildApiKey();
     return fetch('/api/chat',{
       method:'POST', headers:hdrs,
-      body:JSON.stringify({ messages: msgs, model: chatState.model||'openai-fast', stream: chatState.stream!==false, mode: chatState.mode }),
+      body:JSON.stringify({ messages: msgs, model: chatState.model||'openai-fast', stream: chatState.stream!==false, mode: chatState.mode, turnstileToken: token||undefined }),
       signal: ac.signal
     }).then(function(res){
       if(!res.ok){
@@ -5714,14 +5734,14 @@ if(typeof updateBalPill==='function') updateBalPill();
 </div>
 <script>
 /* Widget verifikasi (visual ala Cloudflare Turnstile): muncul saat generate ke-1
-   dan setiap kelipatan 10. Klik checkbox -> spinner -> centang hijau -> lanjut. */
+   dan setiap kelipatan 10. Klik checkbox -> spinner -> centang hijau -> lanjut.
+   Chat & WD14 memakai mode INVISIBLE (senyap, tanpa mengganggu percakapan). */
 (function(){
   var wrap=document.getElementById('vaia-verify'), chk=document.getElementById('vaia-v-chk');
   if(!wrap||!chk) return;
-  function countKey(){ return 'vaia-gen-count'; }
-  function vCount(){
-    var n=parseInt(localStorage.getItem(countKey())||'0',10)||0;
-    localStorage.setItem(countKey(),String(n+1));
+  function vCount(key){
+    var n=parseInt(localStorage.getItem(key)||'0',10)||0;
+    localStorage.setItem(key,String(n+1));
     return n+1;
   }
   function resetChk(){
@@ -5739,7 +5759,7 @@ if(typeof updateBalPill==='function') updateBalPill();
       return window._vaiaSiteKey;
     }).catch(function(){ window._vaiaSiteKey=''; return ''; });
   }
-  // Turnstile ASLI (Cloudflare): render widget, token siap -> lanjut generate
+  // Turnstile ASLI (Cloudflare): render widget, token siap -> lanjut
   function runTurnstile(cb){
     chk.style.pointerEvents='auto';
     wrap.classList.remove('vaia-verifying');
@@ -5783,13 +5803,71 @@ if(typeof updateBalPill==='function') updateBalPill();
       },1700);
     };
   }
-  window.vaiaVerify=function(cb){
-    var n=vCount();
+  // ---- Mode INVISIBLE: challenge senyap untuk chat & WD14 (tanpa popup). ----
+  // Setiap aksi dapat token segar (token Turnstile sekali pakai). Kalau invisible
+  // gagal (script diblokir), fallback ke widget terlihat. Tanpa site key -> token ''.
+  var _inv=null, _invReady=false, _invPend=null;
+  function ensureInvisible(){
+    if(_invReady) return Promise.resolve(!!_inv);
+    _invReady=true;
+    return new Promise(function(res){
+      var boot=function(){
+        if(!window.turnstile){ res(false); return; }
+        try{
+          _inv=document.createElement('div');
+          _inv.id='vaia-ts-inv';
+          _inv.style.display='none';
+          document.body.appendChild(_inv);
+          window.turnstile.render(_inv, {
+            sitekey: window._vaiaSiteKey,
+            size: 'invisible',
+            callback: function(token){ if(_invPend){ var p=_invPend; _invPend=null; p(token); } },
+            'error-callback': function(){ if(_invPend){ var p=_invPend; _invPend=null; p(null); } }
+          });
+          res(true);
+        }catch(e){ res(false); }
+      };
+      if(window.turnstile){ boot(); return; }
+      var s=document.createElement('script');
+      s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async=true;
+      s.onload=boot;
+      s.onerror=function(){ res(false); };
+      document.head.appendChild(s);
+    });
+  }
+  function invisibleToken(){
+    return ensureInvisible().then(function(ok){
+      if(!ok) return Promise.resolve(null);
+      return new Promise(function(res){
+        _invPend=res;
+        try{ window.turnstile.execute(_inv); }catch(e){ _invPend=null; res(null); return; }
+        setTimeout(function(){ if(_invPend){ var p=_invPend; _invPend=null; p(null); } }, 15000);
+      });
+    });
+  }
+  // Token per-aksi: real -> invisible (senyap), gagal -> widget terlihat; tanpa key -> ''
+  function vaiaToken(cb){
+    ensureSiteKey().then(function(sk){
+      if(!sk){ window._vaiaTurnToken=''; cb(''); return; }
+      invisibleToken().then(function(tok){
+        if(tok){ window._vaiaTurnToken=tok; cb(tok); }
+        else runTurnstile(function(){ cb(window._vaiaTurnToken||''); });
+      });
+    });
+  }
+  // Kadens: ke-1 + setiap kelipatan 10. generate pakai widget terlihat (disetujui),
+  // chat/WD14 pakai invisible (senyap) supaya percakapan tidak terganggu.
+  function verifyFor(key, cb, silent){
+    var n=vCount(key);
     if(n!==1 && n%10!==0){ if(cb) cb(); return; }
     ensureSiteKey().then(function(sk){
-      if(sk) runTurnstile(cb); else runFake(cb);
+      if(sk){ if(silent) vaiaToken(cb); else runTurnstile(cb); }
+      else runFake(cb);
     });
-  };
+  }
+  window.vaiaVerify=function(cb){ verifyFor('vaia-gen-count', cb, false); };
+  window.vaiaToken=vaiaToken;
 })();
 </script>
 </body>
