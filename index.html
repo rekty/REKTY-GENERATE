@@ -5474,6 +5474,27 @@ if(typeof updateBalPill==='function') updateBalPill();
     var q=new URLSearchParams(location.search); q.delete('admin');
     var nq=q.toString(); history.replaceState(null,'','?'+nq);
   }
+  /* Auto-lock: PIN dihapus dari memori + panel terkunci otomatis setelah
+     beberapa menit TIDAK ADA aktivitas di dalam panel admin. */
+  var IDLE_LOCK_MS = 10*60*1000; // 10 menit tanpa aktivitas
+  var _lastAct = Date.now();
+  function touchAdmin(){ _lastAct = Date.now(); }
+  function lockAdmin(){
+    if(!_pin) return;
+    _pin='';
+    $('kvadmin-body').classList.add('hidden');
+    $('kvadmin-login').classList.remove('hidden');
+    var inp=$('kvadmin-pin'); if(inp) inp.value='';
+    clearErr();
+    toast('Panel terkunci otomatis — masukkan PIN lagi');
+  }
+  setInterval(function(){
+    if(_pin && Date.now()-_lastAct > IDLE_LOCK_MS) lockAdmin();
+  }, 15000); // cek tiap 15 detik
+  // Aktivitas apa pun di dalam panel (klik, ketik, scroll) mengulur waktu auto-lock
+  adminEl.addEventListener('pointerdown', touchAdmin);
+  adminEl.addEventListener('keydown', touchAdmin);
+  adminEl.addEventListener('wheel', touchAdmin);
   $('kvadmin-close').addEventListener('click',closeAdmin);
   $('kvadmin-unlock').addEventListener('click',function(){
     var v=$('kvadmin-pin').value.trim();
@@ -5482,6 +5503,7 @@ if(typeof updateBalPill==='function') updateBalPill();
     fetch('/api/admin?pin='+encodeURIComponent(v),{headers:{'x-admin-pin':v}}).then(function(r){
       if(!r.ok){ setErr('PIN salah'); return; }
       _pin=v; // hanya di memori sesi
+      touchAdmin(); // mulai hitung idle untuk auto-lock
       clearErr();
       $('kvadmin-login').classList.add('hidden');
       $('kvadmin-body').classList.remove('hidden');
