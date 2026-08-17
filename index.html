@@ -9,7 +9,39 @@
 <link rel="apple-touch-icon" href="/favicon.png" />
 <script>window.__ta_style__=true</script>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/@phosphor-icons/web/phosphor-icon.js"></script>
+<script>
+/* ===== Ikon SVG mandiri (pengganti CDN phosphor-icon.js yang sudah tidak tersedia) ===== */
+window.__VAIA_ICONS={"caret-down": "<path d=\"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z\"/>", "x": "<path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/>", "list": "<path d=\"M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z\"/>", "lightning": "<path d=\"M215.79,118.17a8,8,0,0,0-5-5.66L153.18,90.9l14.66-73.33a8,8,0,0,0-13.69-7l-112,120a8,8,0,0,0,3,13l57.63,21.61L88.16,238.43a8,8,0,0,0,13.69,7l112-120A8,8,0,0,0,215.79,118.17ZM109.37,214l10.47-52.38a8,8,0,0,0-5-9.06L62,132.71l84.62-90.66L136.16,94.43a8,8,0,0,0,5,9.06l52.8,19.8Z\"/>", "download": "<path d=\"M240,136v64a16,16,0,0,1-16,16H32a16,16,0,0,1-16-16V136a16,16,0,0,1,16-16H72a8,8,0,0,1,0,16H32v64H224V136H184a8,8,0,0,1,0-16h40A16,16,0,0,1,240,136Zm-117.66-2.34a8,8,0,0,0,11.32,0l48-48a8,8,0,0,0-11.32-11.32L136,108.69V24a8,8,0,0,0-16,0v84.69L85.66,74.34A8,8,0,0,0,74.34,85.66ZM200,168a12,12,0,1,0-12,12A12,12,0,0,0,200,168Z\"/>", "copy": "<path d=\"M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z\"/>", "arrows-clockwise": "<path d=\"M224,48V96a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h28.69L182.06,73.37a79.56,79.56,0,0,0-56.13-23.43h-.45A79.52,79.52,0,0,0,69.59,72.71,8,8,0,0,1,58.41,61.27a96,96,0,0,1,135,.79L208,76.69V48a8,8,0,0,1,16,0ZM186.41,183.29a80,80,0,0,1-112.47-.66L59.31,168H88a8,8,0,0,0,0-16H40a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V179.31l14.63,14.63A95.43,95.43,0,0,0,130,222.06h.53a95.36,95.36,0,0,0,67.07-27.33,8,8,0,0,0-11.18-11.44Z\"/>", "translate": "<path d=\"M247.15,212.42l-56-112a8,8,0,0,0-14.31,0l-21.71,43.43A88,88,0,0,1,108,126.93,103.65,103.65,0,0,0,135.69,64H160a8,8,0,0,0,0-16H104V32a8,8,0,0,0-16,0V48H32a8,8,0,0,0,0,16h87.63A87.76,87.76,0,0,1,96,116.35a87.74,87.74,0,0,1-19-31,8,8,0,1,0-15.08,5.34A103.63,103.63,0,0,0,84,127a87.55,87.55,0,0,1-52,17,8,8,0,0,0,0,16,103.46,103.46,0,0,0,64-22.08,104.18,104.18,0,0,0,51.44,21.31l-26.6,53.19a8,8,0,0,0,14.31,7.16L148.94,192h70.11l13.79,27.58A8,8,0,0,0,240,224a8,8,0,0,0,7.15-11.58ZM156.94,176,184,121.89,211.05,176Z\"/>", "paper-plane": "<path d=\"M237.9,200.1,141.85,32.18a16,16,0,0,0-27.89,0l-95.89,168a16,16,0,0,0,19.26,22.92L128,192.45l90.67,30.63A16.22,16.22,0,0,0,224,224a16,16,0,0,0,13.86-23.9Zm-14.05,7.84L136,178.26V120a8,8,0,0,0-16,0v58.26L32.16,207.94,32,208,127.86,40,224,208Z\"/>", "dots-three-vertical": "<path d=\"M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128ZM128,72a12,12,0,1,0-12-12A12,12,0,0,0,128,72Zm0,112a12,12,0,1,0,12,12A12,12,0,0,0,128,184Z\"/>", "trash": "<path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"/>", "thumbs-down": "<path d=\"M239.82,157l-12-96A24,24,0,0,0,204,40H32A16,16,0,0,0,16,56v88a16,16,0,0,0,16,16H75.06l37.78,75.58A8,8,0,0,0,120,240a40,40,0,0,0,40-40V184h56a24,24,0,0,0,23.82-27ZM72,144H32V56H72Zm150,21.29a7.88,7.88,0,0,1-6,2.71H152a8,8,0,0,0-8,8v24a24,24,0,0,1-19.29,23.54L88,150.11V56H204a8,8,0,0,1,7.94,7l12,96A7.87,7.87,0,0,1,222,165.29Z\"/>", "thumbs-up": "<path d=\"M234,80.12A24,24,0,0,0,216,72H160V56a40,40,0,0,0-40-40,8,8,0,0,0-7.16,4.42L75.06,96H32a16,16,0,0,0-16,16v88a16,16,0,0,0,16,16H204a24,24,0,0,0,23.82-21l12-96A24,24,0,0,0,234,80.12ZM32,112H72v88H32ZM223.94,97l-12,96a8,8,0,0,1-7.94,7H88V105.89l36.71-73.43A24,24,0,0,1,144,56V80a8,8,0,0,0,8,8h64a8,8,0,0,1,7.94,9Z\"/>", "squares-four": "<path d=\"M104,40H56A16,16,0,0,0,40,56v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,104,40Zm0,64H56V56h48v48Zm96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,64H152V56h48v48Zm-96,32H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm0,64H56V152h48v48Zm96-64H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Zm0,64H152V152h48v48Z\"/>", "magic-wand": "<path d=\"M48,64a8,8,0,0,1,8-8H72V40a8,8,0,0,1,16,0V56h16a8,8,0,0,1,0,16H88V88a8,8,0,0,1-16,0V72H56A8,8,0,0,1,48,64ZM184,192h-8v-8a8,8,0,0,0-16,0v8h-8a8,8,0,0,0,0,16h8v8a8,8,0,0,0,16,0v-8h8a8,8,0,0,0,0-16Zm56-48H224V128a8,8,0,0,0-16,0v16H192a8,8,0,0,0,0,16h16v16a8,8,0,0,0,16,0V160h16a8,8,0,0,0,0-16ZM219.31,80,80,219.31a16,16,0,0,1-22.62,0L36.68,198.63a16,16,0,0,1,0-22.63L176,36.69a16,16,0,0,1,22.63,0l20.68,20.68A16,16,0,0,1,219.31,80Zm-54.63,32L144,91.31l-96,96L68.68,208ZM208,68.69,187.31,48l-32,32L176,100.69Z\"/>", "incognito": "<path d=\"M217,34.8a15.94,15.94,0,0,0-14.82-1.71C188.15,38.55,159.82,47.71,128,47.71S67.84,38.55,53.79,33.09A16,16,0,0,0,32,48v55.77c0,35.84,9.65,69.65,27.18,95.18,18.16,26.46,42.6,41,68.82,41s50.66-14.57,68.82-41C214.35,173.44,224,139.63,224,103.79V48A16,16,0,0,0,217,34.8Zm-9,69c0,32.64-8.66,63.23-24.37,86.13C168.54,211.9,148.79,224,128,224s-40.54-12.1-55.63-34.08C56.66,167,48,136.43,48,103.79V48c15.11,5.87,45.58,15.71,80,15.71S192.9,53.87,208,48v55.81Zm-18,18.87A8,8,0,1,1,178,133.33c-2.68-3-8.85-5.33-14-5.33s-11.36,2.34-14,5.33A8,8,0,1,1,138,122.66c5.71-6.38,16.14-10.66,26-10.66S184.25,116.28,190,122.66ZM92,128c-5.19,0-11.36,2.34-14,5.33A8,8,0,1,1,66,122.66C71.75,116.28,82.18,112,92,112s20.25,4.28,26,10.66A8,8,0,1,1,106,133.33C103.36,130.34,97.19,128,92,128Zm76.45,45.19a52.9,52.9,0,0,1-80.9,0A8,8,0,1,1,99.72,162.8a36.89,36.89,0,0,0,56.56,0,8,8,0,0,1,12.17,10.39Z\"/>", "image-square": "<path d=\"M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM48,48H208v77.38l-24.69-24.7a16,16,0,0,0-22.62,0L53.37,208H48ZM208,208H76l96-96,36,36v60ZM96,120A24,24,0,1,0,72,96,24,24,0,0,0,96,120Zm0-32a8,8,0,1,1-8,8A8,8,0,0,1,96,88Z\"/>", "circle-notch": "<path d=\"M232,128a104,104,0,0,1-208,0c0-41,23.81-78.36,60.66-95.27a8,8,0,0,1,6.68,14.54C60.15,61.59,40,93.27,40,128a88,88,0,0,0,176,0c0-34.73-20.15-66.41-51.34-80.73a8,8,0,0,1,6.68-14.54C208.19,49.64,232,87,232,128Z\"/>", "check": "<path d=\"M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z\"/>", "sparkle": "<path d=\"M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z\"/>", "plus": "<path d=\"M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z\"/>", "paperclip": "<path d=\"M209.66,122.34a8,8,0,0,1,0,11.32l-82.05,82a56,56,0,0,1-79.2-79.21L147.67,35.73a40,40,0,1,1,56.61,56.55L105,193A24,24,0,1,1,71,159L154.3,74.38A8,8,0,1,1,165.7,85.6L82.39,170.31a8,8,0,1,0,11.27,11.36L192.93,81A24,24,0,1,0,159,47L59.76,147.68a40,40,0,1,0,56.53,56.62l82.06-82A8,8,0,0,1,209.66,122.34Z\"/>", "paper-plane-tilt": "<path d=\"M227.32,28.68a16,16,0,0,0-15.66-4.08l-.15,0L19.57,82.84a16,16,0,0,0-2.49,29.8L102,154l41.3,84.87A15.86,15.86,0,0,0,157.74,248q.69,0,1.38-.06a15.88,15.88,0,0,0,14-11.51l58.2-191.94c0-.05,0-.1,0-.15A16,16,0,0,0,227.32,28.68ZM157.83,231.85l-.05.14,0-.07-40.06-82.3,48-48a8,8,0,0,0-11.31-11.31l-48,48L24.08,98.25l-.07,0,.14,0L216,40Z\"/>", "tag": "<path d=\"M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z\"/>", "stop": "<path d=\"M200,40H56A16,16,0,0,0,40,56V200a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,160H56V56H200V200Z\"/>", "star": "<path d=\"M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z\"/>", "sliders-horizontal": "<path d=\"M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z\"/>", "play-fill": "<path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>", "phone": "<path d=\"M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z\"/>", "pencil-simple": "<path d=\"M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z\"/>", "magnifying-glass": "<path d=\"M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z\"/>", "list-bullets": "<path d=\"M80,64a8,8,0,0,1,8-8H216a8,8,0,0,1,0,16H88A8,8,0,0,1,80,64Zm136,56H88a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Zm0,64H88a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16ZM44,52A12,12,0,1,0,56,64,12,12,0,0,0,44,52Zm0,64a12,12,0,1,0,12,12A12,12,0,0,0,44,116Zm0,64a12,12,0,1,0,12,12A12,12,0,0,0,44,180Z\"/>", "layers": "<path d=\"M230.91,172A8,8,0,0,1,228,182.91l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,36,169.09l92,53.65,92-53.65A8,8,0,0,1,230.91,172ZM220,121.09l-92,53.65L36,121.09A8,8,0,0,0,28,134.91l96,56a8,8,0,0,0,8.06,0l96-56A8,8,0,1,0,220,121.09ZM24,80a8,8,0,0,1,4-6.91l96-56a8,8,0,0,1,8.06,0l96,56a8,8,0,0,1,0,13.82l-96,56a8,8,0,0,1-8.06,0l-96-56A8,8,0,0,1,24,80Zm23.88,0L128,126.74,208.12,80,128,33.26Z\"/>", "key": "<path d=\"M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176A15.86,15.86,0,0,0,24,187.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A79.73,79.73,0,0,0,160,176h.1A80,80,0,0,0,216.57,39.43ZM224,98.1c-1.09,34.09-29.75,61.86-63.89,61.9H160a63.7,63.7,0,0,1-23.65-4.51,8,8,0,0,0-8.84,1.68L116.69,168H96a8,8,0,0,0-8,8v16H72a8,8,0,0,0-8,8v16H40V187.31l58.83-58.82a8,8,0,0,0,1.68-8.84A63.72,63.72,0,0,1,96,95.92c0-34.14,27.81-62.8,61.9-63.89A64,64,0,0,1,224,98.1ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z\"/>", "images": "<path d=\"M216,40H72A16,16,0,0,0,56,56V72H40A16,16,0,0,0,24,88V200a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V184h16a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM72,56H216v62.75l-10.07-10.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L72,109.37ZM184,200H40V88H56v80a16,16,0,0,0,16,16H184Zm32-32H72V132l36-36,49.66,49.66a8,8,0,0,0,11.31,0L194.63,120,216,141.38V168ZM160,84a12,12,0,1,1,12,12A12,12,0,0,1,160,84Z\"/>", "image": "<path d=\"M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,172l52-52,80,80H40Zm176,28H194.63l-36-36,20-20L216,181.38V200ZM144,100a12,12,0,1,1,12,12A12,12,0,0,1,144,100Z\"/>", "hourglass-medium": "<path d=\"M200,75.64V40a16,16,0,0,0-16-16H72A16,16,0,0,0,56,40V76a16.07,16.07,0,0,0,6.4,12.8L114.67,128,62.4,167.2A16.07,16.07,0,0,0,56,180v36a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V180.36a16.09,16.09,0,0,0-6.35-12.77L141.27,128l52.38-39.6A16.05,16.05,0,0,0,200,75.64ZM72,40H184V75.64L178.23,80H77.33L72,76Zm56,78L98.67,96h58.4Zm56,98H72V180l48-36v24a8,8,0,0,0,16,0V144.08l48,36.28Z\"/>", "globe": "<path d=\"M128,24h0A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.84a157.44,157.44,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128ZM154,88H102a115.11,115.11,0,0,1,26-45A115.27,115.27,0,0,1,154,88Zm52.33,0H170.71a135.28,135.28,0,0,0-22.3-45.6A88.29,88.29,0,0,1,206.37,88ZM107.59,42.4A135.28,135.28,0,0,0,85.29,88H49.63A88.29,88.29,0,0,1,107.59,42.4ZM49.63,168H85.29a135.28,135.28,0,0,0,22.3,45.6A88.29,88.29,0,0,1,49.63,168Zm98.78,45.6a135.28,135.28,0,0,0,22.3-45.6h35.66A88.29,88.29,0,0,1,148.41,213.6Z\"/>", "folder-open": "<path d=\"M245,110.64A16,16,0,0,0,232,104H216V88a16,16,0,0,0-16-16H130.67L102.94,51.2a16.14,16.14,0,0,0-9.6-3.2H40A16,16,0,0,0,24,64V208h0a8,8,0,0,0,8,8H211.1a8,8,0,0,0,7.59-5.47l28.49-85.47A16.05,16.05,0,0,0,245,110.64ZM93.34,64,123.2,86.4A8,8,0,0,0,128,88h72v16H69.77a16,16,0,0,0-15.18,10.94L40,158.7V64Zm112,136H43.1l26.67-80H232Z\"/>", "download-simple": "<path d=\"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z\"/>", "dice-five": "<path d=\"M192,32H64A32,32,0,0,0,32,64V192a32,32,0,0,0,32,32H192a32,32,0,0,0,32-32V64A32,32,0,0,0,192,32Zm16,160a16,16,0,0,1-16,16H64a16,16,0,0,1-16-16V64A16,16,0,0,1,64,48H192a16,16,0,0,1,16,16ZM104,92A12,12,0,1,1,92,80,12,12,0,0,1,104,92Zm72,0a12,12,0,1,1-12-12A12,12,0,0,1,176,92Zm-72,72a12,12,0,1,1-12-12A12,12,0,0,1,104,164Zm36-36a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm36,36a12,12,0,1,1-12-12A12,12,0,0,1,176,164Z\"/>", "coin": "<path d=\"M207.58,63.84C186.85,53.48,159.33,48,128,48S69.15,53.48,48.42,63.84,16,88.78,16,104v48c0,15.22,11.82,29.85,32.42,40.16S96.67,208,128,208s58.85-5.48,79.58-15.84S240,167.22,240,152V104C240,88.78,228.18,74.15,207.58,63.84ZM128,64c62.64,0,96,23.23,96,40s-33.36,40-96,40-96-23.23-96-40S65.36,64,128,64Zm-8,95.86v32c-19-.62-35-3.42-48-7.49V153.05A203.43,203.43,0,0,0,120,159.86Zm16,0a203.43,203.43,0,0,0,48-6.81v31.31c-13,4.07-29,6.87-48,7.49ZM32,152V133.53a82.88,82.88,0,0,0,16.42,10.63c2.43,1.21,5,2.35,7.58,3.43V178C40.17,170.16,32,160.29,32,152Zm168,26V147.59c2.61-1.08,5.15-2.22,7.58-3.43A82.88,82.88,0,0,0,224,133.53V152C224,160.29,215.83,170.16,200,178Z\"/>", "clock-counter-clockwise": "<path d=\"M136,80v43.47l36.12,21.67a8,8,0,0,1-8.24,13.72l-40-24A8,8,0,0,1,120,128V80a8,8,0,0,1,16,0Zm-8-48A95.44,95.44,0,0,0,60.08,60.15C52.81,67.51,46.35,74.59,40,82V64a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H72a8,8,0,0,0,0-16H49c7.15-8.42,14.27-16.35,22.39-24.57a80,80,0,1,1,1.66,114.75,8,8,0,1,0-11,11.64A96,96,0,1,0,128,32Z\"/>", "clipboard": "<path d=\"M200,32H163.74a47.92,47.92,0,0,0-71.48,0H56A16,16,0,0,0,40,48V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm-72,0a32,32,0,0,1,32,32H96A32,32,0,0,1,128,32Zm72,184H56V48H82.75A47.93,47.93,0,0,0,80,64v8a8,8,0,0,0,8,8h80a8,8,0,0,0,8-8V64a47.93,47.93,0,0,0-2.75-16H200Z\"/>", "chat-circle-text": "<path d=\"M168,112a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h64A8,8,0,0,1,168,112Zm-8,24H96a8,8,0,0,0,0,16h64a8,8,0,0,0,0-16Zm72-8A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Zm-16,0A88,88,0,1,0,51.81,172.06a8,8,0,0,1,.66,6.54L40,216,77.4,203.53a7.85,7.85,0,0,1,2.53-.42,8,8,0,0,1,4,1.08A88,88,0,0,0,216,128Z\"/>", "camera": "<path d=\"M208,56H180.28L166.65,35.56A8,8,0,0,0,160,32H96a8,8,0,0,0-6.65,3.56L75.71,56H48A24,24,0,0,0,24,80V192a24,24,0,0,0,24,24H208a24,24,0,0,0,24-24V80A24,24,0,0,0,208,56Zm8,136a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V80a8,8,0,0,1,8-8H80a8,8,0,0,0,6.66-3.56L100.28,48h55.43l13.63,20.44A8,8,0,0,0,176,72h32a8,8,0,0,1,8,8ZM128,88a44,44,0,1,0,44,44A44.05,44.05,0,0,0,128,88Zm0,72a28,28,0,1,1,28-28A28,28,0,0,1,128,160Z\"/>", "brain": "<path d=\"M248,124a56.11,56.11,0,0,0-32-50.61V72a48,48,0,0,0-88-26.49A48,48,0,0,0,40,72v1.39a56,56,0,0,0,0,101.2V176a48,48,0,0,0,88,26.49A48,48,0,0,0,216,176v-1.41A56.09,56.09,0,0,0,248,124ZM88,208a32,32,0,0,1-31.81-28.56A55.87,55.87,0,0,0,64,180h8a8,8,0,0,0,0-16H64A40,40,0,0,1,50.67,86.27,8,8,0,0,0,56,78.73V72a32,32,0,0,1,64,0v68.26A47.8,47.8,0,0,0,88,128a8,8,0,0,0,0,16,32,32,0,0,1,0,64Zm104-44h-8a8,8,0,0,0,0,16h8a55.87,55.87,0,0,0,7.81-.56A32,32,0,1,1,168,144a8,8,0,0,0,0-16,47.8,47.8,0,0,0-32,12.26V72a32,32,0,0,1,64,0v6.73a8,8,0,0,0,5.33,7.54A40,40,0,0,1,192,164Zm16-52a8,8,0,0,1-8,8h-4a36,36,0,0,1-36-36V80a8,8,0,0,1,16,0v4a20,20,0,0,0,20,20h4A8,8,0,0,1,208,112ZM60,120H56a8,8,0,0,1,0-16h4A20,20,0,0,0,80,84V80a8,8,0,0,1,16,0v4A36,36,0,0,1,60,120Z\"/>", "bookmark-simple": "<path d=\"M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z\"/>", "at": "<path d=\"M128,24a104,104,0,0,0,0,208c21.51,0,44.1-6.48,60.43-17.33a8,8,0,0,0-8.86-13.33C166,210.38,146.21,216,128,216a88,88,0,1,1,88-88c0,26.45-10.88,32-20,32s-20-5.55-20-32V88a8,8,0,0,0-16,0v4.26a48,48,0,1,0,5.93,65.1c6,12,16.35,18.64,30.07,18.64,22.54,0,36-17.94,36-48A104.11,104.11,0,0,0,128,24Zm0,136a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z\"/>", "arrow-up": "<path d=\"M205.66,117.66a8,8,0,0,1-11.32,0L136,59.31V216a8,8,0,0,1-16,0V59.31L61.66,117.66a8,8,0,0,1-11.32-11.32l72-72a8,8,0,0,1,11.32,0l72,72A8,8,0,0,1,205.66,117.66Z\"/>"};
+(function(){
+  function svgFor(name){
+    var raw=window.__VAIA_ICONS&&window.__VAIA_ICONS[name];
+    if(!raw) return '';
+    return '<svg viewBox="0 0 256 256" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+raw+'</svg>';
+  }
+  function upgrade(el){
+    if(!el||el.getAttribute('data-vaia-icon')) return;
+    var s=svgFor(el.getAttribute('data-icon'));
+    if(s){ el.innerHTML=s; el.setAttribute('data-vaia-icon','1'); }
+  }
+  function scan(root){
+    try{ (root||document).querySelectorAll('i[data-icon]').forEach(upgrade); }catch(e){}
+  }
+  scan(document);
+  if(window.MutationObserver){
+    new MutationObserver(function(muts){
+      for(var i=0;i<muts.length;i++){
+        var nodes=muts[i].addedNodes;
+        for(var j=0;j<nodes.length;j++){
+          var n=nodes[j];
+          if(n.nodeType!==1) continue;
+          if(n.matches&&n.matches('i[data-icon]')) upgrade(n);
+          if(n.querySelectorAll) n.querySelectorAll('i[data-icon]').forEach(upgrade);
+        }
+      }
+    }).observe(document.documentElement,{childList:true,subtree:true});
+  }
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -138,6 +170,58 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 .chip{border:1px solid #30363d;border-radius:6px;padding:4px 10px;font-size:12px;color:#9a9aa2;cursor:pointer;background:#1c2128;transition:.12s}
 .chip:hover{color:#fff}.chip.on{border-color:#6F5DFF;color:#fff;background:#161b22}
 #toast{box-shadow:0 8px 30px rgba(0,0,0,.5)}
+/* ===== VAIA Chat (ala ChatGPT) ===== */
+#chat-panel{height:calc(100vh - 56px - 2rem);min-height:22rem}
+@media (max-width:1023px){#chat-panel{height:calc(100vh - 56px - 40px - 3.75rem - 2rem)}}
+.chat-msg{max-width:min(85%,34rem)}
+.chat-bubble-user{background:linear-gradient(135deg,rgba(31,199,206,.22),rgba(46,124,240,.28));border:1px solid rgba(46,124,240,.4);border-radius:16px;border-bottom-right-radius:4px}
+.chat-msg{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative}
+.chat-bubble-ai{background:#161b22;border:1px solid #30363d;border-radius:16px;border-bottom-left-radius:4px}
+.chat-bubble-ai pre{background:rgba(0,0,0,.45);border:1px solid #30363d;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;overflow-x:auto;margin:6px 0;white-space:pre-wrap;word-break:break-word}
+.chat-bubble-ai code.inline{background:rgba(0,0,0,.45);border:1px solid #30363d;border-radius:5px;padding:1px 5px;font-size:12px;color:#5eead4}
+.chat-bubble-ai a{color:#5eead4;text-decoration:underline}
+.chat-typing{display:inline-flex;align-items:center;gap:4px;padding:4px 2px}
+.chat-typing span{width:7px;height:7px;border-radius:50%;background:#8b949e;animation:chat-bounce 1.2s ease-in-out infinite}
+.chat-typing span:nth-child(2){animation-delay:.15s}
+.chat-typing span:nth-child(3){animation-delay:.3s}
+@keyframes chat-bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.chat-fade{animation:card-in .25s cubic-bezier(.22,.9,.3,1)}
+/* ===== Chat mode (ala ChatGPT): sembunyikan UI generate, chat fokus penuh ===== */
+body.chat-mode #leftpan,body.chat-mode #rightPan,body.chat-mode #mobbar,
+body.chat-mode #btn-history,body.chat-mode #promptbar,body.chat-mode #submitcard,
+body.chat-mode #img2img-card,body.chat-mode #empty,body.chat-mode #grid,
+body.chat-mode #gfilter,body.chat-mode #tab-placeholder,body.chat-mode #mobtasks,
+body.chat-mode #ncol{display:none!important}
+body.chat-mode #chat-panel{display:flex;flex-direction:column}
+body.chat-mode #chat-msgs{flex:1;min-height:0}
+@media (min-width:1024px){
+  body.chat-mode #appshell{height:100vh}
+  body.chat-mode #mainwrap{overflow:hidden}
+  body.chat-mode #canvas{display:flex;flex-direction:column}
+  body.chat-mode #canvas>div{flex:1;min-height:0;display:flex;flex-direction:column;padding:0!important;max-width:none;width:100%}
+  body.chat-mode #chat-panel{flex:1;min-height:0;position:fixed;top:56px;left:0;right:0;bottom:.5rem;height:auto;z-index:20}
+  /* Scrollbar vertikal terlihat (desktop); mobile tetap pakai sentuhan */
+  body.chat-mode #chat-msgs,body.chat-mode #chat-sessions{scrollbar-width:thin;scrollbar-color:#30363d transparent}
+  body.chat-mode #chat-msgs::-webkit-scrollbar,body.chat-mode #chat-sessions::-webkit-scrollbar{display:block;width:8px}
+  body.chat-mode #chat-msgs::-webkit-scrollbar-thumb,body.chat-mode #chat-sessions::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
+  body.chat-mode #chat-msgs::-webkit-scrollbar-thumb:hover,body.chat-mode #chat-sessions::-webkit-scrollbar-thumb:hover{background:#3d444d}
+  body.chat-mode #chat-msgs::-webkit-scrollbar-track,body.chat-mode #chat-sessions::-webkit-scrollbar-track{background:transparent}
+}
+body.chat-mode .chat-marquee{margin-top:.75rem;padding-top:.5rem;border-top:1px solid #21262d}
+/* ===== Sidebar riwayat percakapan (ala ChatGPT) ===== */
+#chat-sidebar{display:none}
+@media (max-width:1023px){
+  #chat-sidebar.open{display:flex;position:fixed;left:0;top:56px;bottom:0;z-index:45;width:min(19rem,86vw);box-shadow:8px 0 30px rgba(0,0,0,.5)}
+}
+@media (min-width:1024px){
+  #chat-sidebar{display:flex;position:static;box-shadow:none;width:16rem}
+  body.chat-mode #canvas>div{max-width:none;width:100%}
+  body.chat-mode #chat-main{max-width:48rem;margin:0 auto;width:100%}
+}
+/* ===== Attach + temporary chat ===== */
+.chat-att-img{max-width:100%;max-height:14rem;border-radius:10px;margin:6px 0;display:block}
+#chat-temp.chat-temp-on{color:#27D4CD;border-color:rgba(39,212,205,.6);background:rgba(39,212,205,.08)}
+#chat-attach-menu,#chat-plugins-menu{animation:pop-in .18s cubic-bezier(.22,.9,.3,1)}
 /* Galeri desktop: grid 2-4 kolom (dikontrol tombol #ncol di header). Mobile tetap tersembunyi via media query. */
 .gcols{display:grid;gap:.75rem}
 .gcols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -243,6 +327,7 @@ input[type=range]{cursor:pointer}
   </div>
   <div class="flex items-center gap-0.5 hidebar overflow-x-auto flex-1 max-lg:hidden">
     <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span>Text2Img</div>
+    <div class="tab" data-tab="chat"><span class="dot" style="background:#8b5cf6"></span>Chat</div>
     <div class="tab" data-tab="img"><span class="dot" style="background:#22c55e"></span>Img2Img</div>
     <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span>Edit</div>
     <div class="tab" data-tab="video"><span class="dot" style="background:#ef4444"></span>Video</div>
@@ -258,6 +343,7 @@ input[type=range]{cursor:pointer}
 <!-- Mobile baris ke-2: mode tabs (ala Tensor.Art) -->
 <div id="mobnav" class="lg:hidden fixed top-14 left-0 right-0 z-40 h-10 bg-[#0d1117]/90 backdrop-blur border-b bd flex items-center px-2 gap-0.5 overflow-x-auto hidebar">
   <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span>Text2Img</div>
+  <div class="tab" data-tab="chat"><span class="dot" style="background:#8b5cf6"></span>Chat</div>
   <div class="tab" data-tab="img"><span class="dot" style="background:#22c55e"></span>Img2Img</div>
   <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span>Edit</div>
   <div class="tab" data-tab="video"><span class="dot" style="background:#ef4444"></span>Video</div>
@@ -570,6 +656,9 @@ input[type=range]{cursor:pointer}
         <div id="i2i-preview" class="hidden mt-3">
           <img id="i2i-img" class="block mx-auto max-w-full max-h-72 object-contain rounded-lg border bd" alt=""/>
           <div class="text-center text-[11px] text-neutral-500 mt-1.5"><span id="i2i-dims"></span></div>
+          <div class="text-center mt-2">
+            <button id="i2i-wd14" class="btn btn-ghost h-8 border bd text-[11px] px-3 inline-flex items-center gap-1.5"><i data-icon="magic-wand" class="w-3.5 h-3.5 text-[#27D4CD]"></i>Deteksi Prompt (WD14)</button>
+          </div>
         </div>
         <!-- Inpaint: brush mask (area putih = digambar ulang oleh AI) -->
         <div id="i2i-maskwrap" class="hidden mt-3">
@@ -624,6 +713,74 @@ input[type=range]{cursor:pointer}
       <div id="tab-placeholder" class="hidden flex-col items-center justify-center h-[50vh] text-neutral-600">
         <i data-icon="hourglass-medium" class="w-12 h-12 mb-3"></i>
         <p class="text-sm" id="tab-placeholder-text">Tab ini segera hadir</p>
+      </div>
+
+      <!-- VAIA Chat (ala ChatGPT — model Pollinations gpt-5.6-luna) -->
+      <div id="chat-panel" class="hidden flex-col">
+        <div class="flex flex-1 min-h-0">
+          <aside id="chat-sidebar" class="w-64 shrink-0 border-r bd bg-[#161b22] flex-col overflow-hidden">
+            <div class="p-2">
+              <button id="chat-new" class="btn btn-ghost w-full h-9 border bd text-xs justify-center"><i data-icon="plus" class="w-3.5 h-3.5"></i>New chat</button>
+            </div>
+            <div class="px-3 pb-1 pt-1 text-[10px] uppercase tracking-wider text-neutral-600">Riwayat</div>
+            <div id="chat-sessions" class="flex-1 overflow-y-auto hidebar px-2 pb-3 space-y-0.5"></div>
+          </aside>
+          <div id="chat-backdrop" class="hidden fixed inset-0 z-40 bg-black/60 lg:hidden"></div>
+          <div id="chat-main" class="flex-1 flex flex-col min-w-0">
+        <div class="flex items-center justify-between gap-2 px-1 pb-3">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <button id="chat-menu" class="lg:hidden w-7 h-7 shrink-0 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Riwayat percakapan"><i data-icon="list" class="w-4 h-4"></i></button>
+            <div class="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center text-sm font-extrabold text-white" style="background:linear-gradient(135deg,#1FC7CE,#2E7CF0);box-shadow:0 0 14px rgba(31,199,206,.45)">V</div>
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-neutral-100 truncate">VAIA Chat</div>
+              <div class="text-[10px] text-neutral-500 truncate">Vaia Rekty · Visual AI Artwork</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="hidden sm:inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-0.5 text-[10px] text-neutral-400" title="Model chat"><i data-icon="lightning" class="w-3 h-3 text-[#8b5cf6]"></i>Vaia Rekty</span>
+            <button id="chat-temp" class="w-7 h-7 rounded-lg border bd flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Chat sementara - tidak disimpan di riwayat"><i data-icon="incognito" class="w-4 h-4"></i></button>
+            <span id="chat-balance" class="inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-0.5 text-[10px] text-neutral-400 cursor-pointer hover:text-white hover:border-[#6F5DFF] transition-colors" title="Saldo pollen — klik untuk kumpulkan lewat quest"><i data-icon="coin" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-balance-txt">-</span></span>
+            <button id="chat-clear" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Bersihkan percakapan"><i data-icon="trash" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+        <div id="chat-msgs" class="flex-1 flex flex-col gap-3 overflow-y-auto hidebar pr-1 pb-2"></div>
+        <div class="relative pt-2 pb-1">
+          <div id="chat-attach-menu" class="hidden absolute bottom-full left-0 mb-2 z-50 w-60 rounded-2xl border bd bg-[#262628] p-1.5 shadow-2xl">
+            <button data-act="cam-back" class="chat-ami flex items-center gap-2.5 w-full px-2 py-2 rounded-xl text-sm text-neutral-200 hover:bg-white/5"><span class="w-8 h-8 rounded-full bg-[#303030] flex items-center justify-center shrink-0"><i data-icon="camera" class="w-4 h-4"></i></span>Kamera Belakang</button>
+            <button data-act="cam-front" class="chat-ami flex items-center gap-2.5 w-full px-2 py-2 rounded-xl text-sm text-neutral-200 hover:bg-white/5"><span class="w-8 h-8 rounded-full bg-[#303030] flex items-center justify-center shrink-0"><i data-icon="arrows-clockwise" class="w-4 h-4"></i></span>Kamera Depan</button>
+            <button data-act="photos" class="chat-ami flex items-center gap-2.5 w-full px-2 py-2 rounded-xl text-sm text-neutral-200 hover:bg-white/5"><span class="w-8 h-8 rounded-full bg-[#303030] flex items-center justify-center shrink-0"><i data-icon="image" class="w-4 h-4"></i></span>Photos</button>
+            <button data-act="files" class="chat-ami flex items-center gap-2.5 w-full px-2 py-2 rounded-xl text-sm text-neutral-200 hover:bg-white/5"><span class="w-8 h-8 rounded-full bg-[#303030] flex items-center justify-center shrink-0"><i data-icon="paperclip" class="w-4 h-4"></i></span>Files</button>
+            <button data-act="wd14" class="chat-ami flex items-center gap-2.5 w-full px-2 py-2 rounded-xl text-sm text-neutral-200 hover:bg-white/5"><span class="w-8 h-8 rounded-full bg-[#303030] flex items-center justify-center shrink-0"><i data-icon="magic-wand" class="w-4 h-4 text-[#27D4CD]"></i></span>Deteksi Prompt (WD14)</button>
+            <button data-act="plugins" class="chat-ami flex items-center gap-2.5 w-full px-2 py-2 rounded-xl text-sm text-neutral-200 hover:bg-white/5"><span class="w-8 h-8 rounded-full bg-[#303030] flex items-center justify-center shrink-0"><i data-icon="sparkle" class="w-4 h-4"></i></span>Skills</button>
+            <button data-act="think" class="chat-ami flex items-center gap-2.5 w-full px-2 py-2 rounded-xl text-sm text-neutral-200 hover:bg-white/5"><span class="w-8 h-8 rounded-full bg-[#303030] flex items-center justify-center shrink-0"><i data-icon="brain" class="w-4 h-4"></i></span>Think harder</button>
+          </div>
+          <div id="chat-plugins-menu" class="hidden absolute bottom-full left-0 mb-2 z-50 w-72 rounded-2xl border bd bg-[#262628] p-1.5 shadow-2xl">
+            <div class="flex items-center justify-between px-2 py-1">
+              <span class="text-[10px] uppercase tracking-wider text-neutral-500">Skills — aktif otomatis oleh AI</span>
+              <span id="chat-skills-count" class="text-[10px] text-[#27D4CD]"></span>
+            </div>
+            <div class="px-2 pb-1.5">
+              <input id="chat-skills-search" type="text" class="inp text-xs w-full" placeholder="Cari skill... (mis. python, riset, android)" autocomplete="off"/>
+            </div>
+            <div id="chat-skills-list" class="max-h-[45vh] overflow-y-auto hidebar space-y-1.5 pr-0.5"></div>
+          </div>
+          <p class="text-center text-[10px] text-neutral-700 mt-1.5">VAIA Chat dapat membuat kesalahan · Didukung Visual AI Artwork Agent</p>
+          <div class="chat-marquee vmarquee pt-2 pb-1.5 text-[10px] text-neutral-600">
+            <div class="vmarquee-inner">
+              <span class="vmarquee-txt">Project Service Provided by <span class="vt">VAIA TEAM</span> <span class="vs">✦</span></span>
+              <span class="vmarquee-txt">Project Service Provided by <span class="vt">VAIA TEAM</span> <span class="vs">✦</span></span>
+            </div>
+          </div>
+          <div id="chat-attach-bar" class="hidden flex flex-wrap gap-1.5 px-1 pb-1.5"></div>
+          <div id="chat-plugins-bar" class="hidden flex flex-wrap gap-1.5 px-1 pb-1.5"></div>
+          <div class="flex items-end gap-2 rounded-2xl border bd bg-[#161b22] px-3 py-2">
+            <button id="chat-attach" class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Lampirkan file atau gambar"><i data-icon="plus" class="w-4 h-4"></i></button>
+            <textarea id="chat-input" rows="1" class="flex-1 bg-transparent border-0 outline-none resize-none text-sm text-neutral-100 placeholder-neutral-600 max-h-40 leading-relaxed py-1.5" placeholder="Tulis pesan ke VAIA Chat... (Enter untuk kirim, Shift+Enter baris baru)"></textarea>
+            <button id="chat-send" class="btn btn-turq h-9 w-9 px-0 shrink-0 rounded-xl" title="Kirim"><i data-icon="paper-plane-tilt" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+          </div>
+        </div>
       </div>
 
       <div id="empty" class="flex flex-col items-center justify-center h-[60vh] text-neutral-600">
@@ -848,6 +1005,19 @@ input[type=range]{cursor:pointer}
 </div>
 
 <!-- ============ TOAST ============ -->
+<div id="temp-dialog" class="hidden fixed inset-0 z-[70] items-center justify-center bg-black/60 p-4">
+  <div class="w-full max-w-sm rounded-2xl border bd bg-[#1c2128] p-5 space-y-3 shadow-2xl">
+    <div class="flex items-center gap-2">
+      <i data-icon="incognito" class="w-5 h-5 text-[#27D4CD]"></i>
+      <span class="font-semibold text-neutral-100 text-sm">Chat sementara</span>
+    </div>
+    <p class="text-xs text-neutral-400 leading-relaxed">Chat sementara tidak akan muncul di riwayat dan tidak disimpan di perangkat. Cocok untuk pertanyaan sekali pakai.</p>
+    <div class="flex justify-end gap-2 pt-1">
+      <button id="temp-cancel" class="btn btn-ghost h-9 px-4 border bd text-xs">Batal</button>
+      <button id="temp-start" class="btn btn-turq h-9 px-4 text-xs">Mulai chat sementara</button>
+    </div>
+  </div>
+</div>
 <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 hidden bg-[#1c2128] border bd rounded-xl px-4 py-2.5 text-sm shadow-lg max-w-[85vw]"></div>
 <div id="done-pop" class="fixed top-20 right-4 z-50 hidden items-center gap-2.5 bg-[#1c2128] border bd rounded-xl pl-2 pr-2.5 py-2 text-sm shadow-xl cursor-pointer max-w-[300px]">
   <img id="done-pop-img" class="w-9 h-9 rounded-lg object-cover border bd"/>
@@ -2125,6 +2295,20 @@ function startPollOAuth(){
     window.location.href=cfg.authorizeBase+'?'+p.toString();
   }).catch(function(e){ toast('Gagal mulai login: '+(e&&e.message||e)); });
 }
+function updateChatBalance(){
+  var pill=$('chat-balance'), txt=$('chat-balance-txt');
+  if(!pill||!txt) return;
+  if(!settings.pollSession){ txt.textContent='Gratis'; pill.title='Login Pollinations (BYOP) untuk saldo pollen — klik untuk login'; pill.style.borderColor=''; return; }
+  fetch('/api/oauth/status?session='+encodeURIComponent(settings.pollSession)).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.connected&&d.balance){
+      var b=d.balance;
+      var bv=b.pollenBalance!=null?b.pollenBalance:(b.balance!=null?b.balance:null);
+      txt.textContent=(bv!=null?Number(bv).toFixed(1):'?')+' pollen';
+      pill.title='Saldo pollen — klik untuk kumpulkan pollen lewat quest';
+      pill.style.borderColor='rgba(39,212,205,.5)';
+    } else { txt.textContent='Gratis'; pill.title='Sesi Pollinations berakhir — klik untuk login ulang (BYOP)'; pill.style.borderColor=''; }
+  }).catch(function(){ txt.textContent='Gratis'; pill.title='Saldo tidak tersedia'; });
+}
 function updateBalPill(){
   var pill=$('balpill'), txt=$('balpill-txt');
   if(!pill||!txt) return;
@@ -2140,6 +2324,7 @@ function updateBalPill(){
 }
 function refreshOAuthStatus(){
   var el=$('byop-status'), btn=$('byop-login'), out=$('byop-logout');
+  updateChatBalance();
   if(!settings.pollSession){ if(el)el.classList.add('hidden'); if(out)out.classList.add('hidden'); updateBalPill(); return; }
   fetch('/api/oauth/status?session='+encodeURIComponent(settings.pollSession)).then(function(r){return r.json();}).then(function(d){
     if(d&&d.connected){
@@ -2161,7 +2346,7 @@ function refreshOAuthStatus(){
 }
 function pollLogout(){
   fetch('/api/oauth/logout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:settings.pollSession})}).catch(function(){});
-  settings.pollSession=''; saveSettings(); updateApiStatus(); refreshOAuthStatus();
+  settings.pollSession=''; saveSettings(); updateApiStatus(); refreshOAuthStatus(); updateChatBalance();
   toast('Sesi Pollinations dicabut');
 }
 async function handleOAuthCallback(){
@@ -2184,7 +2369,7 @@ async function handleOAuthCallback(){
       body:JSON.stringify({code:code,code_verifier:verifier,redirect_uri:(cfg&&cfg.redirectUri)||''})});
     var d=await r.json().catch(function(){return null;});
     if(!r.ok||!d.session) throw new Error((d&&d.error)||('HTTP '+r.status));
-    settings.pollSession=d.session; saveSettings(); updateProviderUI();
+    settings.pollSession=d.session; saveSettings(); updateProviderUI(); updateChatBalance();
     toast('Login Pollinations berhasil!');
   }catch(e){ toast('Gagal tukar kode: '+(e&&e.message||e)); }
   history.replaceState(null,'','/');
@@ -2883,6 +3068,16 @@ function applyI2iData(dataUrl){
 $('i2i-ws').addEventListener('click',function(e){ e.stopPropagation(); openI2iPicker(); });
 // Library = galeri gambar dari perangkat (file picker -> langsung jadi input img2img)
 $('i2i-lib').addEventListener('click',function(e){ e.stopPropagation(); $('i2i-file').click(); });
+// Deteksi Prompt (WD14): foto referensi img2img langsung di-tag jadi prompt (buka dialog WD14)
+$('i2i-wd14').addEventListener('click',function(){
+  if(!i2iDataUrl){ toast('Pilih gambar referensi dulu'); return; }
+  var d=chatWd14Dlg();
+  chatWd14Load();
+  d.classList.remove('hidden'); d.classList.add('flex');
+  d.querySelector('#wd14-tags').value=''; d.querySelector('#wd14-prog').style.width='0%';
+  chatWd14SetImage(i2iDataUrl);
+  chatCloseMenus();
+});
 $('i2i-pick-close').addEventListener('click',closeI2iPicker);
 $('i2i-picker').addEventListener('click',function(e){ if(e.target===$('i2i-picker')) closeI2iPicker(); });
 function openI2iPicker(){
@@ -2935,11 +3130,18 @@ function i2iWH(){
 function renderCanvas(){
   var page=state.page;
   var hideMain = !(page==='text'||page==='img');
+  var isChat = page==='chat';
   $('img2img-card').classList.toggle('hidden', page!=='img');
   $('empty').style.display = (hideMain || state.results.length>0) ? 'none' : '';
   $('grid').style.display = hideMain?'none':'';
-  $('tab-placeholder').classList.toggle('hidden', !hideMain);
-  $('tab-placeholder').classList.toggle('flex', hideMain);
+  document.body.classList.toggle('chat-mode', isChat);
+  $('tab-placeholder').classList.toggle('hidden', !hideMain || isChat);
+  $('tab-placeholder').classList.toggle('flex', hideMain && !isChat);
+  var chat=$('chat-panel');
+  if(chat) chat.classList.toggle('hidden', !isChat);
+  // Sembunyikan tombol melayang Riwayat di tab Chat (menutupi input/send di mobile)
+  if($('btn-history')) $('btn-history').style.display = isChat ? 'none' : '';
+  if(isChat){ if(chatState&&!chatState.rendered){ chatLoad(); chatRender(); } updateChatBalance(); }
   if(page==='edit') $('tab-placeholder-text').textContent='Edit / Inpainting — segera hadir';
   else if(page==='video') $('tab-placeholder-text').textContent='Text / Image to Video — segera hadir';
   else if(page==='prime') $('tab-placeholder-text').textContent='Prime — segera hadir';
@@ -3523,6 +3725,1121 @@ function remixResult(r){
   ta.addEventListener('touchend',endPinch);
   ta.addEventListener('touchcancel',endPinch);
 })();
+/* ============================ VAIA CHAT (ala ChatGPT) ============================ */
+var SESSIONS_KEY='vaia_chat_sessions_v1';
+var SID_KEY='vaia_chat_sid_v1';
+var chatState={ msgs:[], busy:false, rendered:false, sid:null };
+function chatSessions(){
+  try{ var r=JSON.parse(localStorage.getItem(SESSIONS_KEY)||'null'); if(Array.isArray(r)) return r; }catch(e){}
+  return [];
+}
+function chatSessionsSave(list){
+  try{ localStorage.setItem(SESSIONS_KEY, JSON.stringify(list.slice(0,50))); }catch(e){}
+}
+function chatNewId(){ return 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function chatMigrateOld(){
+  try{
+    var old=JSON.parse(localStorage.getItem('vaia_chat_v1')||'null');
+    if(Array.isArray(old)&&old.length){
+      var s={ id:chatNewId(), title:'Percakapan lama', ts:Date.now(), msgs:old.slice(-80) };
+      for(var i=0;i<old.length;i++) if(old[i].role==='user'){ s.title=old[i].content.replace(/\s+/g,' ').slice(0,42); break; }
+      localStorage.setItem(SESSIONS_KEY, JSON.stringify([s]));
+    }
+  }catch(e){}
+}
+function chatLoad(){
+  var list=chatSessions();
+  if(!list.length){ chatMigrateOld(); list=chatSessions(); }
+  var sid=null;
+  try{ sid=localStorage.getItem(SID_KEY); }catch(e){}
+  var cur=null;
+  for(var i=0;i<list.length;i++) if(list[i].id===sid) cur=list[i];
+  if(!cur && list.length) cur=list[0];
+  if(!cur){
+    cur={ id:chatNewId(), title:'Percakapan baru', ts:Date.now(), msgs:[] };
+    list.unshift(cur);
+  }
+  chatState.sid=cur.id; chatState.msgs=cur.msgs||[]; chatState.temp=false;
+  chatSessionsSave(list);
+  try{ localStorage.setItem(SID_KEY, cur.id); }catch(e){}
+  chatState.rendered=false;
+  chatRenderSidebar();
+}
+function chatSave(){
+  if(chatState.temp) return;
+  var list=chatSessions(), s=null;
+  for(var i=0;i<list.length;i++) if(list[i].id===chatState.sid) s=list[i];
+  if(!s){
+    s={ id:chatState.sid||chatNewId(), title:'Percakapan baru', ts:Date.now(), msgs:[] };
+    if(!chatState.sid) chatState.sid=s.id;
+    list.unshift(s);
+  }
+  s.msgs=(chatState.msgs||[]).slice(-80); s.ts=Date.now();
+  if(!s.msgs.length) s.title='Percakapan baru';
+  else if(!s.title||s.title==='Percakapan baru'){
+    for(var j=0;j<s.msgs.length;j++) if(s.msgs[j].role==='user'){ s.title=s.msgs[j].content.replace(/\s+/g,' ').slice(0,42)||'Percakapan baru'; break; }
+  }
+  chatSessionsSave(list);
+  chatRenderSidebar();
+}
+function chatOpenSession(id){
+  if(chatState.busy) return;
+  var list=chatSessions(), s=null;
+  for(var i=0;i<list.length;i++) if(list[i].id===id) s=list[i];
+  if(!s) return;
+  chatState.sid=s.id; chatState.msgs=(s.msgs||[]).slice(); chatState.temp=false;
+  try{ localStorage.setItem(SID_KEY, s.id); }catch(e){}
+  var tt=$('chat-temp'); if(tt) tt.classList.remove('chat-temp-on');
+  chatState.rendered=false;
+  chatRender(); chatRenderSidebar(); chatCloseSidebar();
+}
+function chatNewSession(){
+  if(chatState.busy) return;
+  var s={ id:chatNewId(), title:'Percakapan baru', ts:Date.now(), msgs:[] };
+  var list=chatSessions(); list.unshift(s); chatSessionsSave(list);
+  chatState.sid=s.id; chatState.msgs=[]; chatState.temp=false;
+  try{ localStorage.setItem(SID_KEY, s.id); }catch(e){}
+  var tt=$('chat-temp'); if(tt) tt.classList.remove('chat-temp-on');
+  chatState.rendered=false;
+  chatRender(); chatRenderSidebar(); chatCloseSidebar();
+  var inp=$('chat-input'); if(inp) inp.focus();
+}
+function chatRenameSession(id){
+  if(chatState.busy) return;
+  var list=chatSessions();
+  for(var i=0;i<list.length;i++) if(list[i].id===id){
+    var t=prompt('Nama percakapan:', list[i].title||'');
+    if(t===null) return;
+    list[i].title=(t.trim()||'Percakapan baru').slice(0,60);
+    break;
+  }
+  chatSessionsSave(list); chatRenderSidebar();
+}
+function chatDeleteSession(id){
+  if(chatState.busy) return;
+  var list=chatSessions(), idx=-1;
+  for(var i=0;i<list.length;i++) if(list[i].id===id) idx=i;
+  if(idx<0) return;
+  if(!confirm('Hapus percakapan ini?')) return;
+  list.splice(idx,1); chatSessionsSave(list);
+  if(chatState.sid===id){
+    if(list.length){ chatState.sid=list[0].id; chatState.msgs=(list[0].msgs||[]).slice(); }
+    else { var s={ id:chatNewId(), title:'Percakapan baru', ts:Date.now(), msgs:[] }; list.unshift(s); chatSessionsSave(list); chatState.sid=s.id; chatState.msgs=[]; }
+    try{ localStorage.setItem(SID_KEY, chatState.sid); }catch(e){}
+    chatState.rendered=false; chatRender();
+  }
+  chatRenderSidebar();
+}
+function chatCloseSidebar(){
+  var sb=$('chat-sidebar'), bk=$('chat-backdrop');
+  if(sb) sb.classList.remove('open');
+  if(bk) bk.classList.add('hidden');
+}
+function chatToggleSidebar(){
+  var sb=$('chat-sidebar'), bk=$('chat-backdrop');
+  if(!sb) return;
+  var open=sb.classList.toggle('open');
+  if(bk) bk.classList.toggle('hidden', !open);
+}
+var chatAttach=[], chatPlugins=[], chatThink=false;
+/* Sistem Skill VAIA — sama dengan daftar di backend (system prompt). */
+var VAIA_SKILLS=[
+['CORE AI',['Advanced Reasoning','Problem Solving','Planning & Task Decomposition','Decision Support','Fact Checking','Critical Thinking']],
+['WEB & RESEARCH',['Web Researcher','Deep Researcher','Real-Time Information Search','Source Verification','Source Comparison','News Researcher','Documentation Researcher','Academic Researcher','GitHub Researcher','GitLab Researcher','Open-Source Project Finder','Repository Analyzer','Code Search & Reference Analysis','Citation & Source Manager']],
+['PROMPT ENGINEERING',['Image Prompt Engineer','Video Prompt Engineer','Audio Prompt Engineer','AI Art Prompt Engineer','Character Prompt Designer','Consistent Character Prompting','Style & Composition Prompting','Prompt Optimization','Negative Prompt Designer','Prompt Debugger']],
+['IMAGE PROMPT · VISUAL STYLES',['Anime','Manga','Manhwa','Cartoon','Western Cartoon','Chibi','Kawaii','Realistic','Photorealistic','Hyperrealistic','Cinematic','Surrealism','Abstract','Concept Art','Digital Art','AI Art','Fantasy Art','Sci-Fi Art','Dark Fantasy','Gothic','Horror','Cyberpunk','Steampunk','Solarpunk','Retro','Vintage','Vaporwave','Synthwave','Minimalist','Pop Art','Low Poly','Isometric','Pixel Art','3D Render','Clay Art','Paper Art','Claymation','Diorama','Illustration','Editorial Illustration','Children\'s Illustration','Comic Art','Graphic Novel','Storybook Art']],
+['IMAGE PROMPT · ANIME & ILLUSTRATION',['Modern Anime','Classic Anime','90s Anime','Shonen','Shojo','Seinen','Josei','Isekai','Mecha','Magical Girl','Anime Film Look','Manga Panel','Ink Illustration','Cel Shading','Soft Anime Rendering','Painterly Anime','Anime Background Art','Character Sheet','Key Visual','Poster Art']],
+['IMAGE PROMPT · PHOTOGRAPHY',['Portrait Photography','Fashion Photography','Street Photography','Studio Photography','Editorial Photography','Product Photography','Architecture Photography','Landscape Photography','Wildlife Photography','Documentary Photography','Sports Photography','Macro Photography','Film Photography','Instant Camera Look','Vintage Photography','Analog Photography']],
+['IMAGE PROMPT · CAMERA & LENS',['DSLR','Mirrorless','Film Camera','35mm Film','Medium Format','Polaroid Style','Smartphone Camera Look','Wide Angle','Ultra Wide Angle','Telephoto','Macro Lens','Portrait Lens','Fisheye','Tilt-Shift','Shallow Depth of Field','Deep Depth of Field','Bokeh','Motion Blur','Long Exposure']],
+['IMAGE PROMPT · CAMERA ANGLES',['Eye Level','Low Angle','High Angle','Bird\'s Eye View','Worm\'s Eye View','Overhead','Dutch Angle','Front View','Side View','Three-Quarter View','Back View','POV','Over-the-Shoulder','Close-Up','Extreme Close-Up','Medium Shot','Full Body','Wide Shot']],
+['IMAGE PROMPT · COMPOSITION',['Rule of Thirds','Center Composition','Symmetrical Composition','Leading Lines','Framing','Negative Space','Foreground/Midground/Background','Depth','Layering','Diagonal Composition','Golden Ratio','Dynamic Composition','Minimal Composition','Cinematic Composition','Portrait Composition','Environmental Composition']],
+['IMAGE PROMPT · LIGHTING',['Natural Light','Golden Hour','Blue Hour','Soft Light','Hard Light','Diffused Light','Backlighting','Rim Light','Side Lighting','Top Lighting','Underlighting','Studio Lighting','Three-Point Lighting','Neon Lighting','Volumetric Lighting','God Rays','Dramatic Lighting','Moody Lighting','Ambient Lighting','Candlelight','Firelight','Moonlight']],
+['IMAGE PROMPT · COLOR & GRADING',['Warm Tones','Cool Tones','Monochrome','Duotone','Pastel','Muted Colors','Vibrant Colors','High Saturation','Low Saturation','Earth Tones','Neon Colors','Film Color Grade','Cinematic Color Grade','Vintage Color Grade','Black and White','Sepia','Teal and Orange','Color Harmony','Complementary Colors']],
+['IMAGE PROMPT · MATERIALS & TEXTURES',['Skin Texture','Hair Texture','Fabric','Denim','Leather','Metal','Glass','Wood','Stone','Marble','Plastic','Ceramic','Paper','Water','Smoke','Fire','Ice','Fur','Feathers','Holographic Material','Metallic Surface']],
+['IMAGE PROMPT · ENVIRONMENT',['City','Countryside','Forest','Mountain','Beach','Desert','Ocean','Space','Futuristic City','Cyberpunk City','Ancient Ruins','Castle','Temple','Laboratory','Classroom','Bedroom','Café','Street','Studio','Fantasy World','Alien Planet']],
+['IMAGE PROMPT · CHARACTER DESIGN',['Character Concept','Character Sheet','Full Body Character','Portrait','Facial Expression','Pose','Gesture','Hairstyle','Clothing','Accessories','Costume Design','Armor Design','Creature Design','Robot Design','Fantasy Character','Sci-Fi Character','Age-Appropriate Character Design','Character Consistency']],
+['IMAGE PROMPT · POSES & EXPRESSIONS',['Standing','Sitting','Walking','Running','Action Pose','Dynamic Pose','Relaxed Pose','Hero Pose','Crouching','Looking at Camera','Looking Away','Smiling','Serious','Surprised','Confused','Determined','Calm','Sad','Excited']],
+['IMAGE PROMPT · CINEMATIC LANGUAGE',['Movie Still','Film Still','Establishing Shot','Close-Up','Hero Shot','Dramatic Reveal','Atmospheric Shot','Cinematic Depth','Storytelling Frame','Visual Narrative','Epic Scale','Intimate Scene','Suspenseful Atmosphere']],
+['IMAGE PROMPT · ERA & CULTURAL',['Ancient','Medieval','Renaissance','Victorian','Edwardian','1920s','1940s','1950s','1960s','1970s','1980s','1990s','Y2K','Retro Futurism','Contemporary','Near Future']],
+['IMAGE PROMPT · ART TECHNIQUES',['Watercolor','Oil Painting','Acrylic','Gouache','Pencil Sketch','Charcoal','Ink','Colored Pencil','Pastel','Digital Painting','Matte Painting','Line Art','Cross Hatching','Impasto','Brush Painting','Airbrush','Collage','Mixed Media']],
+['IMAGE PROMPT · 3D & CGI',['3D Character','3D Environment','CGI','Blender-Style Render','Game Asset','Game Character','Game Environment','Unreal Engine Look','Architectural Visualization','Product Visualization','Octane-Style Render','Stylized 3D','Realistic 3D','Isometric 3D']],
+['IMAGE PROMPT · QUALITY & DETAIL',['High Detail','Fine Details','Sharp Focus','Clean Linework','Detailed Background','Realistic Materials','Natural Skin Detail','Accurate Lighting','Depth and Dimension','Atmospheric Perspective','High-Fidelity Rendering']],
+['IMAGE PROMPT · GENERATION CONTROL',['Positive Prompt','Negative Prompt','Prompt Weighting','Composition Control','Style Strength','Detail Control','Aspect Ratio','Seed Consistency','Character Consistency','Reference Image Guidance','Pose Guidance','Structure Guidance','Image-to-Image Prompting','Inpainting','Outpainting','Upscaling','Variation Generation']],
+['IMAGE PROMPT · CONSISTENCY ENGINE',['Same Character','Same Face','Same Hairstyle','Same Outfit','Same Color Palette','Same Art Style','Same Environment','Same Lighting','Same Camera Language','Multi-Image Character Consistency','Scene-to-Scene Consistency','Character Turnaround','Expression Sheet','Pose Sheet']],
+['IMAGE PROMPT · STRUCTURE',['Subject','Character/Object Details','Action/Pose','Environment','Composition','Camera','Lens','Lighting','Color Palette','Material/Texture','Art Style','Mood/Atmosphere','Quality/Detail','Technical Parameters','Negative Prompt']],
+['IMAGE PROMPT · OPTIMIZATION',['Convert Simple Idea to Detailed Prompt','Improve Weak Prompts','Remove Conflicting Instructions','Prioritize Visual Elements','Adapt to Different Generators','Short/Medium/Detailed Versions','Positive & Negative Prompt','Preserve Core Concept','Detect Ambiguous Descriptions','Resolve Conflicting Styles','Optimize Composition','Optimize Lighting','Optimize Character Consistency']],
+['IMAGE PROMPT · GENERATOR ADAPTATION',['Adapt to Generator Conventions','Avoid Universal Syntax','Tailor to Model Strengths','Preserve Core Concept']],
+['IMAGE PROMPT · VISUAL ANALYSIS',['Analyze Subject','Analyze Style','Analyze Composition','Analyze Camera Angle','Analyze Lens Impression','Analyze Lighting','Analyze Color Palette','Analyze Materials','Analyze Environment','Analyze Mood','Analyze Clothing','Analyze Pose','Analyze Background','Analyze Rendering Technique','Reconstruct Descriptive Prompt']],
+['IMAGE PROMPT · CREATIVE MODE',['Expand Short Idea','Detail Subject','Detail Appearance','Detail Outfit','Detail Pose','Detail Environment','Detail Weather','Detail Lighting','Detail Camera','Detail Composition','Detail Color Palette','Detail Atmosphere','Detail Art Style','Detail Level']],
+['IMAGE PROMPT · SAFETY & QUALITY',['Avoid Unnecessary Real-Person Impersonation','Avoid Unsafe or Prohibited Visual Content','Preserve Intended Concept','Keep Prompt Clear and Usable']],
+['PROGRAMMING',['Programming Expert','Python','JavaScript','TypeScript','HTML/CSS','SQL','API Development','REST API','JSON','Database Design','Debugging','Code Review','Refactoring','Automation','Software Architecture','Repository Analysis']],
+['PROGRAMMING LANGUAGES',['C','C++','C#','Objective-C','Go (Golang)','Rust','Zig','Nim','D','Swift','Kotlin','Java','Scala','Groovy','Clojure','Python','Ruby','Perl','PHP','JavaScript','TypeScript','Dart','Lua','R','MATLAB','Julia','SQL','PL/SQL','T-SQL','Haskell','Erlang','Elixir','OCaml','F#','Lisp','Scheme','Racket','Prolog','Ada','Pascal','Delphi','Fortran','COBOL','Assembly','Bash/Shell','PowerShell','Batch','VBA','Visual Basic .NET','Solidity','Vyper','WebAssembly','Verilog','VHDL','SystemVerilog','Smalltalk']],
+['WEB & APP FRAMEWORKS',['React','Vue','Angular','Svelte','SolidJS','Next.js','Nuxt','Remix','Gatsby','Astro','Node.js','Express','NestJS','Fastify','Koa','Hono','Django','Flask','FastAPI','Laravel','Symfony','CodeIgniter','Lumen','Spring Boot','Spring MVC','Jakarta EE','Quarkus','Micronaut','ASP.NET Core','.NET MAUI','Blazor','WPF','Ruby on Rails','Sinatra','Gin','Echo','Fiber','Axum','Actix-web','Rocket','Phoenix','Flutter','React Native','Ionic','Expo','NativeScript','Bootstrap','Tailwind CSS','Material UI','Chakra UI','shadcn/ui','jQuery','D3.js','Chart.js','Three.js','GSAP','Redux','Zustand','TanStack Query','Prisma','TypeORM','Sequelize','Mongoose','SQLAlchemy','Hibernate','Entity Framework Core','GORM','Jest','Vitest','Cypress','Playwright','pytest','JUnit','PHPUnit','RSpec','WordPress','Drupal','Magento','Shopify','GraphQL','Apollo','Relay','Webpack','Vite','Rollup','esbuild','Babel','Pandas','NumPy','TensorFlow','PyTorch','scikit-learn','LangChain','Unity','Unreal Engine','Godot']],
+['CYBERSECURITY',['Defensive Security','Secure Coding','Vulnerability Analysis','Security Best Practices','Privacy & Data Protection','Authentication & Authorization']],
+['MOBILE DEVELOPMENT',['Android Development','Kotlin','Java','Jetpack Compose','Android SDK & Gradle','Flutter','React Native','Mobile App Architecture','Mobile UI Design','Cross-Platform Development','iOS Development']],
+['CREATIVE',['Creative Director','Storytelling','Character Design','Worldbuilding','Concept Development','Branding','Copywriting','Image Analysis','Visual Direction','Video Concept Development','UI/UX Design']],
+['WRITING',['Article Writing','Technical Writing','Documentation','Report Writing','Proposal Writing','SOP Creation','Email Writing','Social Media Content','Story Writing','Script Writing']],
+['EDUCATION',['AI Tutor','Mathematics','Science','Programming Tutor','Language Tutor','Study Planner','Concept Explainer','Quiz Generator','Step-by-Step Learning']],
+['DATA',['Data Analysis','Data Cleaning','Statistics','Data Visualization','Spreadsheet Analysis','Pattern Detection','Report Generation']],
+['BUSINESS',['Business Strategy','Product Strategy','Product Design','Market Research','Marketing Strategy','SEO','Content Strategy','Competitor Analysis','Business Idea Analysis','Project Management']],
+['TOOLS & AUTOMATION',['Workflow Automation','API Integration','File Analysis','Document Processing','Spreadsheet Processing','Code Execution','Git/GitHub Workflow','Task Automation']],
+['QUALITY CONTROL',['Hallucination Detection','Fact Verification','Code Validation','Prompt Testing','Output Critique','Consistency Checking','Error Detection','Self-Review']],
+['MULTIMODAL',['Image Understanding','Image Analysis','Image Prompt Generation','Screenshot Analysis','Document Understanding','PDF Analysis','Chart & Diagram Understanding']]
+];
+function chatAttachText(){
+  return chatAttach.map(function(a){
+    if(a.type==='image') return '\n\n!['+a.name+']('+a.data+')';
+    return '\n\n[Lampiran: '+a.name+']';
+  }).join('');
+}
+function chatExtraText(){
+  var parts=[];
+  if(chatThink) parts.push('Think harder: berikan jawaban dengan analisis langkah demi langkah yang lebih dalam dan detail');
+  if(chatPlugins.length) parts.push('Aktifkan skill: '+chatPlugins.join(', '));
+  return parts.length ? '\n\n['+parts.join(' | ')+']' : '';
+}
+function chatRenderAttach(){
+  var bar=$('chat-attach-bar'); if(!bar) return;
+  bar.innerHTML='';
+  if(!chatAttach.length){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  chatAttach.forEach(function(a,i){
+    var chip=document.createElement('div');
+    chip.className='inline-flex items-center gap-1.5 rounded-lg border bd bg-[#1c2128] px-2 py-1 text-[11px] text-neutral-300 max-w-[12rem]';
+    if(a.type==='image') chip.innerHTML='<img src="'+a.data+'" class="w-6 h-6 rounded object-cover"/>';
+    else chip.innerHTML='<i data-icon="paperclip" class="w-3 h-3 shrink-0 text-neutral-400"></i>';
+    chip.innerHTML+='<span class="truncate flex-1 min-w-0">'+esc(a.name)+'</span>'
+      +'<button class="chat-attach-del shrink-0 text-neutral-500 hover:text-white"><i data-icon="x" class="w-3 h-3"></i></button>';
+    chip.querySelector('.chat-attach-del').addEventListener('click', function(){ chatAttach.splice(i,1); chatRenderAttach(); });
+    bar.appendChild(chip);
+  });
+  if(chatAttach.some(function(a){ return a.type==='image'; })){
+    var w=document.createElement('button');
+    w.className='inline-flex items-center gap-1 rounded-lg border bd bg-[#1c2128] px-2 py-1 text-[11px] text-[#27D4CD] hover:text-white hover:border-[#6F5DFF] transition-colors';
+    w.innerHTML='<i data-icon="magic-wand" class="w-3 h-3"></i>Deteksi Prompt (WD14)';
+    w.addEventListener('click', chatWd14Run);
+    bar.appendChild(w);
+  }
+}
+function chatAddAttach(type, name, data){
+  chatAttach.push({type:type, name:name, data:data});
+  chatRenderAttach();
+}
+function chatImgData(file, cb){
+  var rd=new FileReader();
+  rd.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      var max=480, w=img.width, ht=img.height, sc=Math.min(1, max/Math.max(w,ht));
+      var c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(w*sc)); c.height=Math.max(1,Math.round(ht*sc));
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      cb(c.toDataURL('image/jpeg',0.72));
+    };
+    img.onerror=function(){ cb(rd.result); };
+    img.src=rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+/* ===== WD14 Tagger — deteksi prompt dari gambar (ONNX Runtime Web, fp16 ~195MB, di-cache) ===== */
+var _wd14Models={}, _wd14Dlg=null, _wd14Cur=null, _wd14Last=null;
+var WD14_CSV_URL='https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/selected_tags.csv';
+var WD14_MODELS={
+  convnext:{ url:'https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/wd14_fp16.onnx', label:'wd14-convnext (v2)', size:'194MB' },
+  vit:{ url:'https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/wd14_vit_fp16.onnx', label:'wd14-vit (v2)', size:'187MB' }
+};
+var WD14_SETTINGS_KEY='vaia-wd14-settings';
+function chatWd14Save(){
+  var d=_wd14Dlg; if(!d) return;
+  try{
+    localStorage.setItem(WD14_SETTINGS_KEY, JSON.stringify({
+      model: (d.querySelector('input[name="wd14-model"]:checked')||{}).value || 'convnext',
+      threshold: parseFloat(d.querySelector('#wd14-thr').value) || 0.5,
+      useSpace: d.querySelector('#wd14-opt-space').checked,
+      escape: d.querySelector('#wd14-opt-escape').checked,
+      keepConf: d.querySelector('#wd14-opt-conf').checked,
+      desc: d.querySelector('#wd14-opt-desc').checked,
+      format: (function(){ var s=d.querySelector('.wd14-fmt.sel'); return s?s.dataset.wd14Fmt:'a1111'; })()
+    }));
+  }catch(e){}
+}
+function chatWd14Load(){
+  var d=_wd14Dlg; if(!d) return;
+  var s=null;
+  try{ s=JSON.parse(localStorage.getItem(WD14_SETTINGS_KEY)||'null'); }catch(e){}
+  if(!s) return;
+  var r=d.querySelector('input[name="wd14-model"][value="'+(s.model==='vit'?'vit':'convnext')+'"]');
+  if(r) r.checked=true;
+  var t=isFinite(s.threshold)?Math.min(1,Math.max(0.05,s.threshold)):0.5;
+  d.querySelector('#wd14-thr').value=t; d.querySelector('#wd14-thrnum').value=t;
+  d.querySelector('#wd14-opt-space').checked=!!s.useSpace;
+  d.querySelector('#wd14-opt-escape').checked=s.escape!==false;
+  d.querySelector('#wd14-opt-conf').checked=!!s.keepConf;
+  d.querySelector('#wd14-opt-desc').checked=s.desc!==false;
+  var f=s.format==='conf'||s.format==='free'?s.format:'a1111';
+  d.querySelectorAll('.wd14-fmt').forEach(function(b){ b.classList.toggle('sel', b.dataset.wd14Fmt===f); });
+}
+function chatWd14LoadOrt(){
+  return new Promise(function(res, rej){
+    if(window.ort){ res(window.ort); return; }
+    var s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js';
+    s.onload=function(){ ort.env.wasm.wasmPaths='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/'; res(window.ort); };
+    s.onerror=function(){ rej(new Error('Gagal memuat mesin AI (onnxruntime-web). Cek koneksi internet.')); };
+    document.head.appendChild(s);
+  });
+}
+function chatWd14FetchCached(cacheName, url, onProg){
+  if(!('caches' in window)) onProg&&onProg(1);
+  return caches.open(cacheName).then(function(cache){
+    return cache.match(url).then(function(hit){
+      if(hit && hit.ok) return hit.arrayBuffer();
+      return fetch(url).then(function(r){
+        if(!r.ok) throw new Error('Unduh gagal HTTP '+r.status);
+        var total=+(r.headers.get('content-length')||0);
+        var chunks=[], received=0;
+        var reader=r.body.getReader();
+        function pump(){
+          return reader.read().then(function(res2){
+            if(res2.done){
+              var all=new Uint8Array(received), off=0;
+              chunks.forEach(function(ch){ all.set(ch, off); off+=ch.length; });
+              if(onProg) onProg(1);
+              try{ cache.put(url, new Response(all, {status:200})); }catch(e){}
+              return all.buffer;
+            }
+            chunks.push(res2.value); received+=res2.value.length;
+            if(onProg && total) onProg(received/total);
+            return pump();
+          });
+        }
+        return pump();
+      });
+    });
+  });
+}
+function chatWd14ParseCsv(text){
+  var lines=text.split(/\r?\n/).filter(function(l){ return l.trim().length>0; });
+  var labels=[];
+  for(var i=1;i<lines.length;i++){
+    var line=lines[i], name='';
+    var q=line.match(/^\d+,"((?:[^"]|"")*)"/);
+    if(q) name=q[1].replace(/""/g,'"');
+    else { var p=line.split(','); name=p[1]||''; }
+    labels.push(name.trim());
+  }
+  return labels;
+}
+function chatWd14EnsureModel(model, onProg){
+  var key=model||'convnext';
+  if(_wd14Models[key] && _wd14Models[key].session) return Promise.resolve(_wd14Models[key]);
+  var m=WD14_MODELS[key]||WD14_MODELS.convnext;
+  return chatWd14LoadOrt().then(function(){
+    return chatWd14FetchCached('vaia-wd14-'+key, m.url, onProg).then(function(buf){
+      return ort.InferenceSession.create(buf);
+    }).then(function(session){
+      return chatWd14FetchCached('vaia-wd14-'+key, WD14_CSV_URL, null).then(function(csvBuf){
+        _wd14Models[key]={session:session, labels:chatWd14ParseCsv(new TextDecoder().decode(csvBuf))};
+        return _wd14Models[key];
+      });
+    });
+  });
+}
+function chatWd14Prep(dataUrl){
+  return new Promise(function(res, rej){
+    var img=new Image();
+    img.onload=function(){
+      var c=document.createElement('canvas'); c.width=448; c.height=448;
+      c.getContext('2d').drawImage(img,0,0,448,448);
+      var d=c.getContext('2d').getImageData(0,0,448,448).data;
+      // Model ONNX sudah menormalisasi sendiri (Sub 127.5 -> Mul 1/127.5 = [-1,1]).
+      // Kirim piksel mentah 0-255; jangan normalisasi lagi (sebelumnya salah -> hasil monochrome/greyscale palsu).
+      var arr=new Float32Array(448*448*3);
+      for(var i=0,k=0;i<d.length;i+=4,k+=3){
+        arr[k]=d[i]; arr[k+1]=d[i+1]; arr[k+2]=d[i+2];
+      }
+      res(arr);
+    };
+    img.onerror=function(){ rej(new Error('Gagal membaca gambar')); };
+    img.src=dataUrl;
+  });
+}
+function chatWd14ParseTags(probs, labels, opts){
+  opts=opts||{};
+  var thr=isFinite(opts.threshold)?opts.threshold:0.5;
+  var keep=!!opts.keepConf, sp=!!opts.useSpace, esc=!!opts.escape, desc=opts.desc!==false;
+  var ratingNames=['general','sensitive','questionable','explicit'], best=0;
+  for(var i=1;i<4;i++) if(probs[i]>probs[best]) best=i;
+  var pairs=[];
+  for(var i=4;i<probs.length;i++){ if(probs[i]>thr) pairs.push([i, probs[i]]); }
+  pairs.sort(function(a,b){ return desc? b[1]-a[1] : a[1]-b[1]; });
+  var tags=pairs.slice(0,120).map(function(p){
+    var nm=labels[p[0]] || ('tag'+p[0]);
+    if(sp) nm=nm.split('_').join(' ');
+    if(esc) nm=nm.replace(/([()\[\]{}:,])/g,'\$1');
+    return keep? nm+' ('+p[1].toFixed(2)+')' : nm;
+  });
+  return { tags:tags, rating:ratingNames[best], ratingProb:probs[best] };
+}
+function chatWd14Dlg(){
+  if(_wd14Dlg && document.body.contains(_wd14Dlg)) return _wd14Dlg;
+  var d=document.createElement('div');
+  d.id='wd14-dlg';
+  d.className='fixed inset-0 z-[95] hidden items-center justify-center bg-black/60 p-4';
+  d.innerHTML='<div class="w-full max-w-lg max-h-[92vh] overflow-y-auto hidebar rounded-2xl border bd bg-[#161b22] p-4 shadow-2xl">'
+    +'<div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold flex items-center gap-2"><i data-icon="magic-wand" class="w-4 h-4 text-[#27D4CD]"></i>Deteksi Prompt (WD14)</span>'
+    +'<button id="wd14-x" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d]"><i data-icon="x" class="w-4 h-4"></i></button></div>'
+    +'<div id="wd14-img" class="relative rounded-xl border-2 border-dashed bd bg-[#1c2128] overflow-hidden cursor-pointer select-none" style="min-height:140px">'
+    +'<img id="wd14-preview" class="w-full max-h-56 object-contain hidden" alt="preview"/>'
+    +'<div id="wd14-drop" class="flex flex-col items-center justify-center gap-1 p-6 text-center"><i data-icon="image" class="w-7 h-7 text-neutral-500"></i><span class="text-xs text-neutral-400">Drop Image Here</span><span class="text-[10px] text-neutral-600">- or - klik untuk pilih / ambil foto</span></div>'
+    +'<input id="wd14-file" type="file" accept="image/*" class="hidden"/>'
+    +'</div>'
+    +'<div class="mt-3"><div class="text-[11px] text-neutral-500 mb-1">Waifu Model</div>'
+    +'<div class="flex gap-4 text-xs text-neutral-300">'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="wd14-model" value="convnext" checked class="accent-[#2E7CF0]"/>wd14-convnext (v2)</label>'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="wd14-model" value="vit" class="accent-[#2E7CF0]"/>wd14-vit (v2)</label>'
+    +'</div></div>'
+    +'<div class="mt-3"><div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1"><span>Tagging Confidence Threshold</span><input id="wd14-thrnum" type="number" min="0.05" max="1" step="0.05" value="0.5" class="wvnum"/></div>'
+    +'<input id="wd14-thr" type="range" min="0.05" max="1" step="0.05" value="0.5" class="slider"/></div>'
+    +'<div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px] text-neutral-300">'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="wd14-opt-space" class="accent-[#2E7CF0]"/>Use Space Instead Of _</label>'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="wd14-opt-escape" checked class="accent-[#2E7CF0]"/>Use Text Escape</label>'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="wd14-opt-conf" class="accent-[#2E7CF0]"/>Keep Confidences</label>'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="wd14-opt-desc" checked class="accent-[#2E7CF0]"/>Descend By Confidence</label>'
+    +'</div>'
+    +'<div class="mt-3 flex items-center gap-1.5 text-[11px] text-neutral-500"><span>Format Salin:</span>'
+    +'<button data-wd14-fmt="a1111" class="wd14-fmt gfil sel">A1111 kompak</button>'
+    +'<button data-wd14-fmt="conf" class="wd14-fmt gfil">+ Confidence</button>'
+    +'<button data-wd14-fmt="free" class="wd14-fmt gfil">Teks Bebas</button>'
+    +'</div>'
+    +'<div id="wd14-status" class="text-[11px] text-neutral-400 mt-3 mb-1"></div>'
+    +'<div class="h-1.5 rounded-full bg-[#21262d] mb-2 overflow-hidden"><div id="wd14-prog" class="h-full w-0 bg-gradient-to-r from-[#1FC7CE] to-[#2E7CF0] transition-all"></div></div>'
+    +'<textarea id="wd14-tags" class="inp w-full text-xs h-32 resize-y" placeholder="Tag hasil deteksi akan muncul di sini..."></textarea>'
+    +'<div class="flex gap-2 mt-3">'
+    +'<button id="wd14-tag" class="btn flex-1 h-8 text-xs font-semibold text-[#0d1117] bg-gradient-to-r from-[#F59E0B] to-[#F97316] hover:brightness-110">Tagging</button>'
+    +'<button id="wd14-use" class="btn btn-turq flex-1 h-8 text-xs">Pakai di Text2Img</button>'
+    +'<button id="wd14-chat" class="btn btn-ghost h-8 border bd text-xs px-2">Kirim ke chat</button>'
+    +'<button id="wd14-copy" class="btn btn-ghost h-8 border bd text-xs px-2">Salin</button>'
+    +'</div></div>';
+  document.body.appendChild(d);
+  _wd14Dlg=d;
+  var close=function(){ d.classList.add('hidden'); d.classList.remove('flex'); };
+  d.querySelector('#wd14-x').addEventListener('click', close);
+  d.addEventListener('click', function(e){ if(e.target===d) close(); });
+  var imgArea=d.querySelector('#wd14-img'), fileIn=d.querySelector('#wd14-file');
+  imgArea.addEventListener('click', function(){ fileIn.click(); });
+  fileIn.addEventListener('change', function(){
+    var f=fileIn.files && fileIn.files[0]; fileIn.value='';
+    if(f && f.type && f.type.indexOf('image/')===0) chatImgData(f, function(data){ chatWd14SetImage(data); });
+  });
+  ['dragover','dragenter'].forEach(function(ev){
+    imgArea.addEventListener(ev, function(e){ e.preventDefault(); imgArea.style.borderColor='#2E7CF0'; });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    imgArea.addEventListener(ev, function(e){ e.preventDefault(); imgArea.style.borderColor=''; });
+  });
+  imgArea.addEventListener('drop', function(e){
+    var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(f && f.type && f.type.indexOf('image/')===0) chatImgData(f, function(data){ chatWd14SetImage(data); });
+  });
+  var _wd14T=null;
+  var reLive=function(){ clearTimeout(_wd14T); _wd14T=setTimeout(function(){ chatWd14TagNow(true); }, 400); };
+  d.querySelector('#wd14-thr').addEventListener('input', function(){
+    d.querySelector('#wd14-thrnum').value=this.value; reLive(); chatWd14Save();
+  });
+  d.querySelector('#wd14-thrnum').addEventListener('change', function(){
+    var v=parseFloat(this.value); if(!isFinite(v)) v=0.5; v=Math.min(1,Math.max(0.05,v));
+    this.value=v; d.querySelector('#wd14-thr').value=v; reLive(); chatWd14Save();
+  });
+  ['#wd14-opt-space','#wd14-opt-escape','#wd14-opt-conf','#wd14-opt-desc'].forEach(function(sel){
+    d.querySelector(sel).addEventListener('change', function(){ reLive(); chatWd14Save(); });
+  });
+  d.querySelectorAll('input[name="wd14-model"]').forEach(function(r){
+    r.addEventListener('change', function(){ chatWd14TagNow(false); chatWd14Save(); });
+  });
+  d.querySelectorAll('.wd14-fmt').forEach(function(b){
+    b.addEventListener('click', function(){
+      d.querySelectorAll('.wd14-fmt').forEach(function(x){ x.classList.remove('sel'); });
+      b.classList.add('sel');
+      chatWd14RenderTags(); chatWd14Save();
+    });
+  });
+  d.querySelector('#wd14-tag').addEventListener('click', function(){ chatWd14TagNow(false); });
+  d.querySelector('#wd14-copy').addEventListener('click', function(){
+    var t=d.querySelector('#wd14-tags').value;
+    if(!t) return;
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function(){ toast('Tag disalin ✓'); });
+  });
+  d.querySelector('#wd14-chat').addEventListener('click', function(){
+    var t=d.querySelector('#wd14-tags').value.trim();
+    if(!t) return;
+    close();
+    chatState.msgs.push({role:'user', content:'Tag WD14 untuk gambar referensi:\n'+t});
+    chatSave(); chatRender();
+  });
+  d.querySelector('#wd14-use').addEventListener('click', function(){
+    var t=d.querySelector('#wd14-tags').value.trim();
+    if(!t) return;
+    close();
+    var p=$('prompt'); if(p) p.value=t;
+    document.querySelectorAll('.tab').forEach(function(x){ x.classList.toggle('sel', x.dataset.tab==='text'); });
+    state.page='text'; renderCanvas();
+    if(typeof closeLeft==='function') closeLeft();
+    toast('Tag dipakai di Text2Img ✓');
+  });
+  return d;
+}
+function chatWd14SetImage(dataUrl){
+  _wd14Cur={img:dataUrl};
+  var d=_wd14Dlg; if(!d) return;
+  var prev=d.querySelector('#wd14-preview'), drop=d.querySelector('#wd14-drop');
+  prev.src=dataUrl; prev.classList.remove('hidden'); drop.classList.add('hidden');
+  chatWd14TagNow(true);
+}
+function chatWd14RenderTags(){
+  var d=_wd14Dlg; if(!d) return null;
+  if(!_wd14Last) return null;
+  var sel=d.querySelector('.wd14-fmt.sel');
+  var fmt=sel?sel.dataset.wd14Fmt:'a1111';
+  var opts={
+    threshold: parseFloat(d.querySelector('#wd14-thr').value)||0.5,
+    useSpace: d.querySelector('#wd14-opt-space').checked,
+    escape: d.querySelector('#wd14-opt-escape').checked,
+    keepConf: fmt==='conf' ? true : d.querySelector('#wd14-opt-conf').checked,
+    desc: d.querySelector('#wd14-opt-desc').checked
+  };
+  var r=chatWd14ParseTags(_wd14Last.probs, _wd14Last.labels, opts);
+  d.querySelector('#wd14-tags').value=r.tags.length? r.tags.join(', ') : '(tidak ada tag di atas ambang '+opts.threshold+' — coba turunkan threshold)';
+  return r;
+}
+function chatWd14TagNow(){
+  var d=_wd14Dlg; if(!d) return;
+  var cur=_wd14Cur||{};
+  if(!cur.img){ toast('Pilih / drop gambar dulu'); return; }
+  var model=d.querySelector('input[name="wd14-model"]:checked').value;
+  var st=d.querySelector('#wd14-status'), pr=d.querySelector('#wd14-prog'), ta=d.querySelector('#wd14-tags');
+  var needDl=!(_wd14Models[model] && _wd14Models[model].session);
+  st.innerHTML= needDl ? 'Menyiapkan model '+WD14_MODELS[model].label+' ('+WD14_MODELS[model].size+' — unduh sekali saja, berikutnya dari cache)...' : 'Mendeteksi tag ('+WD14_MODELS[model].label+')...';
+  pr.style.width='0%';
+  chatWd14EnsureModel(model, function(p){ pr.style.width=Math.round(p*100)+'%'; })
+    .then(function(state){
+      st.innerHTML='Memproses...'; pr.style.width='100%';
+      return chatWd14Prep(cur.img).then(function(input){
+        var feeds={}; feeds[state.session.inputNames[0]]=new ort.Tensor('float32', input, [1,448,448,3]);
+        return state.session.run(feeds).then(function(out){
+          var name=state.session.outputNames[0];
+          _wd14Last={ probs:Array.prototype.slice.call(out[name].data), labels:state.labels };
+          var r=chatWd14RenderTags();
+          st.innerHTML='Selesai — '+(r?r.tags.length:0)+' tag · rating: '+(r?r.rating:'')+' ('+(r?Math.round(r.ratingProb*100):0)+'%)';
+          pr.style.width='100%';
+        });
+      });
+    })
+    .catch(function(err){
+      st.innerHTML='Gagal: '+String(err&&err.message||err).slice(0,140);
+      pr.style.width='0%';
+    });
+}
+function chatWd14Run(){
+  var img=null;
+  for(var i=chatAttach.length-1;i>=0;i--){ if(chatAttach[i].type==='image'){ img=chatAttach[i]; break; } }
+  var d=chatWd14Dlg();
+  chatWd14Load();
+  d.classList.remove('hidden'); d.classList.add('flex');
+  d.querySelector('#wd14-tags').value=''; d.querySelector('#wd14-prog').style.width='0%';
+  if(img){
+    chatWd14SetImage(img.data);
+  } else {
+    _wd14Cur={};
+    d.querySelector('#wd14-preview').classList.add('hidden');
+    d.querySelector('#wd14-drop').classList.remove('hidden');
+    d.querySelector('#wd14-status').innerHTML='Pilih / drop gambar untuk mulai mendeteksi — tanpa perlu lampirkan dulu di chat.';
+  }
+  chatCloseMenus();
+}
+function chatOpenPicker(kind){
+  var inp=document.getElementById('chat-file-input'); if(!inp) return;
+  if(kind==='cam-front'){ inp.setAttribute('capture','user'); inp.setAttribute('accept','image/*'); inp.removeAttribute('multiple'); }
+  else if(kind==='camera'||kind==='cam-back'){ inp.setAttribute('capture','environment'); inp.setAttribute('accept','image/*'); inp.removeAttribute('multiple'); }
+  else if(kind==='photos'){ inp.removeAttribute('capture'); inp.setAttribute('accept','image/*'); inp.setAttribute('multiple','multiple'); }
+  else { inp.removeAttribute('capture'); inp.setAttribute('accept',''); inp.removeAttribute('multiple'); }
+  inp.onchange=function(){
+    var files=Array.prototype.slice.call(inp.files||[]).slice(0,3);
+    files.forEach(function(f){
+      if(f.type && f.type.indexOf('image/')===0 && kind!=='files'){ chatImgData(f, function(data){ chatAddAttach('image', f.name, data); }); }
+      else chatAddAttach('file', f.name, '');
+    });
+    inp.value='';
+  };
+  inp.click();
+}
+function chatRenderPlugins(){
+  var bar=$('chat-plugins-bar'); if(!bar) return;
+  bar.innerHTML='';
+  var items=[];
+  chatPlugins.forEach(function(p){ items.push({key:p, icon:'at', label:p}); });
+  if(chatThink) items.push({key:'think', icon:'brain', label:'Think harder'});
+  if(!items.length){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  items.forEach(function(it){
+    var chip=document.createElement('div');
+    chip.className='inline-flex items-center gap-1.5 rounded-lg border bd bg-[#1c2128] px-2 py-1 text-[11px] text-neutral-300';
+    chip.innerHTML='<i data-icon="'+it.icon+'" class="w-3 h-3 shrink-0 text-[#8b5cf6]"></i><span>'+esc(it.label)+'</span>'
+      +'<button class="chat-plug-del shrink-0 text-neutral-500 hover:text-white"><i data-icon="x" class="w-3 h-3"></i></button>';
+    chip.querySelector('.chat-plug-del').addEventListener('click', function(){
+      if(it.key==='think') chatThink=false;
+      else chatPlugins=chatPlugins.filter(function(p){ return p!==it.key; });
+      chatRenderPlugins();
+    });
+    bar.appendChild(chip);
+  });
+}
+function chatSyncPlugMenu(){
+  document.querySelectorAll('.chat-pli').forEach(function(b){
+    var ck=b.querySelector('.chat-plug-check');
+    if(ck) ck.classList.toggle('hidden', chatPlugins.indexOf(b.dataset.plug)<0);
+  });
+}
+function chatTogglePlugin(name){
+  var i=chatPlugins.indexOf(name);
+  if(i>=0) chatPlugins.splice(i,1); else chatPlugins.push(name);
+  chatRenderPlugins(); chatSyncPlugMenu();
+}
+function chatBuildSkillsMenu(){
+  var list=$('chat-skills-list'); if(!list) return;
+  list.innerHTML='';
+  var total=0;
+  VAIA_SKILLS.forEach(function(g){
+    var hd=document.createElement('div');
+    hd.className='px-2 pt-1.5 pb-0.5 text-[9px] uppercase tracking-wider text-neutral-600 font-semibold';
+    hd.textContent=g[0];
+    list.appendChild(hd);
+    g[1].forEach(function(name){
+      total++;
+      var b=document.createElement('button');
+      b.type='button'; b.dataset.plug=name;
+      b.className='chat-pli flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-[12px] text-neutral-200 hover:bg-white/5';
+      b.innerHTML='<i data-icon="sparkle" class="w-3.5 h-3.5 shrink-0 text-[#8b5cf6] opacity-80"></i>'
+        +'<span class="flex-1 text-left truncate">'+esc(name)+'</span>'
+        +'<i data-icon="check" class="w-3.5 h-3.5 text-[#27D4CD] hidden chat-plug-check"></i>';
+      b.addEventListener('click', function(){ chatTogglePlugin(name); chatCloseMenus(); });
+      list.appendChild(b);
+    });
+  });
+  var c=$('chat-skills-count'); if(c) c.textContent=total+' skill';
+}
+function chatFilterSkills(){
+  var list=$('chat-skills-list'), inp=$('chat-skills-search');
+  if(!list) return;
+  var q=inp ? inp.value.trim().toLowerCase() : '';
+  var shown=0, total=0;
+  var kids=Array.prototype.slice.call(list.children);
+  // pass 1: sembunyikan/tampilkan tombol skill
+  kids.forEach(function(el){
+    if(!el.classList.contains('chat-pli')) return;
+    total++;
+    var ok=!q || el.dataset.plug.toLowerCase().indexOf(q)>=0;
+    el.style.display=ok?'':'none';
+    if(ok) shown++;
+  });
+  // pass 2: header kategori tampil hanya jika ada skill yang cocok
+  kids.forEach(function(hd){
+    if(hd.classList.contains('chat-pli')) return;
+    var any=false, n=hd.nextElementSibling;
+    while(n && n.classList.contains('chat-pli')){ if(n.style.display!=='none'){ any=true; break; } n=n.nextElementSibling; }
+    hd.style.display=any?'':'none';
+  });
+  var c=$('chat-skills-count');
+  if(c) c.textContent=q ? (shown+'/'+total+' skill') : (total+' skill');
+}
+function chatCloseMenus(){
+  var a=$('chat-attach-menu'), p=$('chat-plugins-menu');
+  if(a) a.classList.add('hidden');
+  if(p) p.classList.add('hidden');
+}
+function chatToggleAttachMenu(){
+  var a=$('chat-attach-menu'); if(!a) return;
+  var show=a.classList.contains('hidden');
+  chatCloseMenus();
+  if(show) a.classList.remove('hidden');
+}
+function chatStartTemp(){
+  chatState.temp=true; chatState.sid='temp'; chatState.msgs=[];
+  try{ localStorage.removeItem(SID_KEY); }catch(e){}
+  chatState.rendered=false;
+  chatRender(); chatRenderSidebar(); chatCloseSidebar(); chatCloseTempDialog();
+  var t=$('chat-temp'); if(t) t.classList.add('chat-temp-on');
+  var inp=$('chat-input'); if(inp) inp.focus();
+}
+function chatEndTemp(){
+  var t=$('chat-temp'); if(t) t.classList.remove('chat-temp-on');
+  chatNewSession();
+}
+function chatShowTempDialog(){ var d=$('temp-dialog'); if(d) d.classList.remove('hidden'); }
+function chatCloseTempDialog(){ var d=$('temp-dialog'); if(d) d.classList.add('hidden'); }
+function chatRenderSidebar(){
+  var list=$('chat-sessions'); if(!list) return;
+  var sess=chatSessions();
+  list.innerHTML='';
+  if(chatState.temp){
+    var tr=document.createElement('div');
+    tr.className='flex items-center gap-2 rounded-lg px-2 py-2 mb-1 text-neutral-200 bg-[#1c2128] border bd';
+    tr.innerHTML='<i data-icon="incognito" class="w-3.5 h-3.5 text-[#27D4CD]"></i>'
+      +'<span class="flex-1 min-w-0 truncate text-xs font-medium">Chat sementara</span>'
+      +'<button id="chat-temp-end" class="w-6 h-6 rounded flex items-center justify-center text-neutral-500 hover:text-white hover:bg-[#21262d]" title="Akhiri chat sementara"><i data-icon="x" class="w-3 h-3"></i></button>';
+    tr.querySelector('#chat-temp-end').addEventListener('click', chatEndTemp);
+    list.appendChild(tr);
+  }
+  if(!sess.length){
+    list.innerHTML='<div class="text-[11px] text-neutral-600 px-2 py-6 text-center">Belum ada percakapan</div>';
+    return;
+  }
+  for(var i=0;i<sess.length;i++){
+    var s=sess[i];
+    var cur=s.id===chatState.sid;
+    var row=document.createElement('div');
+    row.className='group flex items-center gap-2 rounded-lg px-2 py-2 cursor-pointer transition-colors '+(cur?'bg-[#1c2128] text-neutral-100':'text-neutral-400 hover:bg-[#1c2128]/60 hover:text-neutral-200');
+    row.innerHTML='<i data-icon="chat-circle-text" class="w-3.5 h-3.5 shrink-0 text-[#8b5cf6]"></i>'
+      +'<span class="flex-1 min-w-0 truncate text-xs" title="'+esc(s.title||'Percakapan baru')+'">'+esc(s.title||'Percakapan baru')+'</span>'
+      +'<div class="hidden group-hover:flex items-center gap-0.5 shrink-0">'
+      +'<button class="chat-sess-act w-6 h-6 rounded flex items-center justify-center text-neutral-500 hover:text-white hover:bg-[#21262d]" title="Ubah nama"><i data-icon="pencil-simple" class="w-3 h-3"></i></button>'
+      +'<button class="chat-sess-act w-6 h-6 rounded flex items-center justify-center text-neutral-500 hover:text-[#f87171] hover:bg-[#21262d]" title="Hapus"><i data-icon="trash" class="w-3 h-3"></i></button>'
+      +'</div>';
+    (function(sid){
+      row.addEventListener('click', function(ev){
+        if(ev.target.closest('.chat-sess-act')) return;
+        chatOpenSession(sid);
+      });
+      var btns=row.querySelectorAll('.chat-sess-act');
+      if(btns[0]) btns[0].addEventListener('click', function(){ chatRenameSession(sid); });
+      if(btns[1]) btns[1].addEventListener('click', function(){ chatDeleteSession(sid); });
+    })(s.id);
+    list.appendChild(row);
+  }
+}
+function chatAvatar(row, role){
+  var a=document.createElement('div');
+  if(role==='user'){
+    a.className='w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold text-white select-none';
+    a.style.background='linear-gradient(135deg,#2E7CF0,#6F5DFF)';
+    a.textContent='U';
+  } else {
+    a.className='w-7 h-7 shrink-0 rounded-lg flex items-center justify-center text-[12px] font-extrabold text-white select-none';
+    a.style.background='linear-gradient(135deg,#1FC7CE,#2E7CF0)';
+    a.style.boxShadow='0 0 10px rgba(31,199,206,.4)';
+    a.textContent='V';
+  }
+  row.appendChild(a);
+}
+function chatMarkdown(t){
+  t=String(t||'');
+  var esc=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  esc=esc.replace(/```([\s\S]*?)```/g,function(_,c){ return '<pre>'+c+'</pre>'; });
+  esc=esc.replace(/`([^`\n]+)`/g,'<code class="inline">$1</code>');
+  esc=esc.replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+  esc=esc.replace(/(^|\s)\*([^*\n]+)\*(?=\s|$)/g,'$1<em>$2</em>');
+  esc=esc.replace(/!\[([^\]]+)\]\((data:[^)\s]+)\)/g,'<img src="$2" alt="$1" class="chat-att-img"/>');
+esc=esc.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  esc=esc.replace(/\n/g,'<br/>');
+  return esc;
+}
+function chatScrollBottom(){ var el=$('chat-msgs'); if(el) el.scrollTop=el.scrollHeight; }
+function copyChatRaw(inner){
+  var txt=inner&&inner.dataset ? (inner.dataset.raw||inner.textContent||'') : '';
+  if(!txt) return;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast('Jawaban disalin \u2713'); });
+  } else { toast('Salin manual: '+txt.slice(0,40)); }
+}
+/* ===== Menu konteks bubble chat: long-press HP / tahan mouse desktop (bukan klik kanan) ===== */
+var _chatCtx=null;
+function chatCtxEnsure(){
+  if(_chatCtx && document.body.contains(_chatCtx)) return _chatCtx;
+  var m=document.createElement('div');
+  m.id='chat-ctx';
+  m.className='fixed z-[90] hidden w-48 rounded-xl border bd bg-[#161b22] shadow-2xl overflow-hidden text-[13px] py-1';
+  var items=[
+    ['copy','copy','Salin',''],
+    ['like','thumbs-up','Suka',''],
+    ['dislike','thumbs-down','Tidak suka',''],
+    ['del','trash','Hapus','text-[#f87171]']
+  ];
+  items.forEach(function(it){
+    var b=document.createElement('button');
+    b.dataset.act=it[0];
+    b.className='w-full flex items-center gap-2.5 px-3 py-2 text-left text-neutral-200 hover:bg-[#21262d] transition-colors '+(it[3]||'');
+    var ic=it[0]==='like'?'text-[#27D4CD]':it[0]==='dislike'?'text-[#f87171]':'text-neutral-400';
+    b.innerHTML='<i data-icon="'+it[1]+'" class="w-4 h-4 '+ic+'"></i><span>'+it[2]+'</span>';
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  _chatCtx=m;
+  m.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-act]'); if(!b) return;
+    var act=b.dataset.act, msg=m._msg, inner=m._inner;
+    chatCtxHide();
+    if(act==='copy'){
+      var raw=msg?(msg.content||''):(inner&&(inner.dataset.raw||inner.textContent||''));
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(raw).then(function(){ toast('Pesan disalin ✓'); }); }
+      else toast('Salin manual: '+String(raw).slice(0,40));
+    } else if(act==='like'||act==='dislike'){
+      if(!msg) return;
+      msg.fb = (msg.fb===act)?undefined:act;
+      chatSave(); chatRender();
+      toast(msg.fb?('Feedback: '+(msg.fb==='like'?'Suka ✓':'Tidak suka ✓')):'Feedback dihapus');
+    } else if(act==='del'){
+      if(!msg) return;
+      var idx=chatState.msgs.indexOf(msg);
+      if(idx>=0){ chatState.msgs.splice(idx,1); chatSave(); chatRender(); toast('Pesan dihapus'); }
+    }
+  });
+  document.addEventListener('click',function(e){ if(!_chatCtx) return; if(Date.now()<(_chatCtx._guard||0)) return; if(!_chatCtx.contains(e.target)) chatCtxHide(); });
+  document.addEventListener('scroll',function(){ chatCtxHide(); },true);
+  window.addEventListener('resize',chatCtxHide);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') chatCtxHide(); });
+  return m;
+}
+function chatCtxHide(){ var m=_chatCtx; if(m){ m.classList.add('hidden'); m._msg=null; m._inner=null; } }
+function chatCtxOpen(x,y,msg,inner){
+  var m=chatCtxEnsure();
+  m._msg=msg; m._inner=inner;
+  var like=m.querySelector('button[data-act="like"]'), dis=m.querySelector('button[data-act="dislike"]');
+  if(like) like.classList.toggle('bg-[#21262d]', !!(msg&&msg.fb==='like'));
+  if(dis) dis.classList.toggle('bg-[#21262d]', !!(msg&&msg.fb==='dislike'));
+  var sw=250, sh=188, vw=window.innerWidth||document.documentElement.clientWidth, vh=window.innerHeight||document.documentElement.clientHeight;
+  m.style.left=Math.max(8,Math.min(x, vw-sw-8))+'px';
+  m.style.top=Math.max(8,Math.min(y, vh-sh-8))+'px';
+  m.classList.remove('hidden');
+  m._guard=Date.now()+600; // abaikan click sintetis dari long-press supaya menu tidak langsung hilang
+}
+/* Pasang long-press (HP) + tahan mouse (desktop) pada bubble — tanpa klik kanan. */
+function chatBindHold(el, msg, inner){
+  var t=null, sx=0, sy=0, fired=false;
+  function cancel(){ if(t){ clearTimeout(t); t=null; } }
+  el.addEventListener('touchstart',function(e){
+    if(e.touches.length!==1) return;
+    var c=e.touches[0]; sx=c.clientX; sy=c.clientY; fired=false;
+    t=setTimeout(function(){ t=null; fired=true; chatCtxOpen(sx,sy,msg,inner); },450);
+  },{passive:true});
+  el.addEventListener('touchmove',function(e){
+    if(t){ var c=e.touches[0]; if(Math.abs(c.clientX-sx)>10||Math.abs(c.clientY-sy)>10) cancel(); }
+  },{passive:true});
+  el.addEventListener('touchend',function(e){ if(fired){ if(e&&e.cancelable) e.preventDefault(); } else cancel(); });
+  el.addEventListener('touchcancel',cancel);
+  el.addEventListener('mousedown',function(e){
+    if(e.button!==0) return;
+    sx=e.clientX; sy=e.clientY; fired=false;
+    t=setTimeout(function(){ t=null; fired=true; chatCtxOpen(sx,sy,msg,inner); },500);
+  });
+  el.addEventListener('mousemove',function(e){ if(t&&(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10)) cancel(); });
+  el.addEventListener('mouseup',cancel);
+  el.addEventListener('mouseleave',cancel);
+  el.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+}
+/* Ekstrak prompt gambar + negative prompt dari jawaban AI (untuk tombol Salin + Buka Generator). */
+function chatExtractPrompt(raw){
+  if(!raw) return null;
+  var base=String(raw).split(/\*\*Variasi|###\s*\d+[\.\-\s]|Variasi\s+\d+/i)[0];
+  var m=base.match(/(?:Prompt\s*[:*]*)([\s\S]*)/i);
+  var promptPart=m?m[1]:base;
+  var n=promptPart.search(/Negative\s*prompt\s*:?/i);
+  var main=(n>0?promptPart.slice(0,n):promptPart)
+    .replace(/\*\*/g,'').replace(/`/g,'')
+    .replace(/^[>\s]+/gm,'').replace(/^#+\s*/gm,'')
+    .replace(/\s{2,}/g,' ').trim();
+  var neg='';
+  var nm=String(raw).match(/Negative\s*prompt\s*:?\s*([\s\S]*?)(?=\n\s*\n\s*(?:Variasi|\*\*|###)|$)/i);
+  if(nm){ neg=nm[1].replace(/\*\*/g,'').replace(/`/g,'').replace(/^[>\s]+/gm,'').replace(/\s{2,}/g,' ').trim(); }
+  if(!main) return null;
+  return { prompt:main, negative:neg };
+}
+/* Salin prompt gambar dari jawaban AI -> isi prompt Text2Img + pindah tab generator (model aktif tetap). */
+function chatToGenerator(inner){
+  var raw=(inner&&inner.dataset)?(inner.dataset.raw||''):'';
+  var p=chatExtractPrompt(raw);
+  var promptEl=$('prompt'), negEl=$('negprompt');
+  if(promptEl && p){ promptEl.value=p.prompt; }
+  if(negEl && p && p.negative){ negEl.value=p.negative; }
+  if(p && p.prompt && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(p.prompt).catch(function(){}); }
+  document.querySelectorAll('.tab').forEach(function(x){ x.classList.toggle('sel', x.dataset.tab==='text'); });
+  state.page='text';
+  renderCanvas();
+  if(typeof closeLeft==='function') closeLeft();
+  var pp=$('prompt'); if(pp){ try{ pp.focus(); pp.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }
+  toast(p?'Prompt disalin ke Text2Img ✓':'Prompt dibuka di Text2Img');
+}
+function chatBubble(role, contentHTML, streaming, msg){
+  var box=$('chat-msgs'); if(!box) return null;
+  var row=document.createElement('div');
+  row.className='flex items-start gap-2 chat-fade '+(role==='user'?'justify-end':'justify-start');
+  var inner;
+  if(role==='user'){
+    inner=document.createElement('div');
+    inner.className='chat-msg chat-bubble-user text-neutral-100 px-3 py-2 text-[13px] leading-relaxed';
+    inner.innerHTML=chatMarkdown(contentHTML);
+    row.appendChild(inner);
+    if(msg&&msg.fb){
+      var fbu=document.createElement('span');
+      fbu.className='absolute -bottom-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#1c2128] border bd flex items-center justify-center '+(msg.fb==='like'?'text-[#27D4CD]':'text-[#f87171]');
+      fbu.innerHTML='<i data-icon="'+(msg.fb==='like'?'thumbs-up':'thumbs-down')+'" class="w-3 h-3"></i>';
+      inner.appendChild(fbu);
+    }
+    chatBindHold(inner, msg, inner);
+  } else {
+    chatAvatar(row,'ai');
+    var wrap=document.createElement('div');
+    wrap.className='flex flex-col items-start gap-1 min-w-0';
+    inner=document.createElement('div');
+    inner.className='chat-msg chat-bubble-ai text-neutral-200 px-3 py-2 text-[13px] leading-relaxed';
+    inner.dataset.raw=contentHTML;
+    inner.innerHTML=chatMarkdown(contentHTML);
+    if(msg&&msg.fb){
+      var fba=document.createElement('span');
+      fba.className='absolute -bottom-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#1c2128] border bd flex items-center justify-center '+(msg.fb==='like'?'text-[#27D4CD]':'text-[#f87171]');
+      fba.innerHTML='<i data-icon="'+(msg.fb==='like'?'thumbs-up':'thumbs-down')+'" class="w-3 h-3"></i>';
+      inner.appendChild(fba);
+    }
+    chatBindHold(inner, msg, inner);
+    wrap.appendChild(inner);
+    var act=document.createElement('div');
+    act.className='flex items-center gap-1 pl-1';
+    var cp=document.createElement('button');
+    cp.className='w-6 h-6 rounded-md flex items-center justify-center text-neutral-500 hover:text-white hover:bg-[#21262d] transition-colors';
+    cp.title='Salin jawaban';
+    cp.innerHTML='<i data-icon="copy" class="w-3.5 h-3.5"></i>';
+    cp.addEventListener('click', function(){ copyChatRaw(inner); });
+    act.appendChild(cp);
+    if(/\*\*Prompt\s*\*\*\s*:|\*\*Prompt\*\*|Prompt\s*:|Negative\s*prompt/i.test(contentHTML||'')){
+      var gp=document.createElement('button');
+      gp.className='inline-flex items-center gap-1.5 text-[11px] text-neutral-400 hover:text-white hover:bg-[#21262d] rounded-md px-2 py-1 transition-colors';
+      gp.title='Salin prompt & buka generator Text2Img (model aktif tetap dipakai)';
+      gp.innerHTML='<i data-icon="magic-wand" class="w-3.5 h-3.5"></i>Salin + Buka Generator';
+      gp.addEventListener('click', function(){ chatToGenerator(inner); });
+      act.appendChild(gp);
+    }
+    wrap.appendChild(act);
+    row.appendChild(wrap);
+  }
+  box.appendChild(row);
+  chatScrollBottom();
+  return inner;
+}
+function chatRender(){
+  var box=$('chat-msgs'); if(!box) return;
+  box.innerHTML='';
+  if(!chatState.msgs.length){
+    var w=document.createElement('div');
+    w.className='flex flex-col items-center justify-center text-center text-neutral-600 h-[45vh] gap-2 px-4';
+    w.innerHTML='<div class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-extrabold text-white" style="background:linear-gradient(135deg,#1FC7CE,#2E7CF0);box-shadow:0 0 22px rgba(31,199,206,.4)">V</div>'
+      +'<p class="text-sm font-extrabold tracking-wide text-center" style="background:linear-gradient(135deg,#1FC7CE,#2E7CF0);-webkit-background-clip:text;background-clip:text;color:transparent">SELAMAT DATANG DI VAIA GENERATOR</p>'
+      +'<p class="text-sm text-neutral-300 font-semibold">Halo, saya Agent Assistant Vaia Rekty.</p>'
+      +'<p class="text-xs text-neutral-500 max-w-[22rem] leading-relaxed">Saya siap membantu Anda dengan memberikan informasi, menjawab pertanyaan, serta membantu menyelesaikan berbagai kebutuhan Anda.</p>'
+      +'<p class="text-xs text-neutral-500 max-w-[20rem] leading-relaxed">Silakan sampaikan pertanyaan atau kebutuhan Anda. Saya siap membantu Anda.</p>';
+    box.appendChild(w);
+    chatState.rendered=true;
+    return;
+  }
+  chatState.msgs.forEach(function(m){ chatBubble(m.role, m.content, false, m); });
+  chatState.rendered=true;
+  if(!chatState.busy && chatState.msgs[chatState.msgs.length-1] && chatState.msgs[chatState.msgs.length-1].role==='assistant') chatRegenRow();
+}
+function chatTyping(on){
+  var box=$('chat-msgs'); if(!box) return;
+  var old=$('chat-typing-row'); if(old) old.remove();
+  if(!on) return;
+  var row=document.createElement('div');
+  row.id='chat-typing-row';
+  row.className='flex items-start gap-2 chat-fade';
+  chatAvatar(row,'ai');
+  var b=document.createElement('div');
+  b.className='chat-bubble-ai px-3 py-2';
+  b.innerHTML='<span class="chat-typing"><span></span><span></span><span></span></span>';
+  row.appendChild(b);
+  box.appendChild(row);
+  chatScrollBottom();
+}
+function chatError(msg){
+  var box=$('chat-msgs'); if(!box) return;
+  var row=document.createElement('div');
+  row.className='flex justify-start chat-fade';
+  var b=document.createElement('div');
+  b.className='chat-msg chat-bubble-ai text-[12px] text-[#f87171] px-3 py-2';
+  b.innerHTML=chatMarkdown('⚠️ '+msg);
+  row.appendChild(b);
+  box.appendChild(row);
+  chatScrollBottom();
+}
+function setChatBusy(b){
+  var s=$('chat-send'), i=$('chat-input');
+  if(s){
+    s.disabled=b;
+    s.title=b?'Hentikan (Stop)':'Kirim';
+    if(b){ s.style.opacity='0.85'; s.innerHTML='<i data-icon="stop" class="w-4 h-4"></i>'; }
+    else { s.style.opacity='1'; s.innerHTML='<i data-icon="paper-plane-tilt" class="w-4 h-4"></i>'; }
+  }
+  if(i){ i.disabled=b; }
+}
+function chatStop(){
+  if(!chatState.busy) return;
+  if(chatState.abort) chatState.abort.abort();
+}
+function chatRegenRow(){
+  var box=$('chat-msgs'); if(!box) return;
+  var old=$('chat-regen-row'); if(old) old.remove();
+  var row=document.createElement('div');
+  row.id='chat-regen-row';
+  row.className='flex justify-start chat-fade pl-9';
+  var b=document.createElement('button');
+  b.className='inline-flex items-center gap-1.5 text-[11px] text-neutral-400 hover:text-white hover:bg-[#1c2128] border bd rounded-lg px-2.5 py-1.5 transition-colors';
+  b.innerHTML='<i data-icon="arrows-clockwise" class="w-3.5 h-3.5"></i>Regenerate';
+  b.addEventListener('click', chatRegenerate);
+  row.appendChild(b);
+  box.appendChild(row);
+  chatScrollBottom();
+}
+function chatRegenerate(){
+  if(chatState.busy) return;
+  while(chatState.msgs.length && chatState.msgs[chatState.msgs.length-1].role==='assistant') chatState.msgs.pop();
+  var last=null;
+  if(chatState.msgs.length && chatState.msgs[chatState.msgs.length-1].role==='user'){ last=chatState.msgs.pop().content; }
+  if(last==null) return;
+  chatSave(); chatRender();
+  chatSendText(last);
+}
+function chatSend(){
+  var inp=$('chat-input'); if(!inp) return;
+  var txt=inp.value.replace(/\s+$/,'');
+  if((!txt && !chatAttach.length) || chatState.busy) return;
+  var full=txt+chatAttachText()+chatExtraText();
+  chatAttach=[]; chatRenderAttach();
+  chatSendText(full);
+  inp.value=''; inp.style.height='';
+}
+function chatSendText(txt){
+  if(chatState.busy) return;
+  chatState.msgs.push({role:'user', content:txt});
+  chatSave(); chatRender();
+  chatState.busy=true; chatState.streaming=true; chatState.abort=null;
+  setChatBusy(true);
+  chatTyping(true);
+  var msgs=chatState.msgs.map(function(m){ return {role:m.role, content:m.content}; });
+  var ac=new AbortController(); chatState.abort=ac;
+  var done=function(ok, content, aborted){
+    chatTyping(false);
+    chatState.busy=false; chatState.streaming=false; chatState.abort=null;
+    setChatBusy(false);
+    if(aborted){
+      if(content && content.trim()){ chatState.msgs.push({role:'assistant', content:content}); }
+      chatSave(); chatRender();
+      return;
+    }
+    if(ok && content){ chatState.msgs.push({role:'assistant', content:content}); chatSave(); chatRender(); }
+    else chatError(content || 'Respons kosong dari server.');
+  };
+  function stream(){
+    return fetch('/api/chat',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ messages: msgs, model:'gpt-5.6-luna', stream:true }),
+      signal: ac.signal
+    }).then(function(res){
+      if(!res.ok){
+        return res.json().catch(function(){ return null; }).then(function(j){ done(false, (j&&j.error)||('Chat gagal (HTTP '+res.status+')')); });
+      }
+      var reader=res.body && res.body.getReader ? res.body.getReader() : null;
+      if(!reader){ return res.json().then(function(j){ done(!!(j&&j.ok), (j&&j.ok)?j.text:((j&&j.error)||'Chat gagal')); }); }
+      var dec=new TextDecoder(), buf='', acc='';
+      var bubble=chatBubble('ai','',false);
+      function pump(){
+        return reader.read().then(function(r){
+          if(r.done) return;
+          buf+=dec.decode(r.value,{stream:true});
+          var i;
+          while((i=buf.indexOf('\n'))>=0){
+            var line=buf.slice(0,i).trim(); buf=buf.slice(i+1);
+            if(line.indexOf('data:')!==0) continue;
+            var data=line.slice(5).trim();
+            if(data==='[DONE]') continue;
+            try{
+              var j=JSON.parse(data);
+              var d=j&&j.choices&&j.choices[0]&&j.choices[0].delta&&j.choices[0].delta.content;
+              if(d){ acc+=d; if(bubble){ bubble.innerHTML=chatMarkdown(acc); bubble.dataset.raw=acc; } chatScrollBottom(); }
+            }catch(e){}
+          }
+          return pump();
+        });
+      }
+      return pump().then(function(){ done(true, acc); }, function(err){ if(err&&err.name==='AbortError'){ done(false, acc, true); } else done(false,'Koneksi terputus saat streaming.'); });
+    }).catch(function(err){ if(err&&err.name==='AbortError'){ done(false, '', true); } else done(false,'Tidak dapat terhubung ke server chat.'); });
+  }
+  stream();
+}
+(function(){
+  var inp=$('chat-input'), snd=$('chat-send'), clr=$('chat-clear');
+  if(!inp||!snd) return;
+  snd.addEventListener('click', function(){ if(chatState.busy){ chatStop(); } else { chatSend(); } });
+  inp.addEventListener('keydown', function(e){
+    if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); chatSend(); }
+  });
+  inp.addEventListener('input', function(){
+    inp.style.height='';
+    inp.style.height=Math.min(160, inp.scrollHeight)+'px';
+  });
+  if(clr) clr.addEventListener('click', function(){
+    if(chatState.busy) return;
+    chatState.msgs=[]; chatSave(); chatRender(); chatTyping(false);
+    inp.focus();
+  });
+  var bal=$('chat-balance');
+  if(bal) bal.addEventListener('click', function(){
+    if(settings.pollSession){
+      window.open('https://enter.pollinations.ai/quests','_blank');
+      toast('Kumpulkan pollen gratis lewat quest di enter.pollinations.ai');
+    } else if(typeof startPollOAuth==='function'){ startPollOAuth(); }
+  });
+  var cnew=$('chat-new'), cm=$('chat-menu'), cb=$('chat-backdrop');
+  if(cnew) cnew.addEventListener('click', chatNewSession);
+  if(cm) cm.addEventListener('click', chatToggleSidebar);
+  if(cb) cb.addEventListener('click', chatCloseSidebar);
+  var fi=document.createElement('input');
+  fi.type='file'; fi.id='chat-file-input'; fi.style.display='none';
+  document.body.appendChild(fi);
+  var cat=$('chat-attach');
+  if(cat) cat.addEventListener('click', chatToggleAttachMenu);
+  document.querySelectorAll('.chat-ami').forEach(function(b){
+    b.addEventListener('click', function(){
+      var act=b.dataset.act;
+      if(act==='cam-back'||act==='cam-front'||act==='camera'||act==='photos'||act==='files'){ chatCloseMenus(); chatOpenPicker(act); }
+      else if(act==='wd14'){ chatCloseMenus(); chatWd14Run(); }
+      else if(act==='plugins'){
+        var a=$('chat-attach-menu'), p=$('chat-plugins-menu');
+        if(a) a.classList.add('hidden');
+        if(p){ p.classList.remove('hidden'); chatSyncPlugMenu(); }
+        var sr=$('chat-skills-search'); if(sr){ sr.value=''; chatFilterSkills(); }
+      }
+      else if(act==='think'){ chatThink=!chatThink; chatRenderPlugins(); chatCloseMenus(); }
+      else chatCloseMenus();
+    });
+  });
+  chatBuildSkillsMenu();
+  var ssearch=$('chat-skills-search');
+  if(ssearch) ssearch.addEventListener('input', chatFilterSkills);
+  var ctemp=$('chat-temp');
+  if(ctemp) ctemp.addEventListener('click', chatShowTempDialog);
+  var tc=$('temp-cancel'), ts=$('temp-start'), td=$('temp-dialog');
+  if(tc) tc.addEventListener('click', chatCloseTempDialog);
+  if(ts) ts.addEventListener('click', chatStartTemp);
+  if(td) td.addEventListener('click', function(e){ if(e.target===td) chatCloseTempDialog(); });
+  document.addEventListener('click', function(e){
+    var a=$('chat-attach-menu'), p=$('chat-plugins-menu'), at=$('chat-attach');
+    var openM=(a&&!a.classList.contains('hidden'))||(p&&!p.classList.contains('hidden'));
+    if(!openM) return;
+    if(at&&at.contains(e.target)) return;
+    if(a&&a.contains(e.target)) return;
+    if(p&&p.contains(e.target)) return;
+    chatCloseMenus();
+  });
+})();
+
 renderCanvas();
 renderGrid();
 renderDetail();

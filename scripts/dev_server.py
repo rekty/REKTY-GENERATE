@@ -320,7 +320,8 @@ class Handler(BaseHTTPRequestHandler):
             sid = str(uuid.uuid4())
             expiresIn = int(d.get("expires_in") or 604800)
             _oauth[sid] = {"token": d["access_token"], "scope": d.get("scope") or "",
-                           "expiresAt": int(time.time() * 1000) + expiresIn * 1000, "balance": None}
+                           "expiresAt": int(time.time() * 1000) + expiresIn * 1000,
+                           "balance": {"pollenBalance": 15.45, "balance": 15.45, "currency": "pollen"}}
             return self._send(200, {"ok": True, "session": sid, "expiresIn": expiresIn, "scope": _oauth[sid]["scope"]})
         if path == "/api/oauth/logout":
             length = int(self.headers.get("Content-Length") or 0)
@@ -333,6 +334,35 @@ class Handler(BaseHTTPRequestHandler):
             if sid in _oauth:
                 del _oauth[sid]
             return self._send(200, {"ok": True})
+        if path == "/api/chat":
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw)
+            except Exception:
+                return self._send(400, {"error": "JSON tidak valid"})
+            msgs = (body or {}).get("messages") or []
+            stream = bool((body or {}).get("stream"))
+            last = str((msgs[-1] or {}).get("content", ""))[:80] if msgs else ""
+            reply = ("Halo! Saya **VAIA Chat** (mode demo). Kamu bilang: \"" + last + "\"\n\n"
+                     "Ini **demo streaming** — di produksi saya memakai model Vaia Rekty dari Visual AI Artwork Agent. "
+                     "Tulis pesan lain atau klik tombol sampah untuk memulai percakapan baru.")
+            if not stream:
+                return self._send(200, {"ok": True, "text": reply, "model": "gpt-5.6-luna"})
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Cache-Control", "no-cache")
+            self.end_headers()
+            import time as _time
+            for i in range(0, len(reply), 6):
+                chunk = reply[i:i + 6]
+                ev = json.dumps({"choices": [{"delta": {"content": chunk}}]}, ensure_ascii=False)
+                self.wfile.write(("data: " + ev + "\n\n").encode("utf-8"))
+                self.wfile.flush()
+                _time.sleep(0.03)
+            self.wfile.write(b"data: [DONE]\n\n")
+            self.wfile.flush()
+            return
         self._send(404, {"error": "not found"})
 
 

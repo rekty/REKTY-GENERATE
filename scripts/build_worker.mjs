@@ -35,7 +35,7 @@ const router = `
 // index.html di-embed sebagai base64 (ASCII murni, aman untuk bundler/minifier).
 const HTML_B64 = '${Buffer.from(html, 'utf8').toString('base64')}';
 const INDEX_HTML = new TextDecoder().decode(Uint8Array.from(atob(HTML_B64), (c) => c.charCodeAt(0)));
-const HTML_CT = { 'Content-Type': 'text/html; charset=utf-8' };
+const HTML_CT = { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache, must-revalidate' };
 const FAVICON_B64 = '${Buffer.from(favicon, 'utf8').toString('base64')}';
 const FAVICON_SVG = new TextDecoder().decode(Uint8Array.from(atob(FAVICON_B64), (c) => c.charCodeAt(0)));
 const FAVICON_PNG_B64 = '${faviconPng ? Buffer.from(faviconPng).toString('base64') : ''}';

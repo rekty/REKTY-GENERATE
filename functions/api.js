@@ -173,6 +173,89 @@ async function fetchWithTimeout(url, opts, ms = 45000) {
   }
 }
 
+// ---- Web Researcher: riset web tanpa API key (Wikipedia + DuckDuckGo) ----
+const SSE_H = { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' };
+const WEB_UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) VAIA-Chatbot/1.0' };
+async function webSearch(query) {
+  const q = String(query || '').trim().slice(0, 120);
+  if (!q) return [];
+  const out = [];
+  const grab = async function (fn) { try { return await fn(); } catch (e) { return null; } };
+  // 1) Wikipedia: cari artikel + ringkasan 2 teratas
+  const wj = await grab(async function () {
+    const r = await fetchWithTimeout('https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=' + encodeURIComponent(q) + '&srlimit=3&format=json&origin=*', { headers: WEB_UA }, 10000);
+    return await r.json();
+  });
+  const titles = ((wj && wj.query && wj.query.search) || []).map(function (s) { return s.title; });
+  for (const t of titles.slice(0, 2)) {
+    const ej = await grab(async function () {
+      const r = await fetchWithTimeout('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(String(t).replace(/ /g, '_')), { headers: WEB_UA }, 10000);
+      return await r.json();
+    });
+    if (ej && ej.extract) out.push({ source: 'Wikipedia', title: String(ej.title || t), snippet: String(ej.extract).slice(0, 600) });
+  }
+  // 2) DuckDuckGo Instant Answer
+  const dj = await grab(async function () {
+    const r = await fetchWithTimeout('https://api.duckduckgo.com/?q=' + encodeURIComponent(q) + '&format=json&no_html=1', { headers: WEB_UA }, 10000);
+    return await r.json();
+  });
+  if (dj && dj.AbstractText) out.push({ source: 'DuckDuckGo', title: String(dj.Heading || q), snippet: String(dj.AbstractText).slice(0, 600) });
+  if (dj && Array.isArray(dj.RelatedTopics)) {
+    dj.RelatedTopics.slice(0, 3).forEach(function (rt) {
+      if (rt && rt.Text && out.length < 5) {
+        const parts = String(rt.Text).split(' - ');
+        out.push({ source: 'DuckDuckGo', title: (parts[0] || q).slice(0, 80), snippet: String(rt.Text).slice(0, 600) });
+      }
+    });
+  }
+  return out.slice(0, 5);
+}
+
+function stripMarkers(t) {
+  return String(t || '').replace(/\[WEB_SEARCH:[^\]]*\]/gi, '').trim();
+}
+
+function researchTxtFor(marker, results) {
+  return 'Hasil riset web (skill Web Researcher) untuk "' + marker + '":\n'
+    + (results && results.length
+      ? results.map(function (r) { return '- [' + r.source + '] ' + r.title + ': ' + r.snippet; }).join('\n')
+      : '(Pencarian web tidak menemukan hasil — jawab berdasarkan pengetahuanmu dan beri tahu user bahwa hasil pencarian kosong.)')
+    + '\n\nJawab langsung berdasarkan hasil riset di atas. JANGAN keluarkan format [WEB_SEARCH] lagi.';
+}
+
+// Saring marker [WEB_SEARCH: ...] dari stream (jaga kalau model mengulang marker)
+function sseClean(src) {
+  const reader = src.getReader();
+  const dec = new TextDecoder();
+  let buf = '';
+  return new ReadableStream({
+    start(controller) {
+      function flushSafe() {
+        const keep = 40;
+        const safe = buf.length > keep ? buf.slice(0, buf.length - keep) : '';
+        buf = buf.slice(safe.length);
+        const out = safe.replace(/\[WEB_SEARCH:[^\]]*\]/gi, '');
+        if (out) controller.enqueue(new TextEncoder().encode(out));
+      }
+      function pump() {
+        return reader.read().then(function (r) {
+          if (r.done) {
+            const out = buf.replace(/\[WEB_SEARCH:[^\]]*\]/gi, '');
+            if (out) controller.enqueue(new TextEncoder().encode(out));
+            controller.close();
+            return;
+          }
+          buf += dec.decode(r.value, { stream: true });
+          flushSafe();
+          return pump();
+        });
+      }
+      return pump();
+    },
+    cancel() { try { reader.cancel(); } catch (e) {} },
+  });
+}
+
 /* --------------------------- TAMS client ---------------------------- */
 
 /** Upload gambar (data URL) ke TAMS, kembalikan resourceId. */
@@ -1020,6 +1103,208 @@ export async function onRequest(context) {
       const text = String((j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '').trim();
       if (!text) return json({ error: 'Refine kosong' }, 502);
       return json({ ok: true, text });
+    }
+
+    // ---- VAIA Chat (Pollinations text LLM — gpt-5.6-luna via gen, BYOP/key) ----
+    // Tanpa key: fallback anonim ke text.pollinations.ai (model openai, gratis).
+    if (method === 'POST' && url.pathname === '/api/chat') {
+      const body = safeJson(await request.text());
+      const msgs = Array.isArray(body && body.messages) ? body.messages : [];
+      if (!msgs.length) return json({ error: 'Pesan kosong' }, 400);
+      const model = String((body && body.model) || 'gpt-5.6-luna').trim() || 'gpt-5.6-luna';
+      const wantStream = !!(body && body.stream);
+      const apiKey = await pickPollKey(env, request, body);
+      // Baca teks/kode panjang: ambil 60 pesan terakhir, sisakan maks ~90rb karakter
+      // (buang pesan tertua dulu; pesan terbaru — biasanya berisi kode/teks user — selalu utuh).
+      const CHAT_BUDGET = 90000;
+      let chatMsgs = msgs.slice(-60).map(function (m) {
+        const role = m && (m.role === 'system' || m.role === 'assistant') ? m.role : 'user';
+        return { role: role, content: String((m && m.content) || '') };
+      }).filter(function (m) { return m.content.length > 0; });
+      let chatTotal = chatMsgs.reduce(function (s, m) { return s + m.content.length; }, 0);
+      while (chatTotal > CHAT_BUDGET && chatMsgs.length > 1) {
+        const removed = chatMsgs.shift();
+        chatTotal -= removed.content.length;
+      }
+      if (!chatMsgs.length) return json({ error: 'Pesan kosong' }, 400);
+      // Keamanan: buang system message dari client, lalu sisipkan guard rahasia di akhir
+      // (system terakhir = prioritas tertinggi) supaya AI tidak pernah membocorkan
+      // API key, app key, kredensial, kode worker, konfigurasi, atau detail teknis web.
+      // Sistem Skill VAIA — daftar lengkap kemampuan asisten (aktif otomatis).
+      const VAIA_SKILLS = [
+        ['CORE AI', 'Advanced Reasoning, Problem Solving, Planning & Task Decomposition, Decision Support, Fact Checking, Critical Thinking'],
+        ['WEB & RESEARCH', 'Web Researcher, Deep Researcher, Real-Time Information Search, Source Verification, Source Comparison, News Researcher, Documentation Researcher, Academic Researcher, GitHub Researcher, GitLab Researcher, Open-Source Project Finder, Repository Analyzer, Code Search & Reference Analysis, Citation & Source Manager'],
+        ['PROMPT ENGINEERING', 'Image Prompt Engineer, Video Prompt Engineer, Audio Prompt Engineer, AI Art Prompt Engineer, Character Prompt Designer, Consistent Character Prompting, Style & Composition Prompting, Prompt Optimization, Negative Prompt Designer, Prompt Debugger'],
+        ['IMAGE PROMPT · VISUAL STYLES', 'Anime, Manga, Manhwa, Cartoon, Western Cartoon, Chibi, Kawaii, Realistic, Photorealistic, Hyperrealistic, Cinematic, Surrealism, Abstract, Concept Art, Digital Art, AI Art, Fantasy Art, Sci-Fi Art, Dark Fantasy, Gothic, Horror, Cyberpunk, Steampunk, Solarpunk, Retro, Vintage, Vaporwave, Synthwave, Minimalist, Pop Art, Low Poly, Isometric, Pixel Art, 3D Render, Clay Art, Paper Art, Claymation, Diorama, Illustration, Editorial Illustration, Children\'s Illustration, Comic Art, Graphic Novel, Storybook Art'],
+        ['IMAGE PROMPT · ANIME & ILLUSTRATION', 'Modern Anime, Classic Anime, 90s Anime, Shonen, Shojo, Seinen, Josei, Isekai, Mecha, Magical Girl, Anime Film Look, Manga Panel, Ink Illustration, Cel Shading, Soft Anime Rendering, Painterly Anime, Anime Background Art, Character Sheet, Key Visual, Poster Art'],
+        ['IMAGE PROMPT · PHOTOGRAPHY', 'Portrait Photography, Fashion Photography, Street Photography, Studio Photography, Editorial Photography, Product Photography, Architecture Photography, Landscape Photography, Wildlife Photography, Documentary Photography, Sports Photography, Macro Photography, Film Photography, Instant Camera Look, Vintage Photography, Analog Photography'],
+        ['IMAGE PROMPT · CAMERA & LENS', 'DSLR, Mirrorless, Film Camera, 35mm Film, Medium Format, Polaroid Style, Smartphone Camera Look, Wide Angle, Ultra Wide Angle, Telephoto, Macro Lens, Portrait Lens, Fisheye, Tilt-Shift, Shallow Depth of Field, Deep Depth of Field, Bokeh, Motion Blur, Long Exposure'],
+        ['IMAGE PROMPT · CAMERA ANGLES', 'Eye Level, Low Angle, High Angle, Bird\'s Eye View, Worm\'s Eye View, Overhead, Dutch Angle, Front View, Side View, Three-Quarter View, Back View, POV, Over-the-Shoulder, Close-Up, Extreme Close-Up, Medium Shot, Full Body, Wide Shot'],
+        ['IMAGE PROMPT · COMPOSITION', 'Rule of Thirds, Center Composition, Symmetrical Composition, Leading Lines, Framing, Negative Space, Foreground/Midground/Background, Depth, Layering, Diagonal Composition, Golden Ratio, Dynamic Composition, Minimal Composition, Cinematic Composition, Portrait Composition, Environmental Composition'],
+        ['IMAGE PROMPT · LIGHTING', 'Natural Light, Golden Hour, Blue Hour, Soft Light, Hard Light, Diffused Light, Backlighting, Rim Light, Side Lighting, Top Lighting, Underlighting, Studio Lighting, Three-Point Lighting, Neon Lighting, Volumetric Lighting, God Rays, Dramatic Lighting, Moody Lighting, Ambient Lighting, Candlelight, Firelight, Moonlight'],
+        ['IMAGE PROMPT · COLOR & GRADING', 'Warm Tones, Cool Tones, Monochrome, Duotone, Pastel, Muted Colors, Vibrant Colors, High Saturation, Low Saturation, Earth Tones, Neon Colors, Film Color Grade, Cinematic Color Grade, Vintage Color Grade, Black and White, Sepia, Teal and Orange, Color Harmony, Complementary Colors'],
+        ['IMAGE PROMPT · MATERIALS & TEXTURES', 'Skin Texture, Hair Texture, Fabric, Denim, Leather, Metal, Glass, Wood, Stone, Marble, Plastic, Ceramic, Paper, Water, Smoke, Fire, Ice, Fur, Feathers, Holographic Material, Metallic Surface'],
+        ['IMAGE PROMPT · ENVIRONMENT', 'City, Countryside, Forest, Mountain, Beach, Desert, Ocean, Space, Futuristic City, Cyberpunk City, Ancient Ruins, Castle, Temple, Laboratory, Classroom, Bedroom, Café, Street, Studio, Fantasy World, Alien Planet'],
+        ['IMAGE PROMPT · CHARACTER DESIGN', 'Character Concept, Character Sheet, Full Body Character, Portrait, Facial Expression, Pose, Gesture, Hairstyle, Clothing, Accessories, Costume Design, Armor Design, Creature Design, Robot Design, Fantasy Character, Sci-Fi Character, Age-Appropriate Character Design, Character Consistency'],
+        ['IMAGE PROMPT · POSES & EXPRESSIONS', 'Standing, Sitting, Walking, Running, Action Pose, Dynamic Pose, Relaxed Pose, Hero Pose, Crouching, Looking at Camera, Looking Away, Smiling, Serious, Surprised, Confused, Determined, Calm, Sad, Excited'],
+        ['IMAGE PROMPT · CINEMATIC LANGUAGE', 'Movie Still, Film Still, Establishing Shot, Close-Up, Hero Shot, Dramatic Reveal, Atmospheric Shot, Cinematic Depth, Storytelling Frame, Visual Narrative, Epic Scale, Intimate Scene, Suspenseful Atmosphere'],
+        ['IMAGE PROMPT · ERA & CULTURAL', 'Ancient, Medieval, Renaissance, Victorian, Edwardian, 1920s, 1940s, 1950s, 1960s, 1970s, 1980s, 1990s, Y2K, Retro Futurism, Contemporary, Near Future'],
+        ['IMAGE PROMPT · ART TECHNIQUES', 'Watercolor, Oil Painting, Acrylic, Gouache, Pencil Sketch, Charcoal, Ink, Colored Pencil, Pastel, Digital Painting, Matte Painting, Line Art, Cross Hatching, Impasto, Brush Painting, Airbrush, Collage, Mixed Media'],
+        ['IMAGE PROMPT · 3D & CGI', '3D Character, 3D Environment, CGI, Blender-Style Render, Game Asset, Game Character, Game Environment, Unreal Engine Look, Architectural Visualization, Product Visualization, Octane-Style Render, Stylized 3D, Realistic 3D, Isometric 3D'],
+        ['IMAGE PROMPT · QUALITY & DETAIL', 'High Detail, Fine Details, Sharp Focus, Clean Linework, Detailed Background, Realistic Materials, Natural Skin Detail, Accurate Lighting, Depth and Dimension, Atmospheric Perspective, High-Fidelity Rendering'],
+        ['IMAGE PROMPT · GENERATION CONTROL', 'Positive Prompt, Negative Prompt, Prompt Weighting, Composition Control, Style Strength, Detail Control, Aspect Ratio, Seed Consistency, Character Consistency, Reference Image Guidance, Pose Guidance, Structure Guidance, Image-to-Image Prompting, Inpainting, Outpainting, Upscaling, Variation Generation'],
+        ['IMAGE PROMPT · CONSISTENCY ENGINE', 'Same Character, Same Face, Same Hairstyle, Same Outfit, Same Color Palette, Same Art Style, Same Environment, Same Lighting, Same Camera Language, Multi-Image Character Consistency, Scene-to-Scene Consistency, Character Turnaround, Expression Sheet, Pose Sheet'],
+        ['IMAGE PROMPT · STRUCTURE', 'Subject, Character/Object Details, Action/Pose, Environment, Composition, Camera, Lens, Lighting, Color Palette, Material/Texture, Art Style, Mood/Atmosphere, Quality/Detail, Technical Parameters, Negative Prompt'],
+        ['IMAGE PROMPT · OPTIMIZATION', 'Convert Simple Idea to Detailed Prompt, Improve Weak Prompts, Remove Conflicting Instructions, Prioritize Visual Elements, Adapt to Different Generators, Short/Medium/Detailed Versions, Positive & Negative Prompt, Preserve Core Concept, Detect Ambiguous Descriptions, Resolve Conflicting Styles, Optimize Composition, Optimize Lighting, Optimize Character Consistency'],
+        ['IMAGE PROMPT · GENERATOR ADAPTATION', 'Adapt to Generator Conventions, Avoid Universal Syntax, Tailor to Model Strengths, Preserve Core Concept'],
+        ['IMAGE PROMPT · VISUAL ANALYSIS', 'Analyze Subject, Analyze Style, Analyze Composition, Analyze Camera Angle, Analyze Lens Impression, Analyze Lighting, Analyze Color Palette, Analyze Materials, Analyze Environment, Analyze Mood, Analyze Clothing, Analyze Pose, Analyze Background, Analyze Rendering Technique, Reconstruct Descriptive Prompt'],
+        ['IMAGE PROMPT · CREATIVE MODE', 'Expand Short Idea, Detail Subject, Detail Appearance, Detail Outfit, Detail Pose, Detail Environment, Detail Weather, Detail Lighting, Detail Camera, Detail Composition, Detail Color Palette, Detail Atmosphere, Detail Art Style, Detail Level'],
+        ['IMAGE PROMPT · SAFETY & QUALITY', 'Avoid Unnecessary Real-Person Impersonation, Avoid Unsafe or Prohibited Visual Content, Preserve Intended Concept, Keep Prompt Clear and Usable'],
+        ['PROGRAMMING', 'Programming Expert, Python, JavaScript, TypeScript, HTML/CSS, SQL, API Development, REST API, JSON, Database Design, Debugging, Code Review, Refactoring, Automation, Software Architecture, Repository Analysis'],
+        ['PROGRAMMING LANGUAGES', 'C, C++, C#, Objective-C, Go (Golang), Rust, Zig, Nim, D, Swift, Kotlin, Java, Scala, Groovy, Clojure, Python, Ruby, Perl, PHP, JavaScript, TypeScript, Dart, Lua, R, MATLAB, Julia, SQL, PL/SQL, T-SQL, Haskell, Erlang, Elixir, OCaml, F#, Lisp, Scheme, Racket, Prolog, Ada, Pascal, Delphi, Fortran, COBOL, Assembly, Bash/Shell, PowerShell, Batch, VBA, Visual Basic .NET, Solidity, Vyper, WebAssembly, Verilog, VHDL, SystemVerilog, Smalltalk'],
+        ['WEB & APP FRAMEWORKS', 'React, Vue, Angular, Svelte, SolidJS, Next.js, Nuxt, Remix, Gatsby, Astro, Node.js, Express, NestJS, Fastify, Koa, Hono, Django, Flask, FastAPI, Laravel, Symfony, CodeIgniter, Lumen, Spring Boot, Spring MVC, Jakarta EE, Quarkus, Micronaut, ASP.NET Core, .NET MAUI, Blazor, WPF, Ruby on Rails, Sinatra, Gin, Echo, Fiber, Axum, Actix-web, Rocket, Phoenix, Flutter, React Native, Ionic, Expo, NativeScript, Bootstrap, Tailwind CSS, Material UI, Chakra UI, shadcn/ui, jQuery, D3.js, Chart.js, Three.js, GSAP, Redux, Zustand, TanStack Query, Prisma, TypeORM, Sequelize, Mongoose, SQLAlchemy, Hibernate, Entity Framework Core, GORM, Jest, Vitest, Cypress, Playwright, pytest, JUnit, PHPUnit, RSpec, WordPress, Drupal, Magento, Shopify, GraphQL, Apollo, Relay, Webpack, Vite, Rollup, esbuild, Babel, Pandas, NumPy, TensorFlow, PyTorch, scikit-learn, LangChain, Unity, Unreal Engine, Godot'],
+        ['CYBERSECURITY', 'Defensive Security, Secure Coding, Vulnerability Analysis, Security Best Practices, Privacy & Data Protection, Authentication & Authorization'],
+        ['MOBILE DEVELOPMENT', 'Android Development, Kotlin, Java, Jetpack Compose, Android SDK & Gradle, Flutter, React Native, Mobile App Architecture, Mobile UI Design, Cross-Platform Development, iOS Development'],
+        ['CREATIVE', 'Creative Director, Storytelling, Character Design, Worldbuilding, Concept Development, Branding, Copywriting, Image Analysis, Visual Direction, Video Concept Development, UI/UX Design'],
+        ['WRITING', 'Article Writing, Technical Writing, Documentation, Report Writing, Proposal Writing, SOP Creation, Email Writing, Social Media Content, Story Writing, Script Writing'],
+        ['EDUCATION', 'AI Tutor, Mathematics, Science, Programming Tutor, Language Tutor, Study Planner, Concept Explainer, Quiz Generator, Step-by-Step Learning'],
+        ['DATA', 'Data Analysis, Data Cleaning, Statistics, Data Visualization, Spreadsheet Analysis, Pattern Detection, Report Generation'],
+        ['BUSINESS', 'Business Strategy, Product Strategy, Product Design, Market Research, Marketing Strategy, SEO, Content Strategy, Competitor Analysis, Business Idea Analysis, Project Management'],
+        ['TOOLS & AUTOMATION', 'Workflow Automation, API Integration, File Analysis, Document Processing, Spreadsheet Processing, Code Execution, Git/GitHub Workflow, Task Automation'],
+        ['QUALITY CONTROL', 'Hallucination Detection, Fact Verification, Code Validation, Prompt Testing, Output Critique, Consistency Checking, Error Detection, Self-Review'],
+        ['MULTIMODAL', 'Image Understanding, Image Analysis, Image Prompt Generation, Screenshot Analysis, Document Understanding, PDF Analysis, Chart & Diagram Understanding']
+      ];
+      const SKILLS_PROMPT = 'Kamu memiliki sistem skill berikut. AKTIFKAN SECARA OTOMATIS skill yang relevan dengan kebutuhan user (tanpa diminta) dan kerjakan dengan sungguh-sungguh serta detail:\n'
+        + VAIA_SKILLS.map(function (g) { return '— ' + g[0] + ': ' + g[1]; }).join('\n')
+        + '\n\nPanduan teks/kode panjang (seperti Claude): saat menerima kode, file, atau teks panjang, BACA SELURUHNYA dengan teliti tanpa memotong; berikan analisis mendalam; tampilkan kode utuh bila diminta; jangan meringkas kode kecuali diminta.'
+        + '\n\nAturan Web Researcher (skill riset web): jika pertanyaan user membutuhkan informasi AKTUAL/TERBARU dari internet (berita, harga terkini, peristiwa terbaru, riset terbaru, data terkini, skor pertandingan, dll), JAWAB dengan mengeluarkan PERSIS satu baris di awal jawaban, tanpa teks lain apa pun: [WEB_SEARCH: query singkat dalam bahasa Inggris] lalu BERHENTI — sistem akan mencari di web dan melanjutkan jawabanmu. Jika tidak butuh pencarian web, jawab langsung seperti biasa tanpa baris itu.'
+        + '\n\nKamu menguasai SEMUA bahasa pemrograman yang ada (lihat kategori PROGRAMMING LANGUAGES — C, C++, Go, Rust, Kotlin, Swift, Java, Python, Ruby, PHP, Perl, R, MATLAB, Julia, SQL, Haskell, Erlang, Elixir, Prolog, Ada, Pascal, Fortran, COBOL, Assembly, Bash, PowerShell, Solidity, Verilog, dll) beserta sintaks, framework, ekosistem, dan best practices-nya. Kamu juga menguasai SEMUA framework & pustaka populer (lihat kategori WEB & APP FRAMEWORKS — React, Vue, Angular, Next.js, Django, Flask, FastAPI, Laravel, Spring Boot, ASP.NET, Flutter, React Native, Tailwind, Prisma, dan lainnya) termasuk versi terbaru, cara setup, struktur proyek, pola terbaik, dan contoh kode idiomatiknya. Saat diminta kode dalam bahasa atau framework apa pun, berikan kode yang benar, lengkap, dan idiomatik.'
+        + '\n\nAturan Ahli Prompt Gambar (Image Prompt Engineer / AI Art Prompt Engineer): saat diminta membuat atau memperbaiki prompt gambar, WAJIB MEMPERTAHANKAN 100% permintaan user: (1) JANGAN mengubah subjek, orang/karakter, pose, pakaian, ekspresi, objek, adegan, lokasi, waktu, gaya, atau framing yang user minta — pertahankan persis apa adanya. (2) Jika user menyebut ukuran/aspek rasio (mis. 832x1536, portrait, landscape, 1:1), sesuaikan deskripsi framing dengan itu tanpa mengubah isi. (3) Perkaya hanya dengan detail yang TIDAK bertentangan: kualitas (masterpiece, best quality, ultra detailed, 8k), pencahayaan, sudut kamera, warna, tekstur, dan gaya artistik bila relevan. (4) JANGAN menambah elemen yang mengubah makna (mis. user minta "wanita di taman bunga" — jangan menambahkan pria, jangan pindahkan ke pantai). (5) Hasilkan prompt final dalam bahasa Inggris (kecuali diminta bahasa lain), bersih, tanpa tanda kutip berlebih, siap tempel ke generator gambar. (6) Boleh tawarkan 2-3 variasi kecil gaya, tetapi subjek utama tetap identik dengan permintaan user. (7) JADILAH KREATIF DAN BERANI: prompt final yang setia pada permintaan user itu hanyalah dasar — perkaya dengan imajinasi seluas-luasnya selama TIDAK mengubah subjek inti (siapa/apa yang user minta tetap persis): kombinasikan gaya, mood, pencahayaan dramatis, sudut kamera sinematik, palet warna yang berani, detail material yang kaya, dan sentuhan artistik yang mengejutkan. Setelah prompt utama, tawarkan juga 2-3 VARIASI KREATIF yang benar-benar berbeda (mis. versi realistis vs anime vs fantasy, atau sudut/lighting/atmosfer yang berlawanan) sebagai opsi pilihan. (8) Jika user meminta "kreatif", "imajinatif", "beda", atau "wow", bebas berimajinasi liar (elemen magis, sinematik, dramatis, konsep tak terduga) — tetapi tetap jangan menghilangkan identitas permintaan awal user: semua variasi harus jelas masih tentang subjek yang user minta, hanya dibingkai lebih kreatif.'
+        + '\n\nIMAGE PROMPT ENGINEER — COMPLETE SKILLSET (lihat 25 kategori IMAGE PROMPT · ... di atas). Terapkan SEMUA pengetahuan berikut saat user minta membuat/memperbaiki/menganalisis prompt gambar: (A) STRUKTUR PROMPT — susun prompt final berurutan: [Subject] + [Character/Object Details] + [Action/Pose] + [Environment] + [Composition] + [Camera] + [Lens] + [Lighting] + [Color Palette] + [Material/Texture] + [Art Style] + [Mood/Atmosphere] + [Quality/Detail] + [Technical Parameters] + [Negative Prompt]. (B) PILIH elemen dari kategori yang relevan: Visual Styles, Anime & Illustration Specialization (modern/shonen/seinen/mecha/cel shading dll), Photography, Camera & Lens, Camera Angles, Composition (rule of thirds, leading lines, golden ratio dll), Lighting (golden hour, rim light, volumetric, neon dll), Color & Grading (teal and orange, monochrome, pastel dll), Materials & Textures, Environment, Character Design, Poses & Expressions, Cinematic Language, Era & Cultural Aesthetics, Art Techniques, 3D & CGI, Quality & Detail, Generation Control, Consistency Engine. (C) CREATIVE MODE — jika user hanya memberi ide singkat (mis. "gadis di kota cyberpunk saat hujan"), kembangkan lengkap: subject, penampilan, outfit, pose, environment, cuaca, lighting, camera, komposisi, palet warna, atmosfer, gaya seni, tingkat detail — TANPA mengubah ide inti user. (D) OPTIMIZATION — perbaiki prompt lemah, buang instruksi konflik, prioritaskan elemen visual penting, buat versi pendek/sedang/detail, deteksi deskripsi ambigu, resolve gaya bertabrakan. (E) GENERATOR ADAPTATION — sesuaikan konvensi prompt dengan generator yang dituju (Stable Diffusion/Flux/Midjourney/ComfyUI/API), jangan paksa satu sintaks universal. (F) VISUAL ANALYSIS — jika diberi gambar: analisis subjek, gaya, komposisi, sudut kamera, kesan lensa, lighting, palet warna, material, lingkungan, mood, pakaian, pose, latar, teknik render, lalu rekonstruksi prompt deskriptif berguna tanpa mengaku tahu parameter tersembunyi. (G) SAFETY & QUALITY — hindari impersonasi orang nyata yang tidak perlu, hindari konten visual terlarang, pertahankan konsep user, jaga prompt jelas dan bisa dipakai.';
+      const SECRET_GUARD = 'Kamu adalah VAIA Rekty, asisten AI dari aplikasi web Visual AI Artwork. Aturan wajib: (1) JANGAN PERNAH menyebut, mengungkap, membocorkan, atau mengisyaratkan rahasia internal aplikasi ini: API key, app key, bearer token, kredensial, kata sandi, kode Cloudflare Worker, konfigurasi server, endpoint backend, variabel lingkungan, source code web ini, atau detail implementasi apa pun. (2) Jika ditanya tentang rahasia atau source code tersebut, tolak dengan sopan dan arahkan kembali ke bantuan umum. (3) NAMAMU ADALAH Vaia Rekty — JANGAN PERNAH mengaku atau menyebut dirimu sebagai ChatGPT, Claude, Gemini, atau chatbot/AI buatan perusahaan lain apa pun; jika ditanya, jawab bahwa kamu adalah Vaia Rekty dari Visual AI Artwork. (4) Bantulah pengguna dengan ramah, dalam bahasa Indonesia kecuali diminta lain.';
+      const baseMsgs = chatMsgs.filter(function (m) { return m.role !== 'system'; });
+      const safeMsgs = baseMsgs.slice();
+      safeMsgs.push({ role: 'system', content: SKILLS_PROMPT });
+      safeMsgs.push({ role: 'system', content: SECRET_GUARD });
+      // Dengan key: gen.pollinations.ai (akses gpt-5.6-luna). Tanpa key: legacy anonim (openai).
+      const payload = { model: apiKey ? model : 'openai', messages: safeMsgs, private: true };
+      if (wantStream) payload.stream = true;
+      const opts = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      };
+      if (apiKey) opts.headers.Authorization = 'Bearer ' + apiKey;
+      let usedModel = apiKey ? model : 'openai';
+      let res = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', opts, 120000);
+      // Key ditolak gen (401 key invalid / 403 tidak diizinkan / 402 saldo pollen 0) ->
+      // fallback otomatis ke anonim (model openai, gratis) supaya chat tetap jalan.
+      if (!res.ok && apiKey && (res.status === 401 || res.status === 402 || res.status === 403)) {
+        const fb = { model: 'openai', messages: safeMsgs, private: true };
+        if (wantStream) fb.stream = true;
+        const fres = await fetchWithTimeout('https://text.pollinations.ai/openai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fb),
+        }, 120000);
+        if (fres.ok) { res = fres; usedModel = 'openai'; }
+      }
+      if (!res.ok) {
+        const j = safeJson(await res.text());
+        let msg = String((j && j.error && (j.error.message || j.error)) || ('Chat gagal (HTTP ' + res.status + ')')).trim();
+        if (res.status === 401) msg += ' — perlu login Pollinations (BYOP) atau API key di Pengaturan.';
+        else if (res.status === 402) msg += ' — saldo pollen tidak cukup. Kumpulkan pollen lewat quest di enter.pollinations.ai.';
+        else if (res.status === 403) msg += ' — model tidak diizinkan untuk key ini (cek saldo/paket di enter.pollinations.ai).';
+        return json({ error: msg }, 502);
+      }
+      if (wantStream) {
+        // --- Web Researcher: tangkap marker [WEB_SEARCH: ...] di awal stream ---
+        const reader0 = res.body && res.body.getReader ? res.body.getReader() : null;
+        if (!reader0) {
+          return new Response(res.body, { headers: SSE_H });
+        }
+        const dec0 = new TextDecoder();
+        // Deteksi marker berdasarkan KONTEN delta (bukan byte mentah — overhead SSE besar)
+        let rawAcc = '', contentAcc = '', marker = null;
+        try {
+          while (contentAcc.length < 300) {
+            const r = await reader0.read();
+            if (r.done) break;
+            rawAcc += dec0.decode(r.value, { stream: true });
+            try {
+              const lines = rawAcc.split('\n');
+              for (let i = 0; i < lines.length - 1; i++) {
+                const line = lines[i].trim();
+                if (line.indexOf('data:') !== 0) continue;
+                const payload = line.slice(5).trim();
+                if (payload === '[DONE]') continue;
+                const ev = JSON.parse(payload);
+                const c = ev && ev.choices && ev.choices[0] && ev.choices[0].delta && ev.choices[0].delta.content;
+                if (c) contentAcc += c;
+              }
+            } catch (e) {}
+            const m = contentAcc.match(/\[WEB_SEARCH:\s*"?([^\]]+?)"?\]/i);
+            if (m) { marker = m[1].trim().replace(/^"+|"$/g, ''); break; }
+          }
+        } catch (e) { marker = null; }
+        if (!marker) {
+          // Bukan permintaan riset: teruskan teks yang sudah terbaca + sisa stream
+          const stream = new ReadableStream({
+            start(controller) {
+              if (rawAcc) controller.enqueue(new TextEncoder().encode(rawAcc));
+              function pump() {
+                return reader0.read().then(function (rr) {
+                  if (rr.done) { controller.close(); return; }
+                  controller.enqueue(rr.value);
+                  return pump();
+                });
+              }
+              return pump();
+            },
+            cancel() { try { reader0.cancel(); } catch (e) {} },
+          });
+          return new Response(stream, { headers: SSE_H });
+        }
+        // Marker ketemu -> riset web lalu jawaban final (stream fase 2)
+        try { await reader0.cancel(); } catch (e) {}
+        const results = await webSearch(marker);
+        const researchTxt = researchTxtFor(marker, results);
+        const p2 = baseMsgs.concat([
+          { role: 'system', content: researchTxt },
+          { role: 'system', content: SKILLS_PROMPT },
+          { role: 'system', content: SECRET_GUARD },
+        ]);
+        const payload2 = { model: apiKey ? model : 'openai', messages: p2, private: true, stream: true };
+        const opts2 = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload2) };
+        if (apiKey) opts2.headers.Authorization = 'Bearer ' + apiKey;
+        const res2 = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', opts2, 120000);
+        if (!res2.ok) return json({ error: 'Riset web selesai, tapi jawaban gagal dibuat (HTTP ' + res2.status + ').' }, 502);
+        return new Response(sseClean(res2.body), { headers: SSE_H });
+      }
+      const j = safeJson(await res.text());
+      let text = String((j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '').trim();
+      if (!text) return json({ error: 'Respons kosong' }, 502);
+      const mm = text.match(/\[WEB_SEARCH:\s*"?([^\]]+?)"?\]/i);
+      if (mm) {
+        const results = await webSearch(mm[1].trim());
+        const researchTxt = researchTxtFor(mm[1].trim(), results);
+        const p2 = baseMsgs.concat([
+          { role: 'system', content: researchTxt },
+          { role: 'system', content: SKILLS_PROMPT },
+          { role: 'system', content: SECRET_GUARD },
+        ]);
+        const res2 = await fetchWithTimeout(apiKey ? GEN_POLLINATIONS_CHAT : 'https://text.pollinations.ai/openai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: 'Bearer ' + apiKey } : {}) },
+          body: JSON.stringify({ model: apiKey ? model : 'openai', messages: p2, private: true }),
+        }, 120000);
+        if (res2.ok) {
+          const j2 = safeJson(await res2.text());
+          const t2 = stripMarkers(String((j2 && j2.choices && j2.choices[0] && j2.choices[0].message && j2.choices[0].message.content) || ''));
+          if (t2) return json({ ok: true, text: t2, model: usedModel, researched: mm[1].trim() });
+        }
+      }
+      return json({ ok: true, text: stripMarkers(text), model: usedModel });
     }
 
     // ---- daftar model Pollinations (publik, tanpa auth) ----
