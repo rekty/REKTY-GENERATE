@@ -5433,7 +5433,7 @@ if(typeof updateBalPill==='function') updateBalPill();
       <div class="flex items-center gap-3 mb-3 text-xs text-neutral-400">
         <span id="kvadmin-count">0 gambar</span>
         <span class="flex-1"></span>
-        <button id="kvadmin-resetpin" class="btn h-8 px-3 text-[11px] border bd text-neutral-300 hover:bg-[#21262d]" title="Lupa PIN? Kosongkan PIN tersimpan lalu masukkan PIN baru">🔑 Lupa PIN / Ganti PIN</button>
+        <button id="kvadmin-resetpin" class="btn h-8 px-3 text-[11px] border bd text-neutral-300 hover:bg-[#21262d]" title="Kunci panel ini — PIN diminta lagi saat dibuka berikutnya">🔒 Kunci Panel</button>
         <button id="kvadmin-delall" class="btn h-8 px-3 text-[11px] border border-red-500/40 text-red-400 hover:bg-red-500/10" title="Hapus SEMUA gambar arsip dari KV (tidak bisa dikembalikan)">🗑️ Hapus Semua</button>
       </div>
       <div id="kvadmin-delall-confirm" class="hidden mb-3 border border-red-500/50 rounded-xl bg-red-500/10 p-3 flex items-center gap-2 text-xs text-red-300">
@@ -5450,19 +5450,24 @@ if(typeof updateBalPill==='function') updateBalPill();
 <script>
 /* ===== Admin panel KV ===== */
 (function(){
-  var PIN_KEY='vaia-admin-pin';
+  // PIN hanya hidup di memori sesi halaman ini — TIDAK disimpan di localStorage.
+  // Setiap kali panel dibuka ulang, PIN diminta lagi.
+  var _pin='';
+  // Bersihkan sisa PIN lama dari localStorage (migrasi dari versi sebelumnya)
+  try{ localStorage.removeItem('vaia-admin-pin'); }catch(e){}
   var $=function(id){ return document.getElementById(id); };
   var adminEl=$('kvadmin');
   if(!adminEl) return;
-  var pin=function(){ try{ return localStorage.getItem(PIN_KEY)||''; }catch(e){ return ''; } };
-  var hasPin=function(){ return !!pin(); };
+  var pin=function(){ return _pin; };
   function setErr(m){ var e=$('kvadmin-err'); if(e){ e.textContent=m; e.classList.remove('hidden'); } }
   function clearErr(){ var e=$('kvadmin-err'); if(e) e.classList.add('hidden'); }
   function openAdmin(){
     adminEl.classList.remove('hidden');
-    $('kvadmin-login').classList.toggle('hidden', hasPin());
-    $('kvadmin-body').classList.toggle('hidden', !hasPin());
-    if(hasPin()) loadAdmin();
+    // Selalu minta PIN — jangan pernah auto-unlock
+    $('kvadmin-login').classList.remove('hidden');
+    $('kvadmin-body').classList.add('hidden');
+    clearErr();
+    var inp=$('kvadmin-pin'); if(inp) inp.value='';
   }
   function closeAdmin(){
     adminEl.classList.add('hidden');
@@ -5473,10 +5478,10 @@ if(typeof updateBalPill==='function') updateBalPill();
   $('kvadmin-unlock').addEventListener('click',function(){
     var v=$('kvadmin-pin').value.trim();
     if(!v){ setErr('PIN wajib diisi'); return; }
-    // Verifikasi PIN lewat backend (401/403 = salah)
+    // Verifikasi PIN lewat backend (401/403 = salah) — PIN tidak disimpan
     fetch('/api/admin?pin='+encodeURIComponent(v),{headers:{'x-admin-pin':v}}).then(function(r){
       if(!r.ok){ setErr('PIN salah'); return; }
-      try{ localStorage.setItem(PIN_KEY,v); }catch(e){}
+      _pin=v; // hanya di memori sesi
       clearErr();
       $('kvadmin-login').classList.add('hidden');
       $('kvadmin-body').classList.remove('hidden');
@@ -5553,15 +5558,14 @@ if(typeof updateBalPill==='function') updateBalPill();
     }).catch(function(){ setErr('Gagal ambil data arsip'); });
   }
   $('kvadmin-refresh').addEventListener('click',loadAdmin);
-  /* Lupa PIN / Ganti PIN: kosongkan PIN tersimpan, kembali ke form login */
+  /* Kunci Panel: hapus PIN dari memori sesi, kembali ke form login */
   $('kvadmin-resetpin').addEventListener('click',function(){
-    if(!confirm('Kosongkan PIN tersimpan di perangkat ini?\nKamu akan diminta masukkan PIN lagi saat membuka panel.')) return;
-    try{ localStorage.removeItem(PIN_KEY); }catch(e){}
+    _pin='';
     $('kvadmin-body').classList.add('hidden');
     $('kvadmin-login').classList.remove('hidden');
     var inp=$('kvadmin-pin'); if(inp){ inp.value=''; inp.focus(); }
     clearErr();
-    toast('PIN direset — masukkan PIN untuk membuka panel');
+    toast('Panel dikunci — masukkan PIN untuk membuka');
   });
   /* Hapus Semua — konfirmasi dua tahap */
   var delAllBtn=$('kvadmin-delall'), delAllCf=$('kvadmin-delall-confirm');
