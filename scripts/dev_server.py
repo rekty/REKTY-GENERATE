@@ -196,8 +196,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, {
                 "ok": True, "pin": True,
                 "images": [
-                    {"name": "demo-a1b2c3.jpg", "size": 138541, "url": "/img/demo-a1b2c3.jpg"},
-                    {"name": "demo-d4e5f6.png", "size": 245000, "url": "/img/demo-d4e5f6.png"},
+                    {"name": "demo-a1b2c3.jpg", "size": 138541, "url": "/img/demo-a1b2c3.jpg", "expiresAt": int(time.time() * 1000) + 5 * 86400 * 1000},
+                    {"name": "demo-d4e5f6.png", "size": 245000, "url": "/img/demo-d4e5f6.png", "expiresAt": int(time.time() * 1000) + 2 * 86400 * 1000},
                 ],
                 "totalKeys": 5, "imageCount": 2,
             })

@@ -5498,6 +5498,17 @@ if(typeof updateBalPill==='function') updateBalPill();
         sz.textContent=im.name+' · '+(im.size?((im.size/1024).toFixed(1)+' KB'):'?');
         sz.title=im.name;
         meta.appendChild(sz);
+        // Sisa waktu sebelum gambar otomatis terhapus (KV expirationTtl 7 hari)
+        if(im.expiresAt){
+          var exp=document.createElement('div');
+          exp.className='text-[9px] text-[#27D4CD]/80';
+          var left=im.expiresAt-Date.now();
+          if(left>0){
+            var h=Math.floor(left/3600000), d=Math.floor(h/24);
+            exp.textContent='⏳ Kadaluarsa '+(d>0?(d+' hari '+(h%24)+' jam'):(h+' jam'))+' lagi';
+          } else exp.textContent='⏳ Kedaluwarsa — segera dihapus KV';
+          meta.appendChild(exp);
+        }
         var row=document.createElement('div');
         row.className='flex gap-1.5';
         var open=document.createElement('a');

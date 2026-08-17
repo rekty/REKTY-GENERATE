@@ -715,12 +715,15 @@ const CT_EXT = {
 };
 function extFromCt(ct) { return CT_EXT[String(ct).toLowerCase().split(';')[0]] || 'png'; }
 
+const IMG_EXPIRY = 7 * 24 * 3600;   // gambar arsip otomatis terhapus setelah 7 hari
+const TASK_EXPIRY = 48 * 3600;      // status task cukup 48 jam (polling selesai jauh sebelumnya)
+
 async function storeImageBuf(buf, ct, env) {
   if (!env || !env.IMAGES || !buf || !buf.byteLength) return null;
   if (buf.byteLength > 20 * 1024 * 1024) return null;
   const name = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)) + '.' + extFromCt(ct);
   try {
-    await env.IMAGES.put(name, buf);
+    await env.IMAGES.put(name, buf, { expirationTtl: IMG_EXPIRY });
     return '/img/' + name;
   } catch {
     return null;
@@ -818,7 +821,7 @@ async function selfhostCreateJob(body, env) {
     await env.IMAGES.put('task:' + taskId, JSON.stringify({
       status: 'RUNNING', progress: 0, startedAt: Date.now(),
       endpoint: base, gatewayTask,
-    })).catch(() => {});
+    }), { expirationTtl: TASK_EXPIRY }).catch(() => {});
   }
   return { taskId, images: [] };
 }
@@ -844,14 +847,14 @@ async function selfhostGetTask(jobId, env) {
     // Endpoint tidak terjangkau lama -> biar tidak polling selamanya.
     if (Date.now() - (rec.startedAt || 0) > 6 * 60 * 1000) {
       const err = 'Endpoint self-host tidak terjangkau (sesi Kaggle mungkin mati) — restart notebook lalu update URL di Pengaturan.';
-      await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify({ status: 'FAILED', error: err })).catch(() => {});
+      await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify({ status: 'FAILED', error: err }), { expirationTtl: TASK_EXPIRY }).catch(() => {});
       return { status: 'FAILED', error: err };
     }
     return { status: 'RUNNING', progress: 0 };
   }
   if (d.status === 'error') {
     const err = String(d.error || 'Gateway error');
-    await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify({ status: 'FAILED', error: err })).catch(() => {});
+    await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify({ status: 'FAILED', error: err }), { expirationTtl: TASK_EXPIRY }).catch(() => {});
     return { status: 'FAILED', error: err };
   }
   // completed -> arsip base64 ke KV.
@@ -865,7 +868,7 @@ async function selfhostGetTask(jobId, env) {
   }
   const images = urls.filter(Boolean);
   const final = { status: 'SUCCESS', progress: 100, images };
-  await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify(final)).catch(() => {});
+  await env.IMAGES.put('task:selfhost:' + jobId, JSON.stringify(final), { expirationTtl: TASK_EXPIRY }).catch(() => {});
   return final;
 }
 
@@ -921,7 +924,7 @@ async function pollinationsCreateJob(body, env, apiKey) {
 
   const taskId = 'pollinations:' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2));
   if (env && env.IMAGES) {
-    await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images: [img] })).catch(() => {});
+    await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images: [img] }), { expirationTtl: TASK_EXPIRY }).catch(() => {});
   }
   return { taskId, images: [img] };
 }
@@ -1514,6 +1517,8 @@ export async function onRequest(context) {
             name: k.name,
             size: (k.metadata && k.metadata.size) || 0,
             url: '/img/' + k.name,
+            // expiration (epoch detik) — KV set otomatis dari expirationTtl saat put
+            expiresAt: k.expiration ? k.expiration * 1000 : null,
           };
         });
       return json({ ok: true, pin: true, images, totalKeys: keys.length, imageCount: images.length });
