@@ -4088,7 +4088,9 @@ function chatWd14Dlg(){
   d.className='fixed inset-0 z-[95] hidden items-center justify-center bg-black/60 p-4';
   d.innerHTML='<div class="w-full max-w-lg max-h-[92vh] overflow-y-auto hidebar rounded-2xl border bd bg-[#161b22] p-4 shadow-2xl">'
     +'<div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold flex items-center gap-2"><i data-icon="magic-wand" class="w-4 h-4 text-[#27D4CD]"></i>Deteksi Prompt (WD14)</span>'
-    +'<button id="wd14-x" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d]"><i data-icon="x" class="w-4 h-4"></i></button></div>'
+    +'<div class="flex items-center gap-1.5">'
+    +'<button id="wd14-hist-btn" class="gfil text-[10px] px-2 py-1 flex items-center gap-1"><i data-icon="clock" class="w-3 h-3"></i>Riwayat</button>'
+    +'<button id="wd14-x" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d]"><i data-icon="x" class="w-4 h-4"></i></button></div></div>'
     +'<div id="wd14-img" class="relative rounded-xl border-2 border-dashed bd bg-[#1c2128] overflow-hidden cursor-pointer select-none" style="min-height:140px">'
     +'<img id="wd14-preview" class="w-full max-h-56 object-contain hidden" alt="preview"/>'
     +'<div id="wd14-drop" class="flex flex-col items-center justify-center gap-1 p-6 text-center"><i data-icon="image" class="w-7 h-7 text-neutral-500"></i><span class="text-xs text-neutral-400">Drop Image Here</span><span class="text-[10px] text-neutral-600">- or - klik untuk pilih / ambil foto</span></div>'
@@ -4112,6 +4114,7 @@ function chatWd14Dlg(){
     +'<button data-wd14-fmt="conf" class="wd14-fmt gfil">+ Confidence</button>'
     +'<button data-wd14-fmt="free" class="wd14-fmt gfil">Teks Bebas</button>'
     +'</div>'
+    +'<div id="wd14-hist" class="hidden mt-2 space-y-2"></div>'
     +'<div id="wd14-status" class="text-[11px] text-neutral-400 mt-3 mb-1"></div>'
     +'<div class="h-1.5 rounded-full bg-[#21262d] mb-2 overflow-hidden"><div id="wd14-prog" class="h-full w-0 bg-gradient-to-r from-[#1FC7CE] to-[#2E7CF0] transition-all"></div></div>'
     +'<textarea id="wd14-tags" class="inp w-full text-xs h-32 resize-y" placeholder="Tag hasil deteksi akan muncul di sini..."></textarea>'
@@ -4164,6 +4167,46 @@ function chatWd14Dlg(){
       chatWd14RenderTags(); chatWd14Save();
     });
   });
+  var histBtn=d.querySelector('#wd14-hist-btn');
+  histBtn.addEventListener('click', function(){
+    var box=d.querySelector('#wd14-hist');
+    var open=box.classList.toggle('hidden');
+    histBtn.innerHTML=open?'<i data-icon="clock" class="w-3 h-3"></i>Riwayat':'<i data-icon="x" class="w-3 h-3"></i>Tutup';
+    if(!open) wd14HistRender();
+  });
+  d.querySelector('#wd14-hist').addEventListener('click', function(e){
+    if(e.target.closest('#wd14-h-clear')){
+      localStorage.removeItem(WD14_HIST_KEY); wd14HistRender(); toast('Riwayat WD14 dihapus'); return;
+    }
+    var t=e.target.closest('[data-key]');
+    if(!t) return;
+    var key=t.dataset.key;
+    var h=wd14HistLoad();
+    var g=null;
+    for(var i=0;i<h.images.length;i++) if(h.images[i].key===key){ g=h.images[i]; break; }
+    if(!g) return;
+    if(t.classList.contains('wd14-h-del')){
+      h.images=h.images.filter(function(x){ return x.key!==key; });
+      wd14HistSave(h); wd14HistRender(); return;
+    }
+    if(t.classList.contains('wd14-h-use')){
+      var r=null;
+      for(var j=0;j<g.runs.length;j++) if(g.runs[j].model===t.dataset.model){ r=g.runs[j]; break; }
+      if(r){ d.querySelector('#wd14-tags').value=r.text; toast('Tag riwayat dipakai ✓'); }
+      return;
+    }
+    if(t.classList.contains('wd14-h-cmp')){ wd14CmpOpen(g); return; }
+  });
+  var cmp=document.createElement('div');
+  cmp.id='wd14-cmp';
+  cmp.className='fixed inset-0 z-[96] hidden items-center justify-center bg-black/60 p-4';
+  cmp.innerHTML='<div class="w-full max-w-2xl max-h-[85vh] overflow-y-auto hidebar rounded-2xl border bd bg-[#161b22] p-4">'
+    +'<div class="flex items-center justify-between mb-2"><span class="text-sm font-semibold flex items-center gap-2"><i data-icon="arrows-left-right" class="w-4 h-4 text-[#27D4CD]"></i>Bandingkan Deteksi</span>'
+    +'<button id="wd14-cmp-x" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d]"><i data-icon="x" class="w-4 h-4"></i></button></div>'
+    +'<div id="wd14-cmp-body" class="flex flex-col sm:flex-row gap-3"></div></div>';
+  document.body.appendChild(cmp);
+  cmp.querySelector('#wd14-cmp-x').addEventListener('click', function(){ cmp.classList.add('hidden'); cmp.classList.remove('flex'); });
+  cmp.addEventListener('click', function(e){ if(e.target===cmp){ cmp.classList.add('hidden'); cmp.classList.remove('flex'); } });
   d.querySelector('#wd14-tag').addEventListener('click', function(){ chatWd14TagNow(false); });
   d.querySelector('#wd14-copy').addEventListener('click', function(){
     var t=d.querySelector('#wd14-tags').value;
@@ -4208,6 +4251,7 @@ function chatWd14RenderTags(){
     keepConf: fmt==='conf' ? true : d.querySelector('#wd14-opt-conf').checked,
     desc: d.querySelector('#wd14-opt-desc').checked
   };
+  _wd14Last.opts=opts;
   var r=chatWd14ParseTags(_wd14Last.probs, _wd14Last.labels, opts);
   d.querySelector('#wd14-tags').value=r.tags.length? r.tags.join(', ') : '(tidak ada tag di atas ambang '+opts.threshold+' — coba turunkan threshold)';
   return r;
@@ -4230,6 +4274,7 @@ function chatWd14TagNow(){
           var name=state.session.outputNames[0];
           _wd14Last={ probs:Array.prototype.slice.call(out[name].data), labels:state.labels };
           var r=chatWd14RenderTags();
+          if(r) wd14HistAdd(model, r);
           st.innerHTML='Selesai — '+(r?r.tags.length:0)+' tag · rating: '+(r?r.rating:'')+' ('+(r?Math.round(r.ratingProb*100):0)+'%)';
           pr.style.width='100%';
         });
@@ -4239,6 +4284,99 @@ function chatWd14TagNow(){
       st.innerHTML='Gagal: '+String(err&&err.message||err).slice(0,140);
       pr.style.width='0%';
     });
+}
+/* ===== Riwayat deteksi WD14: simpan hasil per gambar (satu per model) untuk dibandingkan ===== */
+var WD14_HIST_KEY='vaia-wd14-history';
+function wd14HistLoad(){
+  try{ var h=JSON.parse(localStorage.getItem(WD14_HIST_KEY)||'null'); return h&&h.images?h:{images:[]}; }catch(e){ return {images:[]}; }
+}
+function wd14HistSave(h){ try{ localStorage.setItem(WD14_HIST_KEY, JSON.stringify(h)); }catch(e){} }
+function wd14Hash(s){
+  var h=2166136261;
+  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+  return (h>>>0).toString(16);
+}
+function wd14ThumbFromEl(){
+  var d=_wd14Dlg, prev=d&&d.querySelector('#wd14-preview');
+  if(!prev || !prev.complete || !prev.naturalWidth) return null;
+  try{
+    var c=document.createElement('canvas'), s=96, sc=Math.min(1,s/prev.naturalWidth,s/prev.naturalHeight);
+    c.width=Math.max(1,Math.round(prev.naturalWidth*sc)); c.height=Math.max(1,Math.round(prev.naturalHeight*sc));
+    c.getContext('2d').drawImage(prev,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',0.55);
+  }catch(e){ return null; }
+}
+function wd14HistAdd(model, r){
+  var d=_wd14Dlg, cur=_wd14Cur||{};
+  if(!cur.img || !r) return;
+  var key=wd14Hash(cur.img);
+  var h=wd14HistLoad();
+  var g=null;
+  for(var i=0;i<h.images.length;i++) if(h.images[i].key===key){ g=h.images[i]; break; }
+  var opts=_wd14Last&&_wd14Last.opts? _wd14Last.opts : {};
+  var entry={ model:model, ts:Date.now(), threshold:opts.threshold||0.5, text:r.tags.join(', '), rating:r.rating, ratingProb:r.ratingProb };
+  if(g){
+    g.runs=g.runs.filter(function(x){ return x.model!==model; });
+    g.runs.unshift(entry);
+    if(g.runs.length>4) g.runs.length=4;
+    g.ts=Date.now();
+  } else {
+    g={ key:key, thumb:wd14ThumbFromEl(), ts:Date.now(), runs:[entry] };
+    h.images.unshift(g);
+    if(h.images.length>12) h.images.length=12;
+  }
+  wd14HistSave(h);
+  if(d && !d.querySelector('#wd14-hist').classList.contains('hidden')) wd14HistRender();
+}
+function wd14HistFmt(ts){
+  try{
+    var dt=new Date(ts), p=function(x){ return (x<10?'0':'')+x; };
+    return dt.getDate()+'/'+(dt.getMonth()+1)+' '+p(dt.getHours())+':'+p(dt.getMinutes());
+  }catch(e){ return ''; }
+}
+function wd14HistRender(){
+  var d=_wd14Dlg; if(!d) return;
+  var box=d.querySelector('#wd14-hist');
+  var h=wd14HistLoad();
+  if(!h.images.length){ box.innerHTML='<p class="text-[11px] text-neutral-500 text-center py-3">Belum ada riwayat deteksi.</p>'; return; }
+  var html='';
+  h.images.forEach(function(g){
+    html+='<div class="border bd rounded-xl bg-[#1c2128] p-2.5">'
+      +'<div class="flex items-center gap-2 mb-1.5">'
+      +(g.thumb?'<img src="'+g.thumb+'" class="w-9 h-9 rounded object-cover border bd shrink-0"/>':'<span class="w-9 h-9 rounded border bd flex items-center justify-center text-neutral-600 shrink-0"><i data-icon="image" class="w-4 h-4"></i></span>')
+      +'<div class="min-w-0 flex-1"><div class="text-[11px] font-medium">'+g.runs.length+' deteksi</div><div class="text-[10px] text-neutral-500">'+wd14HistFmt(g.ts)+'</div></div>'
+      +'<button class="wd14-h-del gfil text-[10px] px-2 py-0.5" data-key="'+g.key+'">Hapus</button>'
+      +'</div>';
+    g.runs.forEach(function(r){
+      var m=WD14_MODELS[r.model]?WD14_MODELS[r.model].label.replace(' (v2)',''):r.model;
+      html+='<div class="flex items-start gap-2 border-t bd pt-1.5 mt-1.5">'
+        +'<span class="shrink-0 mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded '+(r.model==='vit'?'bg-[#2E7CF0]/20 text-[#7FA8F5]':'bg-[#1FC7CE]/20 text-[#27D4CD]')+'">'+m+'</span>'
+        +'<div class="min-w-0 flex-1"><div class="text-[10px] text-neutral-400 truncate" title="'+esc(r.text)+'">'+esc(r.text.slice(0,110))+'</div>'
+        +'<div class="text-[9px] text-neutral-600 mt-0.5">thr '+r.threshold+' · '+(r.rating||'')+' '+Math.round((r.ratingProb||0)*100)+'%</div></div>'
+        +'<button class="wd14-h-use gfil text-[10px] px-2 py-0.5 shrink-0" data-key="'+g.key+'" data-model="'+r.model+'">Pakai</button>'
+        +'</div>';
+    });
+    if(g.runs.length>=2) html+='<button class="wd14-h-cmp gfil text-[10px] px-2 py-1 mt-1.5 w-full text-center" data-key="'+g.key+'">Bandingkan antar model</button>';
+    html+='</div>';
+  });
+  box.innerHTML=html+'<button id="wd14-h-clear" class="gfil w-full text-[10px] px-2 py-1.5 mt-2 text-center">Hapus semua riwayat</button>';
+}
+function wd14CmpOpen(g){
+  var cmp=document.getElementById('wd14-cmp');
+  if(!cmp) return;
+  var cols='';
+  ['convnext','vit'].forEach(function(m){
+    var r=null;
+    for(var j=0;j<g.runs.length;j++) if(g.runs[j].model===m){ r=g.runs[j]; break; }
+    if(!r) return;
+    cols+='<div class="flex-1 min-w-0 border bd rounded-xl bg-[#1c2128] p-2.5">'
+      +'<div class="text-[10px] font-bold mb-1 '+(m==='vit'?'text-[#7FA8F5]':'text-[#27D4CD]')+'">'+WD14_MODELS[m].label+' · thr '+r.threshold+'</div>'
+      +'<div class="text-[11px] text-neutral-300 leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto hidebar">'+esc(r.text)+'</div>'
+      +'<div class="text-[9px] text-neutral-500 mt-1">rating: '+(r.rating||'')+' '+Math.round((r.ratingProb||0)*100)+'%</div>'
+      +'</div>';
+  });
+  cmp.querySelector('#wd14-cmp-body').innerHTML=cols;
+  cmp.classList.remove('hidden'); cmp.classList.add('flex');
 }
 function chatWd14Run(){
   var img=null;

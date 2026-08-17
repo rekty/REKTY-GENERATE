@@ -47,6 +47,22 @@ HuggingFace, lalu tempel URL `https://huggingface.co/<user>/<repo>/resolve/main/
 di kartu LoRA. (Kaggle tidak bisa: download-nya butuh login, bukan URL publik.)
 Base model disediakan provider (mis. Krea 2 Turbo untuk LoRA base Krea 2).
 
+## WD14 Tagger 🔮 (deteksi prompt dari gambar)
+
+Fitur **image → booru tags** berjalan 100% di browser (ONNX Runtime Web/WASM,
+tanpa server & tanpa API key): menu `+` di VAIA Chat → **Deteksi Prompt (WD14)**,
+dan tombol yang sama di tab **Img2Img** (tag foto referensi jadi prompt).
+
+- 2 model pilihan (**wd14-convnext** / **wd14-vit**, versi fp16 ~190 MB),
+  slider threshold, opsi format (spasi/escape/confidence/urutan), format salin
+  (A1111 kompak / + Confidence / Teks Bebas), pengaturan tersimpan di
+  localStorage, dan riwayat hasil per gambar dengan **perbandingan antar model**.
+- Model fp16 (kualitas ≈ fp32, setengah ukuran) + `selected_tags.csv`:
+  **[`rekty1988/WD14_TAGGER`](https://huggingface.co/rekty1988/WD14_TAGGER)**
+  (turunan `SmilingWolf/wd-v1-4-convnextv2-tagger-v2` & `wd-v1-4-vit-tagger-v2`).
+
+Panduan lengkap: **[`wd14-tagger/README.md`](wd14-tagger/README.md)**.
+
 ## Jalan lokal (tanpa API key)
 
 ```bash
@@ -75,4 +91,5 @@ firebase.json           # config Firebase hosting + rewrite /api/**
 scripts/dev_server.py   # server lokal + mock provider
 scripts/test_backend.mjs# tes integrasi backend
 DEPLOY.md               # panduan deploy & API key
+wd14-tagger/README.md   # dokumen WD14 Tagger (deteksi prompt dari gambar)
 ```
