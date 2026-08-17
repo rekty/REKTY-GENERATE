@@ -815,7 +815,7 @@ input[type=range]{cursor:pointer}
           </div>
           <div id="chat-attach-bar" class="hidden flex flex-wrap gap-1.5 px-1 pb-1.5"></div>
           <div id="chat-plugins-bar" class="hidden flex flex-wrap gap-1.5 px-1 pb-1.5"></div>
-          <div class="flex items-end gap-2 rounded-2xl border bd bg-[#161b22] px-3 py-2">
+          <div id="chat-inputbar" class="flex items-end gap-2 rounded-2xl border bd bg-[#161b22] px-3 py-2">
             <button id="chat-attach" class="w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Lampirkan file atau gambar"><i data-icon="plus" class="w-4 h-4"></i></button>
             <textarea id="chat-input" rows="1" class="flex-1 bg-transparent border-0 outline-none resize-none text-sm text-neutral-100 placeholder-neutral-600 max-h-40 leading-relaxed py-1.5" placeholder="Tulis pesan ke VAIA Chat... (Enter untuk kirim, Shift+Enter baris baru)"></textarea>
             <button id="chat-send" class="btn btn-turq h-9 w-9 px-0 shrink-0 rounded-xl" title="Kirim"><i data-icon="paper-plane-tilt" class="w-4 h-4"></i></button>
@@ -3397,9 +3397,24 @@ $('btn-history').addEventListener('click',function(){ $('rightPan').classList.to
     if(shell&&shell.scrollHeight>shell.clientHeight+50) return shell;
     return document.scrollingElement;
   }
+  var chatInp=document.getElementById('chat-input');
+  var chatInpBar=document.getElementById('chat-inputbar');
+  var chatFocused=false;
   function updTopBtn(){
     var s=scroller();
-    topBtn.style.display=(s&&s.scrollTop>300)?'flex':'none';
+    var show=!chatFocused&&!!(s&&s.scrollTop>300);
+    if(show){
+      // Di tab Chat: posisikan tombol PERSIS di atas kolom input (tidak menutupi
+      // area ketik/paste). Dinamis — ikut tinggi kolom input + keyboard.
+      if(chatInpBar&&chatInpBar.getBoundingClientRect){
+        var r=chatInpBar.getBoundingClientRect();
+        var gap=window.innerHeight-r.top+12;
+        if(gap>4) topBtn.style.bottom=gap+'px';
+      }
+    } else {
+      topBtn.style.bottom='';
+    }
+    topBtn.style.display=show?'flex':'none';
   }
   ['scroll','resize'].forEach(function(ev){
     if(chatmsgs) chatmsgs.addEventListener(ev,updTopBtn,{passive:true});
@@ -3407,6 +3422,13 @@ $('btn-history').addEventListener('click',function(){ $('rightPan').classList.to
     if(shell) shell.addEventListener(ev,updTopBtn,{passive:true});
     window.addEventListener(ev,updTopBtn,{passive:true});
   });
+  // Saat kolom input difokus (mau ketik/paste) -> tombol panah disembunyikan
+  // supaya TIDAK bentrok dengan area paste/kirim. Flag dipakai di updTopBtn
+  // supaya event scroll/resize tidak memunculkannya lagi selama mengetik.
+  if(chatInp){
+    chatInp.addEventListener('focus',function(){ chatFocused=true; topBtn.style.display='none'; });
+    chatInp.addEventListener('blur',function(){ chatFocused=false; updTopBtn(); });
+  }
   topBtn.addEventListener('click',function(){
     var s=scroller(); if(s) s.scrollTop=0;
     if(chatmsgs) chatmsgs.scrollTop=0;
