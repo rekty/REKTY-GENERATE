@@ -230,8 +230,8 @@ globalThis.fetch = async (url, opts) => {
       assert.strictEqual(b.messages[1].content, 'seorang wanita di taman bunga', 'refine isi prompt');
       return jsonResp({ choices: [{ message: { content: 'A beautiful woman standing in a vibrant flower garden, golden hour lighting, shallow depth of field, ultra detailed, masterpiece.' } }] });
     }
-    // VAIA Chat
-    assert.strictEqual(b.model, 'gpt-5.6-luna', 'chat model gpt-5.6-luna');
+    // VAIA Chat (default openai-fast; gpt-5.6-luna bila dipilih user)
+    assert.ok(b.model === 'gpt-5.6-luna' || b.model === 'openai-fast', 'chat model valid: ' + b.model);
     assert.ok(Array.isArray(b.messages) && b.messages.length >= 1, 'chat ada messages');
     assert.strictEqual(b.messages[0].role, 'user', 'chat pesan user');
     if (b.stream) {
@@ -667,6 +667,12 @@ console.log('VAIA Chat (Pollinations text LLM):');
   assert.strictEqual(ch.data.text, 'Halo! Ada yang bisa saya bantu?', 'chat hasil');
   assert.strictEqual(ch.data.model, 'gpt-5.6-luna', 'chat model gpt-5.6-luna');
   ok('chat + key -> gpt-5.6-luna via gen');
+
+  // Tanpa model: default openai-fast (stabil)
+  const chDef = await run('/api/chat', { messages: [{ role: 'user', content: 'halo' }] }, { POLLINATIONS_API_KEY: 'sk_env_fallback' });
+  assert.strictEqual(chDef.status, 200);
+  assert.strictEqual(chDef.data.model, 'openai-fast', 'default model openai-fast: ' + JSON.stringify(chDef.data).slice(0, 120));
+  ok('chat tanpa model -> default openai-fast (stabil)');
 
   // Pesan kosong -> 400
   const chEmpty = await run('/api/chat', { messages: [] }, { POLLINATIONS_API_KEY: 'sk_env_fallback' });

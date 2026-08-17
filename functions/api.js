@@ -1116,7 +1116,10 @@ export async function onRequest(context) {
       const body = safeJson(await request.text());
       const msgs = Array.isArray(body && body.messages) ? body.messages : [];
       if (!msgs.length) return json({ error: 'Pesan kosong' }, 400);
-      const model = String((body && body.model) || 'gpt-5.6-luna').trim() || 'gpt-5.6-luna';
+      // Model chat: default openai-fast (stabil). gpt-5.6-luna hanya bila
+      // user pilih (butuh saldo pollen / key berizin). Model lain -> openai-fast.
+      let model = String((body && body.model) || 'openai-fast').trim() || 'openai-fast';
+      if (model !== 'openai-fast' && model !== 'gpt-5.6-luna') model = 'openai-fast';
       const wantStream = !!(body && body.stream);
       const chatMode = (body && body.mode === 'setia') ? 'setia' : 'kreatif';
       const MODE_PROMPT = chatMode === 'setia'

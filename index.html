@@ -267,6 +267,8 @@ body.chat-mode .chat-marquee{margin-top:.75rem;padding-top:.5rem;border-top:1px 
   /* Tasks: form disembunyikan, tampil daftar task */
   body.mob-tasks #promptbar,body.mob-tasks #leftpan,body.mob-tasks #img2img-card,body.mob-tasks #tab-placeholder,body.mob-tasks #rightPan,body.mob-tasks #mobbar,body.mob-tasks #btn-history,body.mob-tasks #submitcard{display:none!important}
   body.mob-tasks #mobtasks{display:flex!important}
+  /* Chat-mode harus menang atas Tasks (spesifisitas lebih tinggi) */
+  body.chat-mode #mobtasks,body.chat-mode.mob-tasks #mobtasks{display:none!important}
   /* Tombol Generate tunggal di bottom bar; sembunyikan yang di prompt bar */
   #promptbar #btn-go,#promptbar #ncount{display:none}
   /* Mobile: kotak prompt diperbesar dengan pinch 2 jari (bukan handle pojok) */
@@ -743,9 +745,11 @@ input[type=range]{cursor:pointer}
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
-            <span class="hidden sm:inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-0.5 text-[10px] text-neutral-400" title="Model chat"><i data-icon="lightning" class="w-3 h-3 text-[#8b5cf6]"></i>Vaia Rekty</span>
+            <select id="chat-model" class="hidden sm:inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-1 text-[10px] text-neutral-300 outline-none cursor-pointer hover:border-[#8b5cf6] transition-colors" title="Model chat: openai-fast (stabil, default) atau gpt-5.6-luna (lebih pintar, butuh saldo pollen)"><option value="openai-fast">⚡ openai-fast · stabil</option><option value="gpt-5.6-luna">🧠 gpt-5.6-luna</option></select>
             <button id="chat-mode" class="h-7 rounded-full border px-2 inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#6F5DFF] transition-colors" title="Mode variasi prompt gambar: Kreatif (variasi liar) / Setia (variasi dekat)"><i data-icon="sparkle" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-mode-txt">Kreatif</span></button>
+            <button id="chat-stream" class="hidden sm:inline-flex h-7 rounded-full border px-2 inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#27D4CD] transition-colors" title="Mode respons: Instan (streaming) / Lengkap (non-stream)"><i data-icon="lightning" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-stream-txt">Instan</span></button>
             <button id="chat-temp" class="w-7 h-7 rounded-lg border bd flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Chat sementara - tidak disimpan di riwayat"><i data-icon="incognito" class="w-4 h-4"></i></button>
+            <button id="chat-sound" class="w-7 h-7 rounded-lg border bd flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Suara notifikasi chat: nyala/mati">🔊</button>
             <span id="chat-balance" class="inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-0.5 text-[10px] text-neutral-400 cursor-pointer hover:text-white hover:border-[#6F5DFF] transition-colors" title="Saldo pollen — klik untuk kumpulkan lewat quest"><i data-icon="coin" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-balance-txt">-</span></span>
             <button id="chat-clear" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Bersihkan percakapan"><i data-icon="trash" class="w-4 h-4"></i></button>
           </div>
@@ -2473,17 +2477,56 @@ $('done-pop').addEventListener('click',function(){
   var mw=$('mainwrap'); if(mw) mw.scrollTo({top:0,behavior:'smooth'});
   var pop=$('done-pop'); if(pop){ pop.classList.add('hidden'); pop.classList.remove('flex','gpop-in','gpop-out'); }
 });
+function playChatChime(){
+  // Nada lembut saat jawaban chat selesai (stream & non-stream)
+  if(!_soundOn) return;
+  ensureAudio();
+  if(!_audioCtx) return;
+  try{
+    var t=_audioCtx.currentTime;
+    [[587,0],[784,0.14]].forEach(function(note){
+      var o=_audioCtx.createOscillator(), g=_audioCtx.createGain();
+      o.type='sine'; o.frequency.value=note[0];
+      g.gain.setValueAtTime(0.0001,t+note[1]);
+      g.gain.exponentialRampToValueAtTime(0.09,t+note[1]+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+note[1]+0.3);
+      o.connect(g); g.connect(_audioCtx.destination);
+      o.start(t+note[1]); o.stop(t+note[1]+0.35);
+    });
+  }catch(e){}
+}
+function playRetryChime(){
+  // Nada "pulih" naik 3 nada saat retry otomatis akhirnya berhasil
+  if(!_soundOn) return;
+  ensureAudio();
+  if(!_audioCtx) return;
+  try{
+    var t=_audioCtx.currentTime;
+    [[440,0],[587,0.18],[784,0.36]].forEach(function(note){
+      var o=_audioCtx.createOscillator(), g=_audioCtx.createGain();
+      o.type='sine'; o.frequency.value=note[0];
+      g.gain.setValueAtTime(0.0001,t+note[1]);
+      g.gain.exponentialRampToValueAtTime(0.09,t+note[1]+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+note[1]+0.28);
+      o.connect(g); g.connect(_audioCtx.destination);
+      o.start(t+note[1]); o.stop(t+note[1]+0.33);
+    });
+  }catch(e){}
+}
 function syncSoundBtn(){
   var b=$('done-sound'); if(b) b.textContent=_soundOn?'🔊':'🔇';
+  var c=$('chat-sound'); if(c) c.textContent=_soundOn?'🔊':'🔇';
 }
-syncSoundBtn();
-$('done-sound').addEventListener('click',function(ev){
-  ev.stopPropagation();
+function toggleSound(ev){
+  if(ev&&ev.stopPropagation) ev.stopPropagation();
   _soundOn=!_soundOn;
   try{ localStorage.setItem('rekty.sound',_soundOn?'1':'0'); }catch(e){}
   syncSoundBtn();
   if(_soundOn) playDoneChime(); // preview suara saat diaktifkan
-});
+}
+syncSoundBtn();
+$('done-sound').addEventListener('click',toggleSound);
+(function(){ var b=$('chat-sound'); if(b) b.addEventListener('click',toggleSound); })();
 
 /* --- progress overlay --- */
 var _pollStop=false;
@@ -3204,6 +3247,14 @@ function renderCanvas(){
   $('empty').style.display = (hideMain || state.results.length>0) ? 'none' : '';
   $('grid').style.display = hideMain?'none':'';
   document.body.classList.toggle('chat-mode', isChat);
+  // Mobile: keluar dari mode Tasks saat pindah ke Chat — cegah daftar gambar
+  // hasil generate (mobtasks) tetap tampil di bawah panel chat (CSS duel .mob-tasks vs .chat-mode)
+  if(isChat){
+    document.body.classList.remove('mob-tasks');
+    var ws=$('tab-workspace'), ts=$('tab-tasks');
+    if(ws) ws.classList.add('sel');
+    if(ts) ts.classList.remove('sel');
+  }
   $('tab-placeholder').classList.toggle('hidden', !hideMain || isChat);
   $('tab-placeholder').classList.toggle('flex', hideMain && !isChat);
   var chat=$('chat-panel');
@@ -3797,7 +3848,44 @@ function remixResult(r){
 /* ============================ VAIA CHAT (ala ChatGPT) ============================ */
 var SESSIONS_KEY='vaia_chat_sessions_v1';
 var SID_KEY='vaia_chat_sid_v1';
-var chatState={ msgs:[], busy:false, rendered:false, sid:null, mode:'kreatif' };
+var chatState={ msgs:[], busy:false, rendered:false, sid:null, mode:'kreatif', model:'openai-fast', stream:true };
+function chatModelLoad(){
+  try{ var m=localStorage.getItem('vaia-chat-model'); if(m==='openai-fast'||m==='gpt-5.6-luna') chatState.model=m; }catch(e){}
+}
+function chatModelApply(){
+  var el=$('chat-model'); if(!el) return;
+  el.value=chatState.model||'openai-fast';
+}
+function chatModelToggle(){
+  var el=$('chat-model'); if(!el) return;
+  chatState.model=el.value||'openai-fast';
+  try{ localStorage.setItem('vaia-chat-model', chatState.model); }catch(e){}
+  toast('Model chat: '+(chatState.model==='gpt-5.6-luna'?'gpt-5.6-luna (lebih pintar, butuh saldo)':'openai-fast (stabil)'));
+}
+(function(){ var el=$('chat-model'); if(el) el.addEventListener('change', chatModelToggle); chatModelLoad(); chatModelApply(); })();
+function chatStreamLoad(){
+  try{ var s=localStorage.getItem('vaia-chat-stream'); if(s!==null) chatState.stream = s==='1'; }catch(e){}
+}
+function chatStreamApply(){
+  var el=$('chat-stream'), tx=$('chat-stream-txt');
+  if(!el||!tx) return;
+  var on=chatState.stream!==false;
+  tx.textContent = on ? 'Instan' : 'Lengkap';
+  el.innerHTML = on
+    ? '<i data-icon="lightning" class="w-3 h-3 text-[#27D4CD]"></i>'
+    : '<i data-icon="arrows-clockwise" class="w-3 h-3 text-[#8b5cf6]"></i>';
+  el.appendChild(tx);
+  el.style.borderColor = on ? 'rgba(39,212,205,.6)' : 'rgba(139,92,246,.6)';
+  el.style.background = on ? 'rgba(39,212,205,.08)' : 'rgba(139,92,246,.08)';
+  el.title = on ? 'Mode Instan (streaming) - klik untuk non-stream' : 'Mode Lengkap (non-stream) - klik untuk streaming';
+}
+function chatStreamToggle(){
+  chatState.stream = chatState.stream===false ? true : false;
+  try{ localStorage.setItem('vaia-chat-stream', chatState.stream===false ? '0' : '1'); }catch(e){}
+  chatStreamApply();
+  toast('Respons chat: '+(chatState.stream===false ? 'Lengkap (non-stream - jawaban penuh sekaligus, lebih stabil)' : 'Instan (streaming - muncul bertahap)'));
+}
+(function(){ var el=$('chat-stream'); if(el) el.addEventListener('click', chatStreamToggle); chatStreamLoad(); chatStreamApply(); })();
 function chatModeLoad(){
   try{ var m=localStorage.getItem('vaia-chat-mode'); if(m==='kreatif'||m==='setia') chatState.mode=m; }catch(e){}
 }
@@ -5031,25 +5119,92 @@ function chatSend(){
 }
 function chatSendText(txt){
   if(chatState.busy) return;
+  ensureAudio(); // buka kunci AudioContext lewat gestur kirim -> suara notifikasi boleh berbunyi
   chatState.msgs.push({role:'user', content:txt});
   chatSave(); chatRender();
   chatState.busy=true; chatState.streaming=true; chatState.abort=null;
   setChatBusy(true);
   chatTyping(true);
   var msgs=chatState.msgs.map(function(m){ return {role:m.role, content:m.content}; });
-  var ac=new AbortController(); chatState.abort=ac;
-  var done=function(ok, content, aborted){
+  // Retry otomatis: saat server AI sibuk/gagal, coba ulang sampai 3x dengan jeda 4 dtk,
+  // tampilkan status "coba lagi (n/3)". Gagal semua -> pesan error + tombol "Coba lagi".
+  var MAX_RETRY=3, RETRY_DELAY=4000;
+  var attempt=0, stopped=false, retried=false, retryEl=null, curBubble=null, ac=new AbortController();
+  chatState.abort=ac;
+  ac.signal.addEventListener('abort', function(){ stopped=true; });
+  function clearBusy(){
     chatTyping(false);
     chatState.busy=false; chatState.streaming=false; chatState.abort=null;
     setChatBusy(false);
+  }
+  var done=function(ok, content, aborted){
+    clearBusy();
     if(aborted){
       if(content && content.trim()){ chatState.msgs.push({role:'assistant', content:content}); }
       chatSave(); chatRender();
       return;
     }
-    if(ok && content){ chatState.msgs.push({role:'assistant', content:content}); chatSave(); chatRender(); }
+    if(ok && content){ if(retried){ playRetryChime(); } else { playChatChime(); } chatState.msgs.push({role:'assistant', content:content}); chatSave(); chatRender(); }
     else chatError(content || 'Respons kosong dari server.');
   };
+  function rmRetry(){ if(retryEl&&retryEl.parentNode){ retryEl.parentNode.removeChild(retryEl); } retryEl=null; }
+  function showRetry(){
+    rmRetry();
+    var box=$('chat-msgs'); if(!box) return;
+    retryEl=document.createElement('div');
+    retryEl.className='flex justify-start chat-fade pl-1';
+    retryEl.innerHTML='<div class="text-[11px] text-[#e5a50a] inline-flex items-center gap-1.5"><i data-icon="circle-notch" class="w-3 h-3 animate-spin"></i>Server AI sibuk — coba lagi ('+attempt+'/'+MAX_RETRY+')…</div>';
+    box.appendChild(retryEl); chatScrollBottom();
+  }
+  function chatErrorRetry(msg){
+    var box=$('chat-msgs'); if(!box) return;
+    var row=document.createElement('div');
+    row.className='flex justify-start chat-fade';
+    var b=document.createElement('div');
+    b.className='chat-msg chat-bubble-ai text-[12px] text-[#f87171] px-3 py-2';
+    b.innerHTML=chatMarkdown('⚠️ '+msg);
+    row.appendChild(b);
+    var bt=document.createElement('button');
+    bt.className='ml-1 inline-flex items-center gap-1.5 text-[11px] text-neutral-300 hover:text-white hover:bg-[#1c2128] border bd rounded-lg px-2.5 py-1.5 transition-colors';
+    bt.innerHTML='<i data-icon="arrows-clockwise" class="w-3.5 h-3.5"></i>Coba lagi';
+    bt.addEventListener('click', function(){
+      row.remove(); attempt=0; retried=false;
+      chatState.busy=true; chatState.streaming=true;
+      setChatBusy(true); chatTyping(true);
+      start();
+    });
+    row.appendChild(bt);
+    box.appendChild(row); chatScrollBottom();
+  }
+  function fail(msg, partial, retryable){
+    if(partial && partial.trim()){
+      // Sudah ada konten ter-stream: simpan sebagian, jangan retry otomatis (hindari dobel)
+      chatState.msgs.push({role:'assistant', content:partial});
+      chatSave(); chatRender();
+      clearBusy();
+      chatErrorRetry(msg);
+      return;
+    }
+    if(curBubble && curBubble.parentNode){ curBubble.parentNode.removeChild(curBubble); curBubble=null; }
+    if(retryable!==false && attempt<MAX_RETRY && !stopped){
+      attempt++; retried=true;
+      showRetry();
+      setTimeout(function(){
+        if(stopped){ rmRetry(); clearBusy(); return; }
+        start();
+      }, RETRY_DELAY);
+    } else {
+      rmRetry(); clearBusy();
+      chatErrorRetry(msg);
+    }
+  }
+  function start(){
+    if(stopped) return;
+    rmRetry();
+    ac=new AbortController(); chatState.abort=ac;
+    ac.signal.addEventListener('abort', function(){ stopped=true; });
+    stream();
+  }
   function stream(){
     // Kirim x-session (BYOP) + x-api-key supaya worker memakai key akun user
     // (key app pk_ ditolak gateway untuk chat — tanpa session -> 522/504).
@@ -5058,7 +5213,7 @@ function chatSendText(txt){
     if(typeof buildApiKey==='function') hdrs['x-api-key']=buildApiKey();
     return fetch('/api/chat',{
       method:'POST', headers:hdrs,
-      body:JSON.stringify({ messages: msgs, model:'gpt-5.6-luna', stream:true, mode: chatState.mode }),
+      body:JSON.stringify({ messages: msgs, model: chatState.model||'openai-fast', stream: chatState.stream!==false, mode: chatState.mode }),
       signal: ac.signal
     }).then(function(res){
       if(!res.ok){
@@ -5067,13 +5222,23 @@ function chatSendText(txt){
           if(!j&&(res.status===522||res.status===504||res.status===524||res.status===529)){
             msg='Server AI sedang sibuk (HTTP '+res.status+'). Tunggu sebentar lalu coba lagi — atau muat ulang halaman.';
           }
-          done(false, msg);
+          fail(msg, '', (res.status===429||res.status>=500));
         });
       }
+      var ct=(res.headers&&res.headers.get)?(res.headers.get('content-type')||''):'';
+      // Non-stream (JSON): backend /api/chat dengan stream:false -> {ok,text}.
+      // Jangan masuk ke jalur SSE — JSON akan disalah-parse sebagai baris "data:".
+      if(ct.indexOf('text/event-stream')<0){
+        return res.json().then(function(j){
+          if(j&&j.ok){ done(true, j.text); }
+          else { fail((j&&j.error)||'Chat gagal', '', true); }
+        }, function(){ fail('Respons tidak valid dari server.', '', true); });
+      }
       var reader=res.body && res.body.getReader ? res.body.getReader() : null;
-      if(!reader){ return res.json().then(function(j){ done(!!(j&&j.ok), (j&&j.ok)?j.text:((j&&j.error)||'Chat gagal')); }); }
+      if(!reader){ return res.json().then(function(j){ if(j&&j.ok){ done(true, j.text); } else { fail((j&&j.error)||'Chat gagal', '', true); } }); }
       var dec=new TextDecoder(), buf='', acc='';
       var bubble=chatBubble('ai','',false);
+      curBubble=bubble;
       function pump(){
         return reader.read().then(function(r){
           if(r.done) return;
@@ -5093,10 +5258,10 @@ function chatSendText(txt){
           return pump();
         });
       }
-      return pump().then(function(){ done(true, acc); }, function(err){ if(err&&err.name==='AbortError'){ done(false, acc, true); } else done(false,'Koneksi terputus saat streaming.'); });
-    }).catch(function(err){ if(err&&err.name==='AbortError'){ done(false, '', true); } else done(false,'Tidak dapat terhubung ke server chat.'); });
+      return pump().then(function(){ done(true, acc); }, function(err){ if(err&&err.name==='AbortError'){ done(false, acc, true); } else fail('Koneksi terputus saat streaming.', acc, true); });
+    }).catch(function(err){ if(err&&err.name==='AbortError'){ done(false, '', true); } else fail('Tidak dapat terhubung ke server chat.', '', true); });
   }
-  stream();
+  start();
 }
 (function(){
   var inp=$('chat-input'), snd=$('chat-send'), clr=$('chat-clear');

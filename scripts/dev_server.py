@@ -34,11 +34,11 @@ _lock = threading.Lock()
 _oauth = {}
 OAUTH_AUTHORIZE = 'https://enter.pollinations.ai/authorize'
 OAUTH_TOKEN = 'https://enter.pollinations.ai/api/oauth/token'
-# client_id (pk_*) TIDAK di-hardcode di sini - baca dari env saja.
-# Set env POLLINATIONS_APP_KEY saat menjalankan dev server lokal:
-#   POLLINATIONS_APP_KEY=pk_... python scripts/dev_server.py
-# (di production key hidup sebagai secret Cloudflare, hanya dibaca worker.)
-OAUTH_CLIENT = os.environ.get('POLLINATIONS_APP_KEY') or ''
+# client_id (pk_*) App Key Pollinations. Di production key hidup sebagai secret
+# Cloudflare (env POLLINATIONS_APP_KEY); di dev pakai fallback key publik yang sama
+# dengan yang production serve lewat /api/oauth/config, supaya login BYOP dari
+# server lokal juga berfungsi (tanpa harus set env manual).
+OAUTH_CLIENT = os.environ.get('POLLINATIONS_APP_KEY') or 'pk_HHh3o6nL2KBmlUjo'
 
 
 # Fallback daftar model image Pollinations (dipakai kalau proxy ke API asli gagal).
