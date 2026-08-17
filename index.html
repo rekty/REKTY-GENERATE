@@ -3345,9 +3345,11 @@ $('btn-history').addEventListener('click',function(){ $('rightPan').classList.to
 (function(){
   var topBtn=$('btn-top');
   if(!topBtn) return;
-  var mw=$('mainwrap'), shell=$('appshell');
+  var mw=$('mainwrap'), shell=$('appshell'), chatmsgs=$('chat-msgs');
   function scroller(){
-    // mobile: appshell yang scroll (mainwrap display:contents); desktop: mainwrap
+    // chat: #chat-msgs yang scroll (percakapan panjang); mobile: appshell;
+    // desktop: mainwrap. Utamakan container yang benar-benar bisa discroll.
+    if(chatmsgs&&chatmsgs.scrollHeight>chatmsgs.clientHeight+50) return chatmsgs;
     if(mw&&mw.scrollHeight>mw.clientHeight+50) return mw;
     if(shell&&shell.scrollHeight>shell.clientHeight+50) return shell;
     return document.scrollingElement;
@@ -3357,12 +3359,14 @@ $('btn-history').addEventListener('click',function(){ $('rightPan').classList.to
     topBtn.style.display=(s&&s.scrollTop>300)?'flex':'none';
   }
   ['scroll','resize'].forEach(function(ev){
+    if(chatmsgs) chatmsgs.addEventListener(ev,updTopBtn,{passive:true});
     if(mw) mw.addEventListener(ev,updTopBtn,{passive:true});
     if(shell) shell.addEventListener(ev,updTopBtn,{passive:true});
     window.addEventListener(ev,updTopBtn,{passive:true});
   });
   topBtn.addEventListener('click',function(){
     var s=scroller(); if(s) s.scrollTop=0;
+    if(chatmsgs) chatmsgs.scrollTop=0;
     if(mw) mw.scrollTop=0; if(shell) shell.scrollTop=0;
     var se=document.scrollingElement; if(se) se.scrollTop=0;
   });
