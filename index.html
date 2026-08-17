@@ -3057,6 +3057,8 @@ async function doGenerate(){
   // mobile: pindah ke tab Tasks supaya kartu Generating tampil sebelum hasil (ala Tensor.Art)
   if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('tasks');
   var par=buildPayload();
+  // Sertakan token Turnstile (kalau verifikasi asli sudah lewat) lalu kosongkan
+  if(window._vaiaTurnToken){ par.turnstileToken=window._vaiaTurnToken; window._vaiaTurnToken=null; }
   saveLastPrompt(); // prompt terakhir yang benar-benar dikirim ke generate
   // Inpaint tanpa mask = tidak ada area yang digambar ulang -> minta user menyapukan brush dulu
   if(_i2iTool==='inpaint'&&!(par.params.masks&&par.params.masks.length)){
@@ -5727,9 +5729,46 @@ if(typeof updateBalPill==='function') updateBalPill();
     wrap.classList.remove('vaia-verifying');
     chk.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c4ccd4" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/></svg>';
   }
-  window.vaiaVerify=function(cb){
-    var n=vCount();
-    if(n!==1 && n%10!==0){ if(cb) cb(); return; }
+  // Ambil site key Turnstile dari backend (via /api/health), cache di memori.
+  var _skLoaded=false;
+  function ensureSiteKey(){
+    if(_skLoaded) return Promise.resolve(window._vaiaSiteKey||'');
+    _skLoaded=true;
+    return fetch('/api/health').then(function(r){ return r.json(); }).then(function(d){
+      window._vaiaSiteKey=(d&&d.turnstileSiteKey)||'';
+      return window._vaiaSiteKey;
+    }).catch(function(){ window._vaiaSiteKey=''; return ''; });
+  }
+  // Turnstile ASLI (Cloudflare): render widget, token siap -> lanjut generate
+  function runTurnstile(cb){
+    chk.style.pointerEvents='auto';
+    wrap.classList.remove('vaia-verifying');
+    wrap.classList.add('open');
+    chk.innerHTML='<div id="vaia-ts"></div>';
+    var render=function(){
+      if(!window.turnstile) return;
+      window.turnstile.render('vaia-ts', {
+        sitekey: window._vaiaSiteKey,
+        theme: 'light',
+        callback: function(token){
+          window._vaiaTurnToken=token;
+          setTimeout(function(){ wrap.classList.remove('open'); if(cb) cb(); }, 400);
+        },
+        'expired-callback': function(){ window._vaiaTurnToken=null; },
+        'error-callback': function(){ toast('Verifikasi Turnstile gagal — coba lagi'); }
+      });
+    };
+    if(window.turnstile) render();
+    else {
+      var s=document.createElement('script');
+      s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      s.async=true;
+      s.onload=render;
+      document.head.appendChild(s);
+    }
+  }
+  // Fallback visual (saat Turnstile belum dikonfigurasi) — pengalaman tetap sama
+  function runFake(cb){
     resetChk();
     wrap.classList.add('open');
     chk.onclick=function(){
@@ -5743,6 +5782,13 @@ if(typeof updateBalPill==='function') updateBalPill();
         },650);
       },1700);
     };
+  }
+  window.vaiaVerify=function(cb){
+    var n=vCount();
+    if(n!==1 && n%10!==0){ if(cb) cb(); return; }
+    ensureSiteKey().then(function(sk){
+      if(sk) runTurnstile(cb); else runFake(cb);
+    });
   };
 })();
 </script>

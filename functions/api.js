@@ -88,8 +88,9 @@ const SEC_H = {
   'Permissions-Policy': 'microphone=(), geolocation=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   // CSP: hanya izinkan script dari domain yang dipakai app (Tailwind CDN, Phosphor,
-  // jsdelivr ONNX, Google Fonts). Script dari domain lain (injected) diblokir.
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://unpkg.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: data: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+  // jsdelivr ONNX, Google Fonts, challenges.cloudflare.com utk Turnstile).
+  // Script dari domain lain (injected) diblokir.
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://fonts.googleapis.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://unpkg.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: data: blob: https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
 };
 
 // Origin request terakhir (sama-origin: app dan API satu host). Dipakai untuk
@@ -1037,6 +1038,8 @@ export async function onRequest(context) {
           selfhost: true,     // pakai URL endpoint (bukan API key)
         },
         byop: !!(env && env.POLLINATIONS_APP_KEY), // OAuth BYOP siap
+        turnstile: !!(env && env.TURNSTILE_SITE_KEY),      // anti-bot Turnstile aktif?
+        turnstileSiteKey: (env && env.TURNSTILE_SITE_KEY) || null, // site key publik utk widget
         tams: TAMS_BASE,
       });
     }
@@ -1471,6 +1474,25 @@ export async function onRequest(context) {
       }
       const body = safeJson(await request.text());
       if (!body) return json({ error: 'JSON tidak valid' }, 400);
+
+      // ---- Turnstile anti-bot (aktif kalau TURNSTILE_SECRET diset di backend) ----
+      if (env && env.TURNSTILE_SECRET) {
+        const token = String(body.turnstileToken || '').trim();
+        if (!token) return json({ error: 'Verifikasi keamanan gagal — muat ulang halaman lalu coba lagi' }, 400);
+        const form = new URLSearchParams();
+        form.set('secret', env.TURNSTILE_SECRET);
+        form.set('response', token);
+        form.set('remoteip', rlIp(request));
+        const vr = await fetchWithTimeout('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: form.toString(),
+        }, 15000).catch(() => null);
+        const vd = vr && vr.ok ? safeJson(await vr.text()) : null;
+        if (!vd || !vd.success) {
+          return json({ error: 'Verifikasi keamanan gagal — coba lagi (Turnstile)' }, 403);
+        }
+      }
 
       const provider = String(body.provider || 'tams').toLowerCase();
       if (!PROVIDERS.includes(provider)) {
