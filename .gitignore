@@ -20,3 +20,7 @@ models/
 __pycache__/
 *.pyc
 *.tmp
+
+# PIN admin privat (RAHASIA — jangan pernah di-upload)
+PIN ADMIN*.txt
+*RAHASIA*.txt
