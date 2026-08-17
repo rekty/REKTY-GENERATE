@@ -175,7 +175,8 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 @media (max-width:1023px){#chat-panel{height:calc(100vh - 56px - 40px - 3.75rem - 2rem)}}
 .chat-msg{max-width:min(85%,34rem)}
 .chat-bubble-user{background:linear-gradient(135deg,rgba(31,199,206,.22),rgba(46,124,240,.28));border:1px solid rgba(46,124,240,.4);border-radius:16px;border-bottom-right-radius:4px}
-.chat-msg{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;position:relative}
+.chat-msg,.chat-msg *{-webkit-touch-callout:none;-webkit-user-select:text;user-select:text;position:relative}
+#chat-msgs{-webkit-user-select:text;user-select:text}
 .chat-bubble-ai{background:#161b22;border:1px solid #30363d;border-radius:16px;border-bottom-left-radius:4px}
 .chat-bubble-ai pre{background:rgba(0,0,0,.45);border:1px solid #30363d;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;overflow-x:auto;margin:6px 0;white-space:pre-wrap;word-break:break-word}
 .chat-bubble-ai code.inline{background:rgba(0,0,0,.45);border:1px solid #30363d;border-radius:5px;padding:1px 5px;font-size:12px;color:#5eead4}
@@ -656,6 +657,11 @@ input[type=range]{cursor:pointer}
         <div id="i2i-preview" class="hidden mt-3">
           <img id="i2i-img" class="block mx-auto max-w-full max-h-72 object-contain rounded-lg border bd" alt=""/>
           <div class="text-center text-[11px] text-neutral-500 mt-1.5"><span id="i2i-dims"></span></div>
+          <div id="i2i-wd14-offer" class="hidden mt-2 items-center gap-2 rounded-lg border border-[#27D4CD]/40 bg-[#27D4CD]/10 px-2.5 py-2 text-[11px] text-neutral-200">
+            <span class="flex-1 min-w-0 leading-snug">Foto referensi siap — deteksi prompt (WD14) dari gambar ini?</span>
+            <button id="i2i-wd14-offer-go" class="btn btn-turq h-7 text-[11px] px-3 shrink-0">Deteksi</button>
+            <button id="i2i-wd14-offer-x" class="w-6 h-6 shrink-0 flex items-center justify-center text-neutral-400 hover:text-white" title="Tutup"><i data-icon="x" class="w-3.5 h-3.5"></i></button>
+          </div>
           <div class="text-center mt-2">
             <button id="i2i-wd14" class="btn btn-ghost h-8 border bd text-[11px] px-3 inline-flex items-center gap-1.5"><i data-icon="magic-wand" class="w-3.5 h-3.5 text-[#27D4CD]"></i>Deteksi Prompt (WD14)</button>
           </div>
@@ -738,6 +744,7 @@ input[type=range]{cursor:pointer}
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
             <span class="hidden sm:inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-0.5 text-[10px] text-neutral-400" title="Model chat"><i data-icon="lightning" class="w-3 h-3 text-[#8b5cf6]"></i>Vaia Rekty</span>
+            <button id="chat-mode" class="h-7 rounded-full border px-2 inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#6F5DFF] transition-colors" title="Mode variasi prompt gambar: Kreatif (variasi liar) / Setia (variasi dekat)"><i data-icon="sparkle" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-mode-txt">Kreatif</span></button>
             <button id="chat-temp" class="w-7 h-7 rounded-lg border bd flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Chat sementara - tidak disimpan di riwayat"><i data-icon="incognito" class="w-4 h-4"></i></button>
             <span id="chat-balance" class="inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-0.5 text-[10px] text-neutral-400 cursor-pointer hover:text-white hover:border-[#6F5DFF] transition-colors" title="Saldo pollen — klik untuk kumpulkan lewat quest"><i data-icon="coin" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-balance-txt">-</span></span>
             <button id="chat-clear" class="w-7 h-7 rounded-lg flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Bersihkan percakapan"><i data-icon="trash" class="w-4 h-4"></i></button>
@@ -2090,6 +2097,29 @@ function loadSettings(){
 }
 function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings)); }catch(e){} }
 /** Baca semua kontrol panel kiri + prompt ke settings (localStorage). */
+/* Simpan prompt + negative TERAKHIR YANG DIKIRIM ke Text2Img (bukan cuma yang diketik),
+   supaya tidak hilang saat halaman refresh — termasuk prompt yang masuk dari chat. */
+function saveLastPrompt(){
+  try{
+    localStorage.setItem('vaia-last-prompt', JSON.stringify({
+      prompt: $('prompt').value||'',
+      neg: $('negprompt').value||'',
+      negCheck: !!($('negcheck')&&$('negcheck').checked),
+      model: state.model?state.model.name:'',
+      ts: Date.now()
+    }));
+  }catch(e){}
+}
+function applyLastPrompt(){
+  try{
+    var s=JSON.parse(localStorage.getItem('vaia-last-prompt')||'null');
+    if(!s||!s.prompt) return;
+    if($('prompt')) $('prompt').value=s.prompt;
+    if($('negprompt')) $('negprompt').value=s.neg||'';
+    if($('negcheck')) $('negcheck').checked=!!s.negCheck;
+    renderTriggers();
+  }catch(e){}
+}
 function collectUI(){
   settings.prompt=$('prompt').value;
   settings.negPrompt=$('negprompt').value; settings.negCheck=$('negcheck').checked;
@@ -2873,6 +2903,7 @@ async function doGenerate(){
   // mobile: pindah ke tab Tasks supaya kartu Generating tampil sebelum hasil (ala Tensor.Art)
   if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('tasks');
   var par=buildPayload();
+  saveLastPrompt(); // prompt terakhir yang benar-benar dikirim ke generate
   // Inpaint tanpa mask = tidak ada area yang digambar ulang -> minta user menyapukan brush dulu
   if(_i2iTool==='inpaint'&&!(par.params.masks&&par.params.masks.length)){
     state.busy=false; setBusy(false);
@@ -3036,10 +3067,10 @@ function maskPaintTo(x,y){
 /* Denoising Strength: slider <-> kotak angka (ala Tensor.Art) */
 function syncDs(v){ v=Math.max(0,Math.min(1,parseFloat(v)||0.5)); $('i2i-ds').value=v; $('i2i-dsv-inp').value=v.toFixed(2); }
 $('i2i-ds').addEventListener('input',function(e){ syncDs(e.target.value); });
-$('i2i-dsv-inp').addEventListener('change',function(e){ syncDs(e.target.value); });
-$('i2i-clear').addEventListener('click',function(){
+$('i2i-dsv-inp').addEventListener('change',function(e){ syncDs(e.target.value); });  $('i2i-clear').addEventListener('click',function(){
   i2iDataUrl=null; i2iW=0; i2iH=0; i2iImgEl=null;
   i2iMaskInit=false; i2iMaskDirty=false; i2iMaskCanvas=null; i2iMaskCtx=null;
+  _i2iWd14OfferHash=null; i2iOfferSet(false);
   $('i2i-preview').classList.add('hidden'); $('i2i-img').src=''; $('i2i-drop').classList.remove('hidden');
   updateMaskUI();
 });
@@ -3059,17 +3090,31 @@ function applyI2iData(dataUrl){
     var dm=$('i2i-dims'); if(dm) dm.textContent=(i2iW&&i2iH)?(i2iW+' × '+i2iH+' px'):'';
     i2iMaskInit=false; i2iMaskDirty=false; i2iMaskCanvas=null; i2iMaskCtx=null;
     updateMaskUI();
+    i2iOfferWd14();
   };
   im.src=dataUrl;
   $('i2i-img').src=dataUrl; $('i2i-preview').classList.remove('hidden'); $('i2i-drop').classList.add('hidden');
   closeI2iPicker();
+}
+/* Tawaran otomatis buka dialog WD14 saat foto referensi baru dipilih (sekali per gambar). */
+var _i2iWd14OfferHash=null;
+function i2iOfferSet(show){
+  var el=$('i2i-wd14-offer'); if(!el) return;
+  el.classList.toggle('hidden',!show); el.classList.toggle('flex',show);
+}
+function i2iOfferWd14(){
+  if(!i2iDataUrl) return;
+  var h=wd14Hash(i2iDataUrl);
+  if(h===_i2iWd14OfferHash) return;
+  _i2iWd14OfferHash=h;
+  i2iOfferSet(true);
 }
 /* Pick hasil generate sebelumnya sebagai gambar awal (ala Tensor.Art). */
 $('i2i-ws').addEventListener('click',function(e){ e.stopPropagation(); openI2iPicker(); });
 // Library = galeri gambar dari perangkat (file picker -> langsung jadi input img2img)
 $('i2i-lib').addEventListener('click',function(e){ e.stopPropagation(); $('i2i-file').click(); });
 // Deteksi Prompt (WD14): foto referensi img2img langsung di-tag jadi prompt (buka dialog WD14)
-$('i2i-wd14').addEventListener('click',function(){
+function openWd14FromI2i(){
   if(!i2iDataUrl){ toast('Pilih gambar referensi dulu'); return; }
   var d=chatWd14Dlg();
   chatWd14Load();
@@ -3077,7 +3122,10 @@ $('i2i-wd14').addEventListener('click',function(){
   d.querySelector('#wd14-tags').value=''; d.querySelector('#wd14-prog').style.width='0%';
   chatWd14SetImage(i2iDataUrl);
   chatCloseMenus();
-});
+}
+$('i2i-wd14').addEventListener('click', openWd14FromI2i);
+$('i2i-wd14-offer-go').addEventListener('click', function(){ i2iOfferSet(false); openWd14FromI2i(); });
+$('i2i-wd14-offer-x').addEventListener('click', function(){ i2iOfferSet(false); });
 $('i2i-pick-close').addEventListener('click',closeI2iPicker);
 $('i2i-picker').addEventListener('click',function(e){ if(e.target===$('i2i-picker')) closeI2iPicker(); });
 function openI2iPicker(){
@@ -3220,7 +3268,7 @@ renderLora();
 setModel(MODELS[0]);
 updWH();
 applyNcol();
-loadSettings(); applySettingsUI();
+loadSettings(); applySettingsUI(); applyLastPrompt();
 handleOAuthCallback();
 
 /* ---- Splash 'VISUAL AI ARTWORK' / 'VAIA' (bisa dipanggil manual) ---- */
@@ -3728,7 +3776,24 @@ function remixResult(r){
 /* ============================ VAIA CHAT (ala ChatGPT) ============================ */
 var SESSIONS_KEY='vaia_chat_sessions_v1';
 var SID_KEY='vaia_chat_sid_v1';
-var chatState={ msgs:[], busy:false, rendered:false, sid:null };
+var chatState={ msgs:[], busy:false, rendered:false, sid:null, mode:'kreatif' };
+function chatModeLoad(){
+  try{ var m=localStorage.getItem('vaia-chat-mode'); if(m==='kreatif'||m==='setia') chatState.mode=m; }catch(e){}
+}
+function chatModeApply(){
+  var el=$('chat-mode'), tx=$('chat-mode-txt');
+  if(!el||!tx) return;
+  tx.textContent = chatState.mode==='kreatif' ? 'Kreatif' : 'Setia';
+  el.style.borderColor = chatState.mode==='kreatif' ? 'rgba(39,212,205,.6)' : 'rgba(111,93,255,.6)';
+  el.style.background = chatState.mode==='kreatif' ? 'rgba(39,212,205,.08)' : 'rgba(111,93,255,.08)';
+}
+function chatModeToggle(){
+  chatState.mode = chatState.mode==='kreatif' ? 'setia' : 'kreatif';
+  try{ localStorage.setItem('vaia-chat-mode', chatState.mode); }catch(e){}
+  chatModeApply();
+  toast('Mode prompt: '+(chatState.mode==='kreatif'?'Kreatif (variasi liar)':'Setia (variasi dekat)'));
+}
+(function(){ var el=$('chat-mode'); if(el) el.addEventListener('click', chatModeToggle); chatModeLoad(); chatModeApply(); })();
 function chatSessions(){
   try{ var r=JSON.parse(localStorage.getItem(SESSIONS_KEY)||'null'); if(Array.isArray(r)) return r; }catch(e){}
   return [];
@@ -4635,6 +4700,10 @@ function chatCtxEnsure(){
   document.addEventListener('scroll',function(){ chatCtxHide(); },true);
   window.addEventListener('resize',chatCtxHide);
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') chatCtxHide(); });
+  document.addEventListener('selectionchange',function(){
+    // Saat user memilih teks (seleksi aktif), tutup menu supaya tidak menghalangi copy manual
+    try{ if(window.getSelection && window.getSelection().toString().trim().length>0) chatCtxHide(); }catch(e){}
+  });
   return m;
 }
 function chatCtxHide(){ var m=_chatCtx; if(m){ m.classList.add('hidden'); m._msg=null; m._inner=null; } }
@@ -4652,59 +4721,136 @@ function chatCtxOpen(x,y,msg,inner){
 }
 /* Pasang long-press (HP) + tahan mouse (desktop) pada bubble — tanpa klik kanan. */
 function chatBindHold(el, msg, inner){
-  var t=null, sx=0, sy=0, fired=false;
+  var t=null, sx=0, sy=0, lx=0, ly=0, fired=false;
   function cancel(){ if(t){ clearTimeout(t); t=null; } }
+  function selActive(){ try{ var s=window.getSelection(); return !!(s && s.toString && s.toString().trim().length>0); }catch(e){ return false; } }
+  function tryOpen(){
+    t=null;
+    if(selActive()) return; // user sedang memilih teks -> jangan ganggu
+    // Jika pointer sudah bergerak dari titik awal (drag untuk memilih), jangan buka menu
+    if(Math.abs(lx-sx)>4 || Math.abs(ly-sy)>4) return;
+    fired=true; chatCtxOpen(lx,ly,msg,inner);
+  }
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1) return;
-    var c=e.touches[0]; sx=c.clientX; sy=c.clientY; fired=false;
-    t=setTimeout(function(){ t=null; fired=true; chatCtxOpen(sx,sy,msg,inner); },450);
+    var c=e.touches[0]; sx=c.clientX; sy=c.clientY; lx=sx; ly=sy; fired=false;
+    t=setTimeout(tryOpen,450);
   },{passive:true});
   el.addEventListener('touchmove',function(e){
-    if(t){ var c=e.touches[0]; if(Math.abs(c.clientX-sx)>10||Math.abs(c.clientY-sy)>10) cancel(); }
+    if(!e.touches[0]) return;
+    var c=e.touches[0]; lx=c.clientX; ly=c.clientY;
+    if(t && (Math.abs(lx-sx)>10||Math.abs(ly-sy)>10)) cancel();
+    else if(fired && (Math.abs(lx-sx)>12||Math.abs(ly-sy)>12)){ fired=false; chatCtxHide(); } // mulai geser = memilih teks
   },{passive:true});
-  el.addEventListener('touchend',function(e){ if(fired){ if(e&&e.cancelable) e.preventDefault(); } else cancel(); });
-  el.addEventListener('touchcancel',cancel);
+  el.addEventListener('touchend',function(){ if(fired) fired=false; else cancel(); });
+  el.addEventListener('touchcancel',function(){ cancel(); fired=false; chatCtxHide(); });
   el.addEventListener('mousedown',function(e){
     if(e.button!==0) return;
-    sx=e.clientX; sy=e.clientY; fired=false;
-    t=setTimeout(function(){ t=null; fired=true; chatCtxOpen(sx,sy,msg,inner); },500);
+    sx=e.clientX; sy=e.clientY; lx=sx; ly=sy; fired=false;
+    t=setTimeout(tryOpen,500);
   });
-  el.addEventListener('mousemove',function(e){ if(t&&(Math.abs(e.clientX-sx)>10||Math.abs(e.clientY-sy)>10)) cancel(); });
-  el.addEventListener('mouseup',cancel);
-  el.addEventListener('mouseleave',cancel);
+  el.addEventListener('mousemove',function(e){
+    lx=e.clientX; ly=e.clientY;
+    if(t && (Math.abs(lx-sx)>10||Math.abs(ly-sy)>10)) cancel();
+    else if(fired && (Math.abs(lx-sx)>12||Math.abs(ly-sy)>12)){ fired=false; chatCtxHide(); }
+  });
+  el.addEventListener('mouseup',function(){ if(fired) fired=false; else cancel(); });
+  el.addEventListener('mouseleave',function(){ cancel(); fired=false; chatCtxHide(); });
   el.addEventListener('contextmenu',function(e){ e.preventDefault(); });
 }
-/* Ekstrak prompt gambar + negative prompt dari jawaban AI (untuk tombol Salin + Buka Generator). */
+/* Ekstrak prompt gambar (murni) + negative prompt dari jawaban AI (untuk tombol Salin + Buka Generator).
+   Mendukung format bernomor baru "Prompt 1: / Prompt 2: / ..." dan format lama (Prompt Utama / Prompt:).
+   Mengembalikan SEMUA blok prompt (prompts[]) + negative — tanpa intro, header, variasi, atau parameter. */
 function chatExtractPrompt(raw){
   if(!raw) return null;
-  var base=String(raw).split(/\*\*Variasi|###\s*\d+[\.\-\s]|Variasi\s+\d+/i)[0];
-  var m=base.match(/(?:Prompt\s*[:*]*)([\s\S]*)/i);
-  var promptPart=m?m[1]:base;
-  var n=promptPart.search(/Negative\s*prompt\s*:?/i);
-  var main=(n>0?promptPart.slice(0,n):promptPart)
-    .replace(/\*\*/g,'').replace(/`/g,'')
-    .replace(/^[>\s]+/gm,'').replace(/^#+\s*/gm,'')
-    .replace(/\s{2,}/g,' ').trim();
+  var s=String(raw);
   var neg='';
-  var nm=String(raw).match(/Negative\s*prompt\s*:?\s*([\s\S]*?)(?=\n\s*\n\s*(?:Variasi|\*\*|###)|$)/i);
+  var nm=s.match(/Negative\s*prompt\s*:?\s*([\s\S]*?)(?=\n\s*(?:#{1,3}|Prompt\s*\d+\s*:?|Prompt\s*Utama\s*:?|Variasi\s*\d+\s*:?|Parameter\s*:?)|$)/i);
   if(nm){ neg=nm[1].replace(/\*\*/g,'').replace(/`/g,'').replace(/^[>\s]+/gm,'').replace(/\s{2,}/g,' ').trim(); }
-  if(!main) return null;
-  return { prompt:main, negative:neg };
+  var prompts=[], seen={};
+  // Kumpulkan semua blok "Prompt N:" / "Prompt Utama:" / "Prompt:" — berhenti di blok berikut / Negative / Variasi / Parameter
+  var re=/(?:^|\n)\s*(?:#{0,3}\s*|\*\*)?Prompt\s*(?:(\d+)|Utama)?\s*:?\s*\*?\*?\s*([\s\S]*?)(?=\n\s*(?:#{0,3}\s*|\*\*)?(?:Prompt\s*(?:\d+|Utama)?\s*:?|Negative\s*prompt\s*:?|Variasi\s*\d+\s*:?|Parameter\s*:?)|Negative\s*prompt\s*:?|$)/gi;
+  var m;
+  while((m=re.exec(s))!==null){
+    var txt=m[2].replace(/\*\*/g,'').replace(/`/g,'')
+      .replace(/^[>\s]+/gm,'').replace(/^#+\s*/gm,'')
+      .replace(/\s{2,}/g,' ').trim()
+      // Potong marker "Negative Prompt:" yang muncul INLINE (baris sama) pada respons asli
+      .replace(/\s*Negative\s*prompt\s*:?[\s\S]*$/i,'')
+      .trim();
+    if(!txt || seen[txt]) continue;
+    seen[txt]=1;
+    prompts.push({ label:(m[1]?'Prompt '+m[1]:'Prompt Utama'), text:txt });
+  }
+  if(!prompts.length){
+    var m2=s.match(/(?:Prompt\s*[:*]+)([\s\S]*?)(?=\n\s*(?:Negative\s*prompt|Variasi|###|$))/i);
+    if(m2){ var t=m2[1].replace(/\*\*/g,'').replace(/`/g,'').replace(/^[>\s]+/gm,'').replace(/\s{2,}/g,' ').trim(); if(t) prompts.push({ label:'Prompt', text:t }); }
+  }
+  if(!prompts.length) return null;
+  return { prompt:prompts[0].text, negative:neg, prompts:prompts };
 }
 /* Salin prompt gambar dari jawaban AI -> isi prompt Text2Img + pindah tab generator (model aktif tetap). */
-function chatToGenerator(inner){
+function chatToGenerator(inner, idx){
   var raw=(inner&&inner.dataset)?(inner.dataset.raw||''):'';
   var p=chatExtractPrompt(raw);
+  if(!p) return;
+  var text=p.prompt;
+  if(p.prompts && p.prompts.length && typeof idx==='number'){
+    var pick=p.prompts[Math.max(0,Math.min(idx,p.prompts.length-1))];
+    if(pick) text=pick.text;
+  }
   var promptEl=$('prompt'), negEl=$('negprompt');
-  if(promptEl && p){ promptEl.value=p.prompt; }
-  if(negEl && p && p.negative){ negEl.value=p.negative; }
-  if(p && p.prompt && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(p.prompt).catch(function(){}); }
+  if(promptEl){ promptEl.value=text; }
+  if(negEl && p.negative){ negEl.value=p.negative; }
+  saveLastPrompt(); // prompt dari chat ikut disimpan sebagai prompt terakhir dikirim
+  if(text && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).catch(function(){}); }
   document.querySelectorAll('.tab').forEach(function(x){ x.classList.toggle('sel', x.dataset.tab==='text'); });
   state.page='text';
   renderCanvas();
   if(typeof closeLeft==='function') closeLeft();
   var pp=$('prompt'); if(pp){ try{ pp.focus(); pp.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){} }
   toast(p?'Prompt disalin ke Text2Img ✓':'Prompt dibuka di Text2Img');
+}
+/* Popover pemilih variasi prompt (Prompt 1/2/3) di atas tombol Pilih. */
+function chatPromptPicker(inner, btn, ex){
+  var old=document.getElementById('chat-prompt-picker');
+  if(old){ old.remove(); return; }
+  if(!ex || !ex.prompts || ex.prompts.length<2) return;
+  var box=document.createElement('div');
+  box.id='chat-prompt-picker';
+  box.className='fixed z-[90] w-80 max-w-[88vw] bg-[#1c2128] border bd rounded-xl shadow-2xl overflow-hidden';
+  var hd=document.createElement('div');
+  hd.className='flex items-center justify-between px-3 py-2 text-[11px] font-semibold text-neutral-400 border-b bd';
+  hd.innerHTML='Pilih Prompt';
+  var x=document.createElement('button');
+  x.className='w-5 h-5 flex items-center justify-center text-neutral-500 hover:text-white';
+  x.innerHTML='<i data-icon="x" class="w-3.5 h-3.5"></i>';
+  x.addEventListener('click', function(){ box.remove(); });
+  hd.appendChild(x);
+  box.appendChild(hd);
+  var list=document.createElement('div');
+  list.className='max-h-72 overflow-y-auto hidebar';
+  ex.prompts.forEach(function(pr,i){
+    var it=document.createElement('button');
+    it.className='w-full text-left px-3 py-2 hover:bg-[#21262d] transition-colors border-b bd last:border-0';
+    var sn=pr.text.length>110 ? pr.text.slice(0,110)+'…' : pr.text;
+    it.innerHTML='<div class="text-[11px] font-semibold text-[#27D4CD]">'+pr.label+'</div>'
+      +'<div class="text-[11px] text-neutral-400 leading-snug mt-0.5 break-words">'+esc(sn)+'</div>';
+    it.addEventListener('click', function(){ box.remove(); chatToGenerator(inner, i); });
+    list.appendChild(it);
+  });
+  box.appendChild(list);
+  var r=btn.getBoundingClientRect();
+  box.style.left=Math.max(8, r.right-320)+'px';
+  box.style.top=Math.max(8, r.bottom+4)+'px';
+  document.body.appendChild(box);
+  setTimeout(function(){
+    document.addEventListener('mousedown', function h(ev){
+      if(!box.contains(ev.target) && ev.target!==btn && !btn.contains(ev.target)){
+        box.remove(); document.removeEventListener('mousedown', h);
+      }
+    });
+  }, 0);
 }
 function chatBubble(role, contentHTML, streaming, msg){
   var box=$('chat-msgs'); if(!box) return null;
@@ -4747,13 +4893,22 @@ function chatBubble(role, contentHTML, streaming, msg){
     cp.innerHTML='<i data-icon="copy" class="w-3.5 h-3.5"></i>';
     cp.addEventListener('click', function(){ copyChatRaw(inner); });
     act.appendChild(cp);
-    if(/\*\*Prompt\s*\*\*\s*:|\*\*Prompt\*\*|Prompt\s*:|Negative\s*prompt/i.test(contentHTML||'')){
+    if(/Prompt\s*(?:\d+|Utama)?\s*[:*]|\*\*Prompt\*\*|Negative\s*prompt/i.test(contentHTML||'')){
       var gp=document.createElement('button');
       gp.className='inline-flex items-center gap-1.5 text-[11px] text-neutral-400 hover:text-white hover:bg-[#21262d] rounded-md px-2 py-1 transition-colors';
       gp.title='Salin prompt & buka generator Text2Img (model aktif tetap dipakai)';
       gp.innerHTML='<i data-icon="magic-wand" class="w-3.5 h-3.5"></i>Salin + Buka Generator';
       gp.addEventListener('click', function(){ chatToGenerator(inner); });
       act.appendChild(gp);
+      var ex2=chatExtractPrompt(contentHTML||'');
+      if(ex2 && ex2.prompts && ex2.prompts.length>=2){
+        var pb=document.createElement('button');
+        pb.className='inline-flex items-center gap-1 text-[11px] text-neutral-400 hover:text-white hover:bg-[#21262d] rounded-md px-2 py-1 transition-colors';
+        pb.title='Pilih salah satu variasi prompt';
+        pb.innerHTML='<i data-icon="caret-down" class="w-3.5 h-3.5"></i>Pilih';
+        pb.addEventListener('click', function(ev){ ev.stopPropagation(); chatPromptPicker(inner, pb, ex2); });
+        act.appendChild(pb);
+      }
     }
     wrap.appendChild(act);
     row.appendChild(wrap);
@@ -4877,7 +5032,7 @@ function chatSendText(txt){
   function stream(){
     return fetch('/api/chat',{
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ messages: msgs, model:'gpt-5.6-luna', stream:true }),
+      body:JSON.stringify({ messages: msgs, model:'gpt-5.6-luna', stream:true, mode: chatState.mode }),
       signal: ac.signal
     }).then(function(res){
       if(!res.ok){
