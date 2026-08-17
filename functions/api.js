@@ -1494,7 +1494,8 @@ export async function onRequest(context) {
     // hanya SHA-256 hash (hex). Set env ADMIN_PIN_HASH dengan hash PIN sendiri:
     //   echo -n "PIN-RAHASIA" | sha256sum
     // Fallback: hash dari PIN default (hanya untuk dev; ganti di production!).
-    const ADMIN_PIN_HASH = (env && env.ADMIN_PIN_HASH) || 'e4ff6175c874a4ff4d6c5799091820a10f59580a99eec052906619851680700c';
+    // PIN saat ini: rekty100 -> 8906c3d4... (hash SHA-256, bukan teks)
+    const ADMIN_PIN_HASH = (env && env.ADMIN_PIN_HASH) || '8906c3d47d7d63133548d622c050152b55332d06caf8f19406e168ecd59f955c';
     async function sha256hex(str) {
       try {
         const data = new TextEncoder().encode(str);
