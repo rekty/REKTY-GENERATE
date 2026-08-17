@@ -1565,9 +1565,10 @@ async function onRequest(context) {
     // PIN tidak pernah disimpan/dibandingkan sebagai teks polos — yang disimpan
     // hanya SHA-256 hash (hex). Set env ADMIN_PIN_HASH dengan hash PIN sendiri:
     //   echo -n "PIN-RAHASIA" | sha256sum
-    // Fallback: hash dari PIN default (hanya untuk dev; ganti di production!).
-    // PIN saat ini: rekty100 -> 8906c3d4... (hash SHA-256, bukan teks)
-    const ADMIN_PIN_HASH = (env && env.ADMIN_PIN_HASH) || '8906c3d47d7d63133548d622c050152b55332d06caf8f19406e168ecd59f955c';
+    // PIN admin PRIVAT: hash disimpan sebagai secret Cloudflare (ADMIN_PIN_HASH),
+    // TIDAK pernah ada di repo. Fallback di bawah adalah hash mati (tidak cocok
+    // dengan PIN apa pun) — tanpa secret, akses admin TIDAK mungkin (keamanan).
+    const ADMIN_PIN_HASH = (env && env.ADMIN_PIN_HASH) || '0000000000000000000000000000000000000000000000000000000000000000';
     async function sha256hex(str) {
       try {
         const data = new TextEncoder().encode(str);
