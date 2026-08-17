@@ -1942,7 +1942,7 @@ function renderDetail(){
     +'</div>';
   // input prompt (ditampilkan penuh, scroll kalau terlalu panjang)
   h+='<div><div class="text-[11px] text-neutral-500 mb-1">Input</div>'
-    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-40 overflow-y-auto hidebar">'+(r.prompt||'-')+'</div></div>';
+    +'<div class="bg-black/40 border bd rounded-lg p-2.5 text-[11px] text-neutral-300 leading-relaxed max-h-40 overflow-y-auto hidebar">'+esc(r.prompt||'-')+'</div></div>';
   // details
   h+='<div><div class="text-[11px] text-neutral-500 mb-1">Details</div>'
     +'<div class="space-y-1.5 text-[11px] text-neutral-400">'
@@ -2002,7 +2002,7 @@ function renderRight(){
       +'</div>'
       +'<div class="p-2.5 space-y-1.5 text-xs">'
       +'<div class="flex items-center gap-1.5"><i data-icon="sparkle" class="w-3 h-3 text-violet-400"></i><span class="bg-violet-500/10 text-violet-300 px-1.5 py-px rounded text-[10px]">'+lbl+'</span></div>'
-      +'<div class="bg-black/40 rounded p-1.5 text-[11px] text-neutral-300 leading-snug cursor-pointer hover:text-white" title="Lihat detail">'+(r.prompt||'').slice(0,90)+'</div>'
+      +'<div class="bg-black/40 rounded p-1.5 text-[11px] text-neutral-300 leading-snug cursor-pointer hover:text-white" title="Lihat detail">'+esc((r.prompt||'').slice(0,90))+'</div>'
       +'<div class="flex items-center gap-1 text-[10px] text-neutral-500"><i data-icon="layers" class="w-3 h-3"></i>'+LORA.filter(function(l){return l.w>0}).length+' LoRA</div>'
       +'<div class="space-y-1 text-[10px] text-neutral-500">'
       +(r.taskId?'<div class="flex justify-between"><span>Task ID</span><span class="text-neutral-300 truncate max-w-[60%]" title="'+esc(r.taskId)+'">'+esc(r.taskId)+'</span></div>':'')

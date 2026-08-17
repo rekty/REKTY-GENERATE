@@ -42,6 +42,55 @@ def _pin_ok(handler):
     cand = hashlib.sha256((h or q).encode('utf-8')).hexdigest()
     return cand == MOCK_ADMIN_PIN_HASH
 
+
+# Mock brute-force lockout PIN (in-memory, replika KV production): 5x gagal -> blokir 15 menit
+_pin_fails = {}
+_pin_block = {}
+_PIN_MAX_FAILS = 5
+_PIN_BLOCK_SEC = 900
+
+# Mock rate limit (replika in-memory api.js): 60/menit POST berat, 300/menit task, 30/menit admin
+_rl = {}
+_RL_LIMITS = {
+    "gen": (60, 60000),
+    "task": (300, 60000),
+    "admin": (30, 60000),
+}
+
+
+def _rl_hit(key, max_n, window_ms):
+    now = int(time.time() * 1000)
+    rec = _rl.get(key)
+    if not rec or now - rec[1] > window_ms:
+        rec = [0, now]
+        _rl[key] = rec
+    rec[0] += 1
+    return rec[0] > max_n
+
+
+def _rl_guard(self, kind):
+    """Return True jika harus 429 (rate limit terlampaui)."""
+    max_n, window = _RL_LIMITS.get(kind, (60, 60000))
+    return _rl_hit(kind + ":127.0.0.1", max_n, window)
+
+
+def _admin_pin_ok(handler):
+    """Sama seperti adminPinOk di api.js: cek blokir -> hash -> hitung gagal/audit."""
+    ip = '127.0.0.1'
+    now = time.time()
+    if ip in _pin_block and now < _pin_block[ip]:
+        return 'blocked'
+    if _pin_ok(handler):
+        _pin_fails.pop(ip, None)
+        _pin_block.pop(ip, None)
+        return True
+    _pin_fails[ip] = _pin_fails.get(ip, 0) + 1
+    _audit.append({"t": int(now * 1000), "action": "pin-gagal",
+                   "detail": "Percobaan PIN salah", "ip": ip, "ua": "mock"})
+    if _pin_fails[ip] >= _PIN_MAX_FAILS:
+        _pin_block[ip] = now + _PIN_BLOCK_SEC
+    return False
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
 
@@ -208,17 +257,25 @@ class Handler(BaseHTTPRequestHandler):
 
     def _do_GET(self):
         path = self.path.split("?")[0]
+        if path == "/api/task":
+            if _rl_guard(self, "task"):
+                return self._send(429, {"error": "Terlalu banyak permintaan — coba lagi sebentar lagi"})
+        if path.startswith("/api/admin"):
+            if _rl_guard(self, "admin"):
+                return self._send(429, {"error": "Terlalu banyak permintaan — coba lagi sebentar lagi"})
         if path == "/api/health":
             return self._send(200, {"ok": True, "hasKeys": {"tams": False, "replicate": False, "fal": False, "pollinations": True}, "tams": "mock"})
         if path == "/api/admin/audit":
             # Mock log audit (PIN: test123 via hash)
-            if not _pin_ok(self):
+            r = _admin_pin_ok(self)
+            if r is not True:
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
             logs = sorted(_audit, key=lambda x: x.get("t", 0), reverse=True)
             return self._send(200, {"ok": True, "logs": logs[:100]})
         if path == "/api/admin":
             # Mock panel admin KV untuk pengembangan lokal (PIN: test123, dibandingkan via hash)
-            if not _pin_ok(self):
+            r = _admin_pin_ok(self)
+            if r is not True:
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
             # Catat "buka panel" hanya saat unlock (ada ?pin= di URL)
             if "pin=" in self.path:
@@ -314,6 +371,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def _do_POST(self):
         path = self.path.split("?")[0]
+        if path in ("/api/generate", "/api/chat", "/api/refine", "/api/archive", "/api/oauth/token"):
+            if _rl_guard(self, "gen"):
+                return self._send(429, {"error": "Terlalu banyak permintaan — coba lagi sebentar lagi"})
+        if path.startswith("/api/admin"):
+            if _rl_guard(self, "admin"):
+                return self._send(429, {"error": "Terlalu banyak permintaan — coba lagi sebentar lagi"})
         if path == "/api/generate":
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"
@@ -337,7 +400,8 @@ class Handler(BaseHTTPRequestHandler):
                 st["count"] = 1
             return self._send(200, {"ok": True, "provider": provider, "taskId": task_id})
         if path == "/api/admin/delete":
-            if not _pin_ok(self):
+            r = _admin_pin_ok(self)
+            if r is not True:
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"
@@ -353,7 +417,8 @@ class Handler(BaseHTTPRequestHandler):
                            "detail": name, "ip": "127.0.0.1", "ua": "mock"})
             return self._send(200, {"ok": True, "deleted": name})
         if path == "/api/admin/delete-all":
-            if not _pin_ok(self):
+            r = _admin_pin_ok(self)
+            if r is not True:
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
             length = int(self.headers.get("Content-Length") or 0)
             raw = self.rfile.read(length) if length else b"{}"

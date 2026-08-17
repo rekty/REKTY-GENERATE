@@ -79,13 +79,59 @@ const FAL_SAMPLER = {
 
 /* ----------------------------- helpers ----------------------------- */
 
+// Header keamanan dasar untuk SEMUA respons (API, gambar, HTML).
+// Camera dibiarkan karena fitur chat memakai kamera HP; mikrofon/geolokasi diblokir.
+const SEC_H = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  // CSP: hanya izinkan script dari domain yang dipakai app (Tailwind CDN, Phosphor,
+  // jsdelivr ONNX, Google Fonts). Script dari domain lain (injected) diblokir.
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://fonts.googleapis.com https://unpkg.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https: wss: data: blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
+};
+
+// Origin request terakhir (sama-origin: app dan API satu host). Dipakai untuk
+// CORS ketat: hanya origin kita yang diizinkan, situs lain tidak bisa memanggil
+// API kita dari browser (mencegah penyalahgunaan key/saldo via cross-site).
+let _reqOrigin = '';
+
 function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
+  const h = {
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
+    'Access-Control-Allow-Headers': 'Content-Type, x-api-key, x-admin-pin, x-session',
     'Access-Control-Max-Age': '86400',
+    ...SEC_H,
   };
+  if (_reqOrigin) h['Access-Control-Allow-Origin'] = _reqOrigin;
+  return h;
+}
+
+// ---- Rate limiter sederhana (in-memory per edge) — lapisan anti-DDoS/abuse ----
+// Cloudflare sudah punya proteksi di level jaringan; ini lapisan tambahan.
+const RL = new Map();
+function rlHit(key, max, windowMs) {
+  const now = Date.now();
+  let r = RL.get(key);
+  if (!r || now - r.t > windowMs) { r = { n: 0, t: now }; RL.set(key, r); }
+  r.n++;
+  return r.n > max;
+}
+function rlIp(request) {
+  return String(request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '0').slice(0, 64);
+}
+// Rate limit GLOBAL lintas-edge via KV (counter per IP, TTL = window).
+// KV eventual consistency => best-effort, tapi jauh lebih efektif daripada
+// Map in-memory (yang terbagi per-edge isolate). Dipakai untuk endpoint berat
+// (generate/chat/arsip/auth/admin) yang tidak dipanggil terlalu sering.
+async function rlGlobal(env, key, max, windowSec) {
+  if (!env || !env.IMAGES) return rlHit(key, max, windowSec * 1000); // fallback in-memory
+  const k = 'rl:' + key;
+  const raw = await env.IMAGES.get(k, { type: 'text' }).catch(() => null);
+  const n = (raw ? parseInt(raw, 10) : 0) + 1;
+  await env.IMAGES.put(k, String(n), { expirationTtl: windowSec }).catch(() => {});
+  return n > max;
 }
 
 function json(data, status = 200, extra = {}) {
@@ -946,6 +992,32 @@ export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const method = request.method;
+  _reqOrigin = url.origin; // CORS ketat: hanya origin ini yang diizinkan
+
+  // ---- Rate limit per IP (anti-DDoS/abuse) ----
+  // Endpoint berat (generate/chat/refine/arsip/auth/admin): counter GLOBAL via KV
+  // (lintas-edge). Polling task sangat sering dipanggil frontend -> in-memory 300/menit
+  // (murah, dan polling tidak menyalahgunakan resource eksternal).
+  const ip = rlIp(request);
+  const RL_MAP = [
+    ['g', url.pathname === '/api/generate', 30, 60],
+    ['c', url.pathname === '/api/chat', 20, 60],
+    ['r', url.pathname === '/api/refine', 30, 60],
+    ['a', url.pathname === '/api/archive', 30, 60],
+    ['o', url.pathname === '/api/oauth/token', 30, 60],
+    ['A', url.pathname.startsWith('/api/admin'), 30, 60],
+  ];
+  for (const [k, hit, mx, win] of RL_MAP) {
+    if (hit) {
+      if (await rlGlobal(env, k + ':' + ip, mx, win)) {
+        return json({ error: 'Terlalu banyak permintaan — coba lagi sebentar lagi' }, 429);
+      }
+      break;
+    }
+  }
+  if (method === 'GET' && url.pathname === '/api/task') {
+    if (rlHit('t:' + ip, 300, 60000)) return json({ error: 'Terlalu banyak permintaan — coba lagi sebentar lagi' }, 429);
+  }
 
   if (method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders() });
@@ -1510,6 +1582,33 @@ export async function onRequest(context) {
       const candidate = await sha256hex(h || q);
       return candidate === ADMIN_PIN_HASH;
     }
+    // ---- Proteksi brute-force PIN: 5 percobaan salah per IP -> blokir 15 menit ----
+    // Status disimpan di KV (sec:pin:<ip> counter, sec:block:<ip> blokir) dengan
+    // TTL pendek, jadi lintas-edge tetap konsisten (bukan cuma memori per-isolate).
+    async function adminPinOk(env, request) {
+      const ip = rlIp(request);
+      if (env && env.IMAGES && ip && ip !== '0') {
+        const blocked = await env.IMAGES.get('sec:block:' + ip).catch(() => null);
+        if (blocked) return 'blocked';
+      }
+      const ok = await pinOk(request);
+      if (!ok) {
+        if (env && env.IMAGES && ip && ip !== '0') {
+          const raw = await env.IMAGES.get('sec:pin:' + ip, { type: 'text' }).catch(() => null);
+          const n = (raw ? parseInt(raw, 10) : 0) + 1;
+          await env.IMAGES.put('sec:pin:' + ip, String(n), { expirationTtl: 900 }).catch(() => {});
+          if (n >= 5) await env.IMAGES.put('sec:block:' + ip, '1', { expirationTtl: 900 }).catch(() => {});
+        }
+        await auditLog(env, request, 'pin-gagal', 'Percobaan PIN salah');
+        return false;
+      }
+      // Sukses -> reset counter & blokir IP ini
+      if (env && env.IMAGES && ip && ip !== '0') {
+        await env.IMAGES.delete('sec:pin:' + ip).catch(() => {});
+        await env.IMAGES.delete('sec:block:' + ip).catch(() => {});
+      }
+      return true;
+    }
     // ---- Audit log panel admin: catat tiap aksi ke KV (audit:<waktu>:<acak>) ----
     // Log bertahan 30 hari lalu terhapus otomatis (expirationTtl). Key berawalan
     // 'audit:' tidak lolos filter gambar IMG_EXT, jadi tidak muncul di galeri dan
@@ -1525,7 +1624,8 @@ export async function onRequest(context) {
       await env.IMAGES.put(key, JSON.stringify(rec), { expirationTtl: AUDIT_TTL }).catch(() => {});
     }
     if (method === 'GET' && url.pathname === '/api/admin') {
-      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      const pinR = await adminPinOk(env, request);
+      if (pinR !== true) return json({ error: pinR === 'blocked' ? 'Terlalu banyak percobaan PIN — coba lagi 15 menit lagi' : 'PIN salah atau tidak disertakan' }, 403);
       // Catat "buka panel" hanya saat unlock (ada ?pin= di URL) — refresh biasa tidak dicatat
       if (url.searchParams.get('pin')) await auditLog(env, request, 'buka', 'Panel admin dibuka');
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
@@ -1558,7 +1658,8 @@ export async function onRequest(context) {
       return json({ ok: true, pin: true, images, totalKeys: keys.length, imageCount: images.length });
     }
     if (method === 'POST' && url.pathname === '/api/admin/delete') {
-      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      const pinR = await adminPinOk(env, request);
+      if (pinR !== true) return json({ error: pinR === 'blocked' ? 'Terlalu banyak percobaan PIN — coba lagi 15 menit lagi' : 'PIN salah atau tidak disertakan' }, 403);
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
       let body = {};
       try { body = await request.json(); } catch (e) {}
@@ -1573,7 +1674,8 @@ export async function onRequest(context) {
     }
 
     if (method === 'POST' && url.pathname === '/api/admin/delete-all') {
-      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      const pinR = await adminPinOk(env, request);
+      if (pinR !== true) return json({ error: pinR === 'blocked' ? 'Terlalu banyak percobaan PIN — coba lagi 15 menit lagi' : 'PIN salah atau tidak disertakan' }, 403);
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
       let body = {};
       try { body = await request.json(); } catch (e) {}
@@ -1597,7 +1699,8 @@ export async function onRequest(context) {
 
     // ---- Audit log: baca riwayat aktivitas panel admin (PIN dilindungi) ----
     if (method === 'GET' && url.pathname === '/api/admin/audit') {
-      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      const pinR = await adminPinOk(env, request);
+      if (pinR !== true) return json({ error: pinR === 'blocked' ? 'Terlalu banyak percobaan PIN — coba lagi 15 menit lagi' : 'PIN salah atau tidak disertakan' }, 403);
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
       let keys = [];
       let cursor;
@@ -1619,9 +1722,12 @@ export async function onRequest(context) {
     }
 
     // ---- sajikan gambar arsip (URL permanen /img/<nama>) ----
+    // Keamanan: nama WAJIB pola UUID.ext — key internal (task:*, oauth:*, sec:*, audit:*)
+    // tidak pernah bisa diakses lewat /img/ (mencegah kebocoran data internal).
     if (method === 'GET' && url.pathname.startsWith('/img/')) {
       const name = url.pathname.slice(5);
-      if (!name || !env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
+      const IMG_NAME_OK = /^[a-zA-Z0-9-]+\.(png|jpe?g|webp|gif|avif|svg)$/;
+      if (!name || !IMG_NAME_OK.test(name) || !env || !env.IMAGES) return json({ error: 'Gambar tidak ditemukan' }, 404);
       // Catatan: pakai { type: 'arrayBuffer' }, bukan 'stream' — pada namespace
       // KV format URL-encoded, get type stream mengembalikan stream kosong
       // (bug runtime); arrayBuffer terbukti bekerja.
@@ -1629,10 +1735,13 @@ export async function onRequest(context) {
       if (buf === null || buf === undefined) return json({ error: 'Gambar tidak ditemukan' }, 404);
       const ext = name.split('.').pop().toLowerCase();
       const ct = ({ png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', avif: 'image/avif', svg: 'image/svg+xml' })[ext] || 'image/png';
-      return new Response(buf, {
-        status: 200,
-        headers: { 'Content-Type': ct, 'Cache-Control': 'public, max-age=31536000, immutable', ...corsHeaders() },
-      });
+      const hdrs = { 'Content-Type': ct, 'Cache-Control': 'public, max-age=31536000, immutable', ...corsHeaders() };
+      // SVG bisa mengandung script — sandbox mencegah eksekusi saat dibuka langsung
+      if (ext === 'svg') {
+        hdrs['Content-Security-Policy'] = 'sandbox';
+        hdrs['Content-Disposition'] = 'inline; filename="' + name + '"';
+      }
+      return new Response(buf, { status: 200, headers: hdrs });
     }
 
     return json({ error: 'Endpoint tidak dikenal' }, 404);
