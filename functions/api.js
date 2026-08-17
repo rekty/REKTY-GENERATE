@@ -1509,8 +1509,24 @@ export async function onRequest(context) {
       const candidate = await sha256hex(h || q);
       return candidate === ADMIN_PIN_HASH;
     }
+    // ---- Audit log panel admin: catat tiap aksi ke KV (audit:<waktu>:<acak>) ----
+    // Log bertahan 30 hari lalu terhapus otomatis (expirationTtl). Key berawalan
+    // 'audit:' tidak lolos filter gambar IMG_EXT, jadi tidak muncul di galeri dan
+    // tidak ikut terhapus oleh delete-all (audit harus selamat dari penghapusan).
+    const AUDIT_TTL = 30 * 86400;
+    async function auditLog(env, request, action, detail) {
+      if (!env || !env.IMAGES) return;
+      const t = Date.now();
+      const key = 'audit:' + t + ':' + (crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10));
+      const ip = String(request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || '').slice(0, 64);
+      const ua = String(request.headers.get('user-agent') || '').slice(0, 160);
+      const rec = { t, action, detail: String(detail || ''), ip, ua };
+      await env.IMAGES.put(key, JSON.stringify(rec), { expirationTtl: AUDIT_TTL }).catch(() => {});
+    }
     if (method === 'GET' && url.pathname === '/api/admin') {
       if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      // Catat "buka panel" hanya saat unlock (ada ?pin= di URL) — refresh biasa tidak dicatat
+      if (url.searchParams.get('pin')) await auditLog(env, request, 'buka', 'Panel admin dibuka');
       if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
       // Key arsip gambar = nama file dengan ekstensi gambar (UUID.jpg/png/webp/...),
       // tanpa prefix. Key task:/oauth: adalah status internal, bukan gambar.
@@ -1551,6 +1567,7 @@ export async function onRequest(context) {
       const allowed = /^[a-zA-Z0-9-]+\.(png|jpe?g|webp|gif|avif|svg)$/.test(name);
       if (!allowed) return json({ error: 'Hanya file gambar arsip yang bisa dihapus' }, 400);
       await env.IMAGES.delete(name);
+      await auditLog(env, request, 'hapus', name);
       return json({ ok: true, deleted: name });
     }
 
@@ -1573,7 +1590,31 @@ export async function onRequest(context) {
       for (const k of imgs) {
         try { await env.IMAGES.delete(k.name); deleted++; } catch (e) { /* lewati yang gagal */ }
       }
+      await auditLog(env, request, 'hapus-semua', 'Semua gambar arsip dihapus (' + deleted + ' gambar)');
       return json({ ok: true, deleted });
+    }
+
+    // ---- Audit log: baca riwayat aktivitas panel admin (PIN dilindungi) ----
+    if (method === 'GET' && url.pathname === '/api/admin/audit') {
+      if (!(await pinOk(request))) return json({ error: 'PIN salah atau tidak disertakan' }, 403);
+      if (!env || !env.IMAGES) return json({ error: 'Penyimpanan gambar belum diaktifkan' }, 404);
+      let keys = [];
+      let cursor;
+      do {
+        const page = await env.IMAGES.list({ prefix: 'audit:', cursor, limit: 1000 });
+        keys = keys.concat(page.keys || []);
+        cursor = page.cursor;
+      } while (cursor);
+      const logs = [];
+      for (const k of keys) {
+        try {
+          const raw = await env.IMAGES.get(k.name, { type: 'text' });
+          const rec = raw ? safeJson(raw) : null;
+          if (rec && rec.t) logs.push(rec);
+        } catch (e) { /* lewati yang gagal dibaca */ }
+      }
+      logs.sort((a, b) => (b.t || 0) - (a.t || 0));
+      return json({ ok: true, logs: logs.slice(0, 100) });
     }
 
     // ---- sajikan gambar arsip (URL permanen /img/<nama>) ----

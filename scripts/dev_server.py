@@ -49,6 +49,9 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8787
 _jobs = {}
 _lock = threading.Lock()
 
+# Mock audit log panel admin (in-memory, sama perilaku dengan KV production).
+_audit = []
+
 # BYOP OAuth: sesi yang ditukar lewat enter.pollinations.ai (disimpan di memori).
 _oauth = {}
 OAUTH_AUTHORIZE = 'https://enter.pollinations.ai/authorize'
@@ -207,10 +210,20 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?")[0]
         if path == "/api/health":
             return self._send(200, {"ok": True, "hasKeys": {"tams": False, "replicate": False, "fal": False, "pollinations": True}, "tams": "mock"})
+        if path == "/api/admin/audit":
+            # Mock log audit (PIN: test123 via hash)
+            if not _pin_ok(self):
+                return self._send(403, {"error": "PIN salah atau tidak disertakan"})
+            logs = sorted(_audit, key=lambda x: x.get("t", 0), reverse=True)
+            return self._send(200, {"ok": True, "logs": logs[:100]})
         if path == "/api/admin":
             # Mock panel admin KV untuk pengembangan lokal (PIN: test123, dibandingkan via hash)
             if not _pin_ok(self):
                 return self._send(403, {"error": "PIN salah atau tidak disertakan"})
+            # Catat "buka panel" hanya saat unlock (ada ?pin= di URL)
+            if "pin=" in self.path:
+                _audit.append({"t": int(time.time() * 1000), "action": "buka",
+                               "detail": "Panel admin dibuka", "ip": "127.0.0.1", "ua": "mock"})
             return self._send(200, {
                 "ok": True, "pin": True,
                 "images": [
@@ -336,6 +349,8 @@ class Handler(BaseHTTPRequestHandler):
             if not name or "." not in name:
                 return self._send(400, {"error": "Hanya file gambar arsip yang bisa dihapus"})
             print("=== admin delete ===", name)
+            _audit.append({"t": int(time.time() * 1000), "action": "hapus",
+                           "detail": name, "ip": "127.0.0.1", "ua": "mock"})
             return self._send(200, {"ok": True, "deleted": name})
         if path == "/api/admin/delete-all":
             if not _pin_ok(self):
@@ -349,6 +364,8 @@ class Handler(BaseHTTPRequestHandler):
             if body.get("all") is not True:
                 return self._send(400, {"error": "Konfirmasi hapus-semu wajib (all:true)"})
             print("=== admin delete-all (mock) ===")
+            _audit.append({"t": int(time.time() * 1000), "action": "hapus-semua",
+                           "detail": "Semua gambar arsip dihapus (2 gambar)", "ip": "127.0.0.1", "ua": "mock"})
             return self._send(200, {"ok": True, "deleted": 2})
         if path == "/api/oauth/token":
             length = int(self.headers.get("Content-Length") or 0)

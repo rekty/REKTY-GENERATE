@@ -5433,6 +5433,7 @@ if(typeof updateBalPill==='function') updateBalPill();
       <div class="flex items-center gap-3 mb-3 text-xs text-neutral-400">
         <span id="kvadmin-count">0 gambar</span>
         <span class="flex-1"></span>
+        <button id="kvadmin-audit" class="btn h-8 px-3 text-[11px] border bd text-neutral-300 hover:bg-[#21262d]" title="Lihat log aktivitas panel admin (buka, hapus, hapus semua)">📜 Log Audit</button>
         <button id="kvadmin-resetpin" class="btn h-8 px-3 text-[11px] border bd text-neutral-300 hover:bg-[#21262d]" title="Kunci panel ini — PIN diminta lagi saat dibuka berikutnya">🔒 Kunci Panel</button>
         <button id="kvadmin-delall" class="btn h-8 px-3 text-[11px] border border-red-500/40 text-red-400 hover:bg-red-500/10" title="Hapus SEMUA gambar arsip dari KV (tidak bisa dikembalikan)">🗑️ Hapus Semua</button>
       </div>
@@ -5444,6 +5445,15 @@ if(typeof updateBalPill==='function') updateBalPill();
       </div>
       <div id="kvadmin-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
       <div id="kvadmin-empty" class="hidden text-center text-neutral-600 text-sm py-16">Tidak ada gambar arsip di KV.</div>
+      <!-- Log Audit: riwayat aktivitas panel admin (buka, hapus, hapus semua) -->
+      <div id="kvadmin-audit-wrap" class="hidden mt-4 border bd rounded-xl bg-[#161b22]">
+        <div class="flex items-center justify-between px-3 py-2 border-b bd">
+          <span class="text-xs font-semibold text-white">📜 Log Audit Panel Admin</span>
+          <button id="kvadmin-audit-refresh" class="btn btn-ghost h-7 px-2 border bd text-[10px]" title="Muat ulang log">⟳</button>
+        </div>
+        <div id="kvadmin-audit-list" class="max-h-72 overflow-y-auto hidebar divide-y divide-[#30363d]"></div>
+        <div id="kvadmin-audit-empty" class="hidden text-center text-neutral-600 text-xs py-6">Belum ada aktivitas tercatat.</div>
+      </div>
     </div>
   </div>
 </div>
@@ -5580,6 +5590,38 @@ if(typeof updateBalPill==='function') updateBalPill();
     }).catch(function(){ setErr('Gagal ambil data arsip'); });
   }
   $('kvadmin-refresh').addEventListener('click',loadAdmin);
+  /* Log Audit: tampilkan riwayat aktivitas panel (buka, hapus, hapus semua) dari KV */
+  var auditOpen = false;
+  $('kvadmin-audit').addEventListener('click',function(){
+    auditOpen = !auditOpen;
+    $('kvadmin-audit-wrap').classList.toggle('hidden', !auditOpen);
+    if(auditOpen) loadAudit();
+  });
+  $('kvadmin-audit-refresh').addEventListener('click',loadAudit);
+  function loadAudit(){
+    var list=$('kvadmin-audit-list'); if(!list) return;
+    list.innerHTML='';
+    fetch('/api/admin/audit',{headers:{'x-admin-pin':pin()}}).then(function(r){ return r.json(); }).then(function(d){
+      if(!d||!d.ok){ toast('Gagal ambil log audit'); return; }
+      var logs=d.logs||[];
+      $('kvadmin-audit-empty').classList.toggle('hidden', !!logs.length);
+      logs.forEach(function(l){
+        var row=document.createElement('div');
+        row.className='px-3 py-2 flex items-start gap-2';
+        var ic = l.action==='hapus-semua' ? '🗑️' : (l.action==='hapus' ? '🧹' : '🔓');
+        var act = l.action==='hapus-semua' ? 'Hapus Semua' : (l.action==='hapus' ? 'Hapus Gambar' : 'Buka Panel');
+        var ts='';
+        try{ ts=new Date(l.t).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}); }catch(e){ ts=String(l.t||''); }
+        row.innerHTML='<span class="text-sm leading-5">'+ic+'</span>'
+          +'<div class="min-w-0 flex-1">'
+          +'<div class="text-[11px] text-neutral-200">'+act+' <span class="text-neutral-500 font-normal">· '+ts+'</span></div>'
+          +'<div class="text-[10px] text-neutral-500 truncate" title="'+esc(String(l.detail||''))+'" style="max-width:36rem">'+esc(String(l.detail||''))+'</div>'
+          +(l.ip?('<div class="text-[9px] text-neutral-600">IP: '+esc(String(l.ip))+'</div>'):'')
+          +'</div>';
+        list.appendChild(row);
+      });
+    }).catch(function(){ toast('Gagal ambil log audit'); });
+  }
   /* Kunci Panel: hapus PIN dari memori sesi, kembali ke form login */
   $('kvadmin-resetpin').addEventListener('click',function(){
     _pin='';
