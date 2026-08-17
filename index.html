@@ -5498,6 +5498,21 @@ if(typeof updateBalPill==='function') updateBalPill();
         sz.textContent=im.name+' · '+(im.size?((im.size/1024).toFixed(1)+' KB'):'?');
         sz.title=im.name;
         meta.appendChild(sz);
+        // Tanggal dibuat (dari metadata uploadedAt, atau perkiraan dari expiry)
+        if(im.createdAt){
+          var cd=document.createElement('div');
+          cd.className='text-[9px] text-neutral-400';
+          var age=Date.now()-im.createdAt;
+          var ageTxt=age>=0?(age>=86400000?(Math.floor(age/86400000)+' hari lalu'):(Math.floor(age/3600000)+' jam lalu')):'baru saja';
+          try{ cd.textContent='📅 Dibuat '+new Date(im.createdAt).toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+' · '+ageTxt; }
+          catch(e){ cd.textContent='📅 Dibuat '+'?'; }
+          meta.appendChild(cd);
+        } else {
+          var cd2=document.createElement('div');
+          cd2.className='text-[9px] text-neutral-600';
+          cd2.textContent='📅 Gambar lama (sebelum fitur tanggal)';
+          meta.appendChild(cd2);
+        }
         // Sisa waktu sebelum gambar otomatis terhapus (KV expirationTtl 7 hari)
         if(im.expiresAt){
           var exp=document.createElement('div');

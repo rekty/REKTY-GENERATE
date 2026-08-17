@@ -722,8 +722,9 @@ async function storeImageBuf(buf, ct, env) {
   if (!env || !env.IMAGES || !buf || !buf.byteLength) return null;
   if (buf.byteLength > 20 * 1024 * 1024) return null;
   const name = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)) + '.' + extFromCt(ct);
+  const uploadedAt = Date.now();
   try {
-    await env.IMAGES.put(name, buf, { expirationTtl: IMG_EXPIRY });
+    await env.IMAGES.put(name, buf, { expirationTtl: IMG_EXPIRY, metadata: { uploadedAt } });
     return '/img/' + name;
   } catch {
     return null;
@@ -1513,12 +1514,17 @@ export async function onRequest(context) {
       const images = keys
         .filter(function (k) { return IMG_EXT.test(k.name); })
         .map(function (k) {
+          let createdAt = null;
+          if (k.metadata && k.metadata.uploadedAt) createdAt = Number(k.metadata.uploadedAt) || null;
+          // Gambar lama tanpa metadata tapi masih ber-TTL: perkirakan dibuat = expiration - 7 hari
+          else if (k.expiration) createdAt = k.expiration * 1000 - IMG_EXPIRY * 1000;
           return {
             name: k.name,
             size: (k.metadata && k.metadata.size) || 0,
             url: '/img/' + k.name,
             // expiration (epoch detik) — KV set otomatis dari expirationTtl saat put
             expiresAt: k.expiration ? k.expiration * 1000 : null,
+            createdAt,
           };
         });
       return json({ ok: true, pin: true, images, totalKeys: keys.length, imageCount: images.length });
