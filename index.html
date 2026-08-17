@@ -3046,13 +3046,26 @@ function demoResults(par){
     for(var i=0;i<state.ncol;i++) srcs.push(demoCanvas(w,h));
     addDemoResults(srcs);
   }
-  // Tunggu gambar pertama selesai dibuat (Pollinations generate on-demand);
-  // kalau gagal/offline/terlalu lama, pakai artwork canvas biar demo tetap jalan.
-  var im=new Image();
-  im.onload=function(){ addDemoResults(urls); };
-  im.onerror=fallbackArt;
-  im.src=urls[0];
-  setTimeout(fallbackArt,180000);
+  // Coba beberapa strategi sebelum menyerah ke artwork canvas, supaya gambar demo
+  // TETAP gambar sungguhan dari Pollinations walau satu URL gagal sesaat:
+  // 1) URL asli (dengan model kalau dipilih) -> 2) tanpa model -> 3) seed acak baru.
+  // Semua gagal / terlalu lama (180 dtk) -> canvas (demo tetap jalan, tanpa error).
+  var attempts=[urls[0]];
+  var baseNoModel='https://image.pollinations.ai/prompt/'+encodeURIComponent(par.params.prompt)
+    +'?width='+w+'&height='+h+'&seed='+seedBase+'&nologo=true';
+  if(modelParam) attempts.push(baseNoModel);
+  attempts.push(baseNoModel.replace('seed='+seedBase,'seed='+(seedBase+99999)));
+  var ai=0, done2=false;
+  function tryNext(){
+    if(gen!==_demoGen) return;
+    if(ai>=attempts.length){ fallbackArt(); return; }
+    var im=new Image();
+    im.onload=function(){ if(!done2){ done2=true; addDemoResults(urls); } };
+    im.onerror=function(){ ai++; tryNext(); };
+    im.src=attempts[ai];
+  }
+  tryNext();
+  setTimeout(function(){ if(!done2){ done2=true; fallbackArt(); } },180000);
 }
 
 async function doGenerate(){
