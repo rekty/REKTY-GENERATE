@@ -1548,12 +1548,6 @@ export async function onRequest(context) {
       const body = safeJson(await request.text());
       if (!body) return json({ error: 'JSON tidak valid' }, 400);
 
-      // ---- Turnstile anti-bot (aktif kalau TURNSTILE_SECRET diset di backend) ----
-      {
-        const v = await verifyTurnstile(env, request, body);
-        if (!v.ok) return json({ error: v.error }, v.code);
-      }
-
       const provider = String(body.provider || 'tams').toLowerCase();
       if (!PROVIDERS.includes(provider)) {
         return json({ error: 'Provider tidak dikenal: ' + provider }, 400);
