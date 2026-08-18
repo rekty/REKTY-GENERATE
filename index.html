@@ -293,10 +293,10 @@ body.chat-mode .chat-marquee{margin-top:.75rem;padding-top:.5rem;border-top:1px 
   body.mob-tasks #mobtasks{display:flex!important}
   /* Chat-mode harus menang atas Tasks (spesifisitas lebih tinggi) */
   body.chat-mode #mobtasks,body.chat-mode.mob-tasks #mobtasks{display:none!important}
-  /* Kartu Generating mobile: FIXED di atas layar saat task berjalan, tampil di
-     tab mana pun (Workspace/Tasks/Chat) supaya progress tidak hilang saat
-     user pindah tab di tengah generate. Hidden di desktop (pakai submitcard). */
-  #mobgen:not(.hidden){display:block;position:fixed;top:6.5rem;left:.75rem;right:.75rem;z-index:45;box-shadow:0 12px 34px rgba(0,0,0,.6)}
+  /* Kartu Generating mobile: tampil sebagai KARTU PERTAMA di aliran daftar task
+     (bukan overlay fixed) — jadi gambar task di bawahnya tetap terlihat dan tidak
+     tertutup, persis Tensor.Art. Hidden di desktop (pakai submitcard). */
+  #mobgen:not(.hidden){display:block;margin:.75rem .75rem 0;box-shadow:0 12px 34px rgba(0,0,0,.5)}
   /* #canvas>div{display:contents} bisa menimpa class hidden Tailwind (spesifisitas
      lebih tinggi) — paksa hidden menang supaya kartu benar-benar hilang saat selesai */
   #mobgen.hidden{display:none!important}
@@ -852,14 +852,9 @@ input[type=range]{cursor:pointer}
           <button id="mob-manage" class="mficon" title="Manage"><i data-icon="squares-four" class="w-4 h-4"></i></button>
         </div>
         <p id="mobtasks-empty" class="hidden text-center text-neutral-600 text-sm py-20 px-4">Belum ada task — buat gambar di tab Workspace.</p>
-        <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
-        <div class="py-4 text-center"><span class="vaia-pill" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></span></div>
-      </div>
-
-      <!-- Kartu Generating mobile (ala Tensor.Art): FIXED di atas layar saat task berjalan,
-           tampil di tab mana pun (Workspace/Tasks/Chat) supaya progress tidak "hilang"
-           saat user pindah tab di tengah generate. -->
-      <div id="mobgen" class="hidden border border-[#3d2f6e] rounded-2xl bg-[#252033] p-4 space-y-3">
+        <!-- Kartu Generating mobile (ala Tensor.Art): kartu PERTAMA di aliran daftar
+             task — tidak menutupi gambar di bawahnya, persis seperti Tensor.Art. -->
+        <div id="mobgen" class="hidden border border-[#3d2f6e] rounded-2xl bg-[#252033] p-4 space-y-3" style="margin:.75rem .75rem 0">
         <div class="flex items-start justify-between gap-2">
           <div class="text-lg font-bold text-white">Generating</div>
           <span id="mobgen-task" class="text-[10px] text-neutral-400 truncate max-w-[55%]" title="Task ID"></span>
@@ -874,6 +869,9 @@ input[type=range]{cursor:pointer}
           </div>
           <span id="mobgen-pct" class="text-sm font-semibold text-white">0%</span>
         </div>
+        </div>
+        <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
+        <div class="py-4 text-center"><span class="vaia-pill" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></span></div>
       </div>
   </main>
 
@@ -3078,7 +3076,18 @@ async function doGenerate(){
   if(!p){ openLeft(); $('prompt').focus(); toast('Isi prompt dulu'); return; }
   state.busy=true; setBusy(true); _pollStop=false;
   // mobile: pindah ke tab Tasks supaya kartu Generating tampil sebelum hasil (ala Tensor.Art)
-  if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('tasks');
+  if(window.innerWidth<1024&&typeof switchMobTab==='function'){
+    switchMobTab('tasks');
+    // Auto-scroll ke atas daftar task — kartu Generating tampil sebagai kartu
+    // PERTAMA di atas, gambar-gambar lama tetap terlihat di bawahnya.
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      var mt=$('mobtasks'); if(mt&&mt.scrollIntoView) mt.scrollIntoView({behavior:'smooth',block:'start'});
+      var sc=$('mainwrap'); if(sc) sc.scrollTop=0;
+    }); });
+  } else {
+    // desktop: kartu Submitting di atas output — scroll ke atas supaya langsung terlihat
+    var sc2=$('mainwrap'); if(sc2) sc2.scrollTo({top:0,behavior:'smooth'});
+  }
   var par=buildPayload();
   // Sertakan token Turnstile (kalau verifikasi asli sudah lewat) lalu kosongkan
   if(window._vaiaTurnToken){ par.turnstileToken=window._vaiaTurnToken; window._vaiaTurnToken=null; }
