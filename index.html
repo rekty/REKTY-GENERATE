@@ -2287,21 +2287,29 @@ function applyLastPrompt(){
   }catch(e){}
 }
 function collectUI(){
-  settings.prompt=$('prompt').value;
-  settings.negPrompt=$('negprompt').value; settings.negCheck=$('negcheck').checked;
-  settings.steps=parseInt($('steps').value)||10; settings.cfg=parseFloat($('cfg').value)||1;
-  settings.sampler=$('sampler').value; settings.sched=$('sched').value; settings.vae=$('vae').value;
-  settings.width=parseInt($('width').value)||768; settings.height=parseInt($('height').value)||1152;
-  settings.aspect=state.aspect||'custom'; settings.clipSkip=parseInt($('clipskip').value)||2;
-  settings.ensd=parseInt($('etansd').value); settings.upscale=parseFloat($('upscale').value)||2;
+  if(!settings) return;
+  var p=$('prompt'); if(p) settings.prompt=p.value;
+  var np=$('negprompt'); if(np) settings.negPrompt=np.value;
+  var nc=$('negcheck'); if(nc) settings.negCheck=nc.checked;
+  var st=$('steps'); if(st) settings.steps=parseInt(st.value)||10;
+  var cf=$('cfg'); if(cf) settings.cfg=parseFloat(cf.value)||1;
+  var sm=$('sampler'); if(sm) settings.sampler=sm.value;
+  var sc=$('sched'); if(sc) settings.sched=sc.value;
+  var va=$('vae'); if(va) settings.vae=va.value;
+  var wi=$('width'); if(wi) settings.width=parseInt(wi.value)||768;
+  var hi=$('height'); if(hi) settings.height=parseInt(hi.value)||1152;
+  settings.aspect=state.aspect||'custom';
+  var cs=$('clipskip'); if(cs) settings.clipSkip=parseInt(cs.value)||2;
+  var en=$('etansd'); if(en) settings.ensd=parseInt(en.value);
+  var up=$('upscale'); if(up) settings.upscale=parseFloat(up.value)||2;
   settings.ncol=state.ncol||1; settings.ncols=state.ncols||2; settings.page=state.page||'text';
   settings.modeA1111=!!state.modeA1111; settings.modeElla=!!state.modeElla;
   settings.modelName=state.model?state.model.name:'';
   settings.loras=LORA.map(function(l){ return { name:l.name, w:l.w, loraUrl:l.loraUrl||'' }; });
-  settings.selfhostUrl=$('selfhost-url').value.trim();
-  settings.denoise=parseFloat($('i2i-ds').value); if(settings.denoise==null) settings.denoise=0.5;
-  settings.animDur=parseFloat($('animdur').value)||0.5;
-  if(!settings.seed||!$('seed').value) settings.seed=$('seed').value;
+  var sh=$('selfhost-url'); if(sh) settings.selfhostUrl=sh.value.trim();
+  var ds=$('i2i-ds'); if(ds) { settings.denoise=parseFloat(ds.value); if(settings.denoise==null) settings.denoise=0.5; }
+  var ad=$('animdur'); if(ad) settings.animDur=parseFloat(ad.value)||0.5;
+  var sd=$('seed'); if(sd && sd.value) { if(!settings.seed) settings.seed=sd.value; }
   saveSettings();
 }
 /** Terapkan durasi animasi kartu (CSS var) + label + simpan. */
@@ -2418,9 +2426,11 @@ function updateApiStatus(){
   el.style.color=connected?'#27D4CD':'#9a9aa2';
 }
 $('apiprovider').addEventListener('change',function(){
+  if(!settings) return;
   settings.provider=$('apiprovider').value; saveSettings(); updateProviderUI();
 });
 $('api-save').addEventListener('click',function(){
+  if(!settings) return;
   settings.mode=$('apimode').value; settings.apiKey=$('apikey').value.trim();
   if(settings.provider==='selfhost') settings.selfhostUrl=$('selfhost-url').value.trim();
   saveSettings(); updateProviderUI(); toast('Pengaturan API disimpan');
@@ -2494,7 +2504,7 @@ function startPollOAuth(){
 function updateChatBalance(){
   var pill=$('chat-balance'), txt=$('chat-balance-txt');
   if(!pill||!txt) return;
-  if(!settings.pollSession){ txt.textContent='Gratis'; pill.title='Login Pollinations (BYOP) untuk saldo pollen — klik untuk login'; pill.style.borderColor=''; return; }
+  if(!settings||!settings.pollSession){ txt.textContent='Gratis'; pill.title='Login Pollinations (BYOP) untuk saldo pollen — klik untuk login'; pill.style.borderColor=''; return; }
   fetch('/api/oauth/status?session='+encodeURIComponent(settings.pollSession)).then(function(r){return r.json();}).then(function(d){
     if(d&&d.connected&&d.balance){
       var b=d.balance;
@@ -3592,7 +3602,7 @@ document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click
 document.querySelectorAll('.chip').forEach(function(c){ c.addEventListener('click',collectUI); });
 $('dice').addEventListener('click',collectUI);
 $('api-save').addEventListener('click',collectUI);
-$('apimode').addEventListener('change',function(){ settings.mode=$('apimode').value; saveSettings(); });
+$('apimode').addEventListener('change',function(){ if(!settings) return; settings.mode=$('apimode').value; saveSettings(); });
 $('i2i-ds').addEventListener('input',collectUI);
 
 renderLora();
