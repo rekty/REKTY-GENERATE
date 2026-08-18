@@ -881,9 +881,10 @@ input[type=range]{cursor:pointer}
   <aside id="rightPan" class="w-[21rem] shrink-0 border-l bd bg-[#161b22] hidden lg:flex flex-col">
     <div class="flex items-center justify-between px-3 py-2 border-b bd">
       <span class="text-sm font-semibold" id="rptitle">Text to Image</span>
-      <div class="flex gap-1">
+      <div class="flex items-center gap-1">
         <button class="rtab sel" data-p="detail">Detail</button>
         <button class="rtab" data-p="history">Riwayat</button>
+        <button id="rightPan-close" class="lg:hidden w-6 h-6 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] rounded-md ml-1" title="Tutup"><i data-icon="x" class="w-4 h-4"></i></button>
       </div>
     </div>
     <!-- Detail hasil aktif (seperti Tensor.Art: Input + Details + params) -->
@@ -3493,7 +3494,13 @@ function renderCanvas(){
 }
 
 /* --- riwayat di mobile --- */
-$('btn-history').addEventListener('click',function(){ $('rightPan').classList.toggle('mobile-open'); });
+$('btn-history').addEventListener('click',function(){
+  var isOpen=$('rightPan').classList.toggle('mobile-open');
+  if(isOpen) $('overlay').classList.remove('hidden'); else $('overlay').classList.add('hidden');
+});
+// Tombol close (X) di header rightPan untuk mobile
+var rpclose=document.getElementById('rightPan-close');
+if(rpclose) rpclose.addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); $('overlay').classList.add('hidden'); });
 /* Floating TOP: tampil setelah scroll jauh, klik -> lompat ke atas */
 (function(){
   var topBtn=$('btn-top');
