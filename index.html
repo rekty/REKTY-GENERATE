@@ -6163,7 +6163,7 @@ if(typeof updateBalPill==='function') updateBalPill();
     try{ already=localStorage.getItem('vaia-ts-done')==='1'; }catch(e){}
     if(already){ if(cb) cb(); return; }
     ensureSiteKey().then(function(sk){
-      if(!sk){ if(cb) cb(); return; }
+      if(!sk){ try{ localStorage.setItem('vaia-ts-done','1'); }catch(e){} if(cb) cb(); return; }
       runTurnstile(function(){
         try{ localStorage.setItem('vaia-ts-done','1'); }catch(e){}
         if(cb) cb();
