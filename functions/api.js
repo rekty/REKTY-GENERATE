@@ -977,26 +977,60 @@ async function pollinationsCreateJob(body, env, apiKey) {
   const gs = clampFloat(params.cfgScale, 0, 10, 0);
   if (gs > 0) url.searchParams.set('guidance_scale', String(gs));
 
-  const res = await fetchWithTimeout(url.toString(), apiKey ? { headers: { Authorization: 'Bearer ' + apiKey } } : {}, 120000);
-  if (!res.ok) {
-    const txt = (await res.text()).slice(0, 300);
-    if (res.status === 402) {
-      throw new Error('Model ini berbayar — saldo pollen 0. Top up di enter.pollinations.ai atau pilih model gratis (zimage, flux, dreamshaper, klein).');
+  // Retry otomatis: Pollinations sering sibuk/lambat — Cloudflare di depannya
+  // membalas 522/502/503/504 atau timeout. Coba ulang 3x dengan backoff singkat,
+  // HANYA untuk error sementara; 402 (saldo 0) & 4xx permanen tidak di-retry.
+  const MAX_ATT = 3;
+  let lastErr = null;
+  for (let att = 1; att <= MAX_ATT; att++) {
+    if (att > 1) await sleep(Math.min(2500, 600 * (att - 1))); // 0.6s -> 1.2s
+    let res;
+    try {
+      // Timeout per percobaan naik bertahap supaya total wall-time tetap wajar
+      // dan tidak melewati batas Cloudflare Pages (30s -> 45s -> 60s). Mayoritas
+      // 522 muncul dalam hitungan detik, jadi attempt pendek memicu retry cepat.
+      const ms = att === 1 ? 30000 : att === 2 ? 45000 : 60000;
+      res = await fetchWithTimeout(url.toString(), apiKey ? { headers: { Authorization: 'Bearer ' + apiKey } } : {}, ms);
+    } catch (e) {
+      const isAbort = e && (e.name === 'AbortError' || /abort|timeout/i.test(String(e && e.message)));
+      if (isAbort) {
+        lastErr = new Error('Pollinations lambat (timeout ' + (att === 1 ? 30 : att === 2 ? 45 : 60) + 's) — mencoba ulang...');
+        continue;
+      }
+      lastErr = new Error('Koneksi ke Pollinations gagal: ' + (e && e.message ? e.message : e));
+      continue; // network error sementara — retry
     }
-    throw new Error('Pollinations gagal (HTTP ' + res.status + '): ' + txt);
+    if (res.ok) {
+      const buf = await res.arrayBuffer();
+      const ct = String(res.headers.get('content-type') || 'image/jpeg').split(';')[0] || 'image/jpeg';
+      // Arsip ke KV (permanen); kalau KV tidak aktif, pakai URL Pollinations langsung.
+      const stored = await storeImageBuf(buf, ct, env);
+      const img = stored || url.toString();
+      const taskId = 'pollinations:' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2));
+      if (env && env.IMAGES) {
+        await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images: [img] }), { expirationTtl: TASK_EXPIRY }).catch(() => {});
+      }
+      return { taskId, images: [img] };
+    }
+    const status = res.status;
+    if (status === 402) {
+      const txt2 = (await res.text()).slice(0, 300);
+      throw new Error('Model ini berbayar — saldo pollen 0. Top up di enter.pollinations.ai atau pilih model gratis (zimage, flux, dreamshaper, klein).' + (txt2 ? ' (' + txt2 + ')' : ''));
+    }
+    if (status === 400 || status === 401 || status === 403 || status === 404 || status === 413 || status === 422) {
+      const txt3 = (await res.text()).slice(0, 300);
+      throw new Error('Pollinations menolak permintaan (HTTP ' + status + '): ' + txt3);
+    }
+    // 408/429/5xx/522 = sementara -> retry
+    const txt4 = (await res.text()).slice(0, 300);
+    lastErr = new Error('Pollinations sibuk (HTTP ' + status + ')' + (txt4 ? ': ' + txt4 : '') + ' — mencoba ulang...');
   }
-  const buf = await res.arrayBuffer();
-  const ct = String(res.headers.get('content-type') || 'image/jpeg').split(';')[0] || 'image/jpeg';
+  throw new Error(lastErr ? lastErr.message : 'Pollinations gagal setelah beberapa percobaan — coba lagi sebentar lagi');
+}
 
-  // Arsip ke KV (permanen); kalau KV tidak aktif, pakai URL Pollinations langsung.
-  const stored = await storeImageBuf(buf, ct, env);
-  const img = stored || url.toString();
-
-  const taskId = 'pollinations:' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2));
-  if (env && env.IMAGES) {
-    await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images: [img] }), { expirationTtl: TASK_EXPIRY }).catch(() => {});
-  }
-  return { taskId, images: [img] };
+/** Sleep helper untuk backoff retry. */
+async function sleep(ms) {
+  return new Promise(function (r) { setTimeout(r, ms); });
 }
 
 /** Baca hasil task Pollinations dari KV. */
