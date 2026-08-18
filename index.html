@@ -5563,6 +5563,41 @@ renderGrid();
 renderDetail();
 renderRight();
 if(typeof updateBalPill==='function') updateBalPill();
+
+/* ===== Pulihkan posisi scroll & tab mobile setelah refresh ===== */
+(function(){
+  function scroller(){
+    var chatmsgs=$('chat-msgs'), mw=$('mainwrap'), shell=$('appshell');
+    if(state.page==='chat'&&chatmsgs&&chatmsgs.scrollHeight>chatmsgs.clientHeight+50) return chatmsgs;
+    if(mw&&mw.scrollHeight>mw.clientHeight+50) return mw;
+    if(shell&&shell.scrollHeight>shell.clientHeight+50) return shell;
+    return document.scrollingElement;
+  }
+  function save(){
+    try{
+      var s=scroller();
+      localStorage.setItem('vaia-scroll-pos', JSON.stringify({
+        page:state.page, top:s.scrollTop||0,
+        mobTasks:document.body.classList.contains('mob-tasks'),
+        ts:Date.now()
+      }));
+    }catch(e){}
+  }
+  try{
+    var d=JSON.parse(localStorage.getItem('vaia-scroll-pos')||'null');
+    if(d&&d.page===state.page){
+      if(d.mobTasks&&typeof switchMobTab==='function'&&window.innerWidth<1024) switchMobTab('tasks');
+      var restore=function(){ var s=scroller(); if(s&&d.top) s.scrollTop=d.top; };
+      // tunggu layout stabil (gambar lazy / chat render) sebelum set posisi
+      requestAnimationFrame(function(){ requestAnimationFrame(restore); });
+      setTimeout(restore, 250);
+    }
+  }catch(e){}
+  var th=null;
+  document.addEventListener('scroll',function(){ if(th) return; th=setTimeout(function(){ th=null; save(); },350); },true);
+  window.addEventListener('pagehide',save);
+  window.addEventListener('beforeunload',save);
+})();
 </script>
 
 <!-- ============ ADMIN PANEL KV (tersembunyi: ?admin=1 di URL) ============ -->
