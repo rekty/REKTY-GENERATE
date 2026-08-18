@@ -22,16 +22,20 @@ const html = readFileSync(src, 'utf-8');
 // Anti-devtools code (prepended to main script)
 const antiDevTools = `
 (function(){
+  var _d=0;
   function _ck(){
     var w=window,d=document;
-    if(w.outerWidth-w.innerWidth>160||w.outerHeight-w.innerHeight>160){
-      d.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:20px"><div><p>Developer Tools detected.</p><p style="color:#666;font-size:14px;margin-top:8px">This app does not allow inspection.</p></div></div>';
-      d.title='Access Denied';
-      throw new Error('DevTools');
-    }
+    var dw=w.outerWidth-w.innerWidth;
+    var dh=w.outerHeight-w.innerHeight;
+    if(dw>200&&dh>200){
+      _d++;
+      if(_d>3){
+        d.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:20px"><div><p>This app does not allow inspection.</p></div></div>';
+        d.title='Access Denied';
+      }
+    }else{_d=0;}
   }
-  setInterval(_ck,800);
-  window.console={log:function(){},warn:function(){},error:function(){},info:function(){},debug:function(){},clear:function(){},table:function(){},group:function(){},groupEnd:function(){},time:function(){},timeEnd:function(){},count:function(){},assert:function(){},dir:function(){},trace:function(){},profile:function(){},profileEnd:function(){}};
+  setInterval(_ck,2000);
 })();
 `;
 
