@@ -6122,7 +6122,7 @@ if(typeof updateBalPill==='function') updateBalPill();
             callback: function(token){ if(_invPend){ var p=_invPend; _invPend=null; p(token); } },
             'error-callback': function(){ if(_invPend){ var p=_invPend; _invPend=null; p(null); } }
           });
-          res(true);
+          setTimeout(function(){ res(true); }, 500);
         }catch(e){ res(false); }
       };
       if(window.turnstile){ boot(); return; }
