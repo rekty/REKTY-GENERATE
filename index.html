@@ -6100,6 +6100,11 @@ if(typeof updateBalPill==='function') updateBalPill();
   // Setiap aksi dapat token segar (token Turnstile sekali pakai). Kalau invisible
   // gagal (script diblokir), fallback ke widget terlihat. Tanpa site key -> token ''.
   var _inv=null, _invReady=false, _invPend=null;
+  function resetInvisible(){
+    try{ if(_inv && window.turnstile) window.turnstile.remove(_inv); }catch(e){}
+    if(_inv && _inv.parentNode) _inv.parentNode.removeChild(_inv);
+    _inv=null; _invReady=false;
+  }
   function ensureInvisible(){
     if(_invReady) return Promise.resolve(!!_inv);
     _invReady=true;
@@ -6133,9 +6138,9 @@ if(typeof updateBalPill==='function') updateBalPill();
     return ensureInvisible().then(function(ok){
       if(!ok) return Promise.resolve(null);
       return new Promise(function(res){
-        _invPend=res;
-        try{ window.turnstile.execute(_inv); }catch(e){ _invPend=null; res(null); return; }
-        setTimeout(function(){ if(_invPend){ var p=_invPend; _invPend=null; p(null); } }, 15000);
+        _invPend=function(tok){ resetInvisible(); res(tok); };
+        try{ window.turnstile.execute(_inv); }catch(e){ _invPend=null; resetInvisible(); res(null); return; }
+        setTimeout(function(){ if(_invPend){ var p=_invPend; _invPend=null; resetInvisible(); p(null); } }, 15000);
       });
     });
   }
