@@ -1351,6 +1351,12 @@ function renderMCat(onPick){
     });
   });
 }
+var POLL_PRICE={zimage:0.004,flux:0.002,dreamshaper:0.0001,krea:0.03,gptimage:0.01,gptimage2:0.37,
+  'gpt-image-2':0.37,gptimageLarge:0.01,gptimageLarge0:0.01,klein:0.005,pImage:0.005,
+  wanImage:0.03,wanImagePro:0.03,seedream:0.03,seedream5:0.035,seedreamPro:0.04,
+  kontext:0.04,qwenImage:0.025,novaCanvas:0.04,
+  'tomdacatto/flux-2-max':0.25,'vendouple/flux-2-pro':0.09,
+  'chigwell/gpt-image-2':0.05,'chigwell/flux-klein-2':0.027};
 function setModel(m){
   state.model=m;
   $('model-name').textContent=m.name;
@@ -1359,6 +1365,15 @@ function setModel(m){
     var lg=_PROV_LOGO[settings.provider]||'';
     b.innerHTML=(lg?'<img src="'+lg+'" alt="" onerror="this.style.display=&apos;none&apos;" class="w-3 h-3 inline rounded-full align-[-2px] mr-1"/>':'')+(m.base||'Model')+' - '+(m.arch||'');
   }
+  // Update harga di tombol Generate berdasarkan model aktif + provider.
+  if(settings.provider==='pollinations'){
+    var mid=String(m.model||m.name||'').toLowerCase().replace(/[^a-z0-9/\-]/g,'');
+    var price=POLL_PRICE[mid]||POLL_PRICE[m.model]||POLL_PRICE[m.name];
+    window._rektyPrice=price!=null?('$'+price.toFixed(3)):('$0.00');
+  }else{
+    window._rektyPrice=(PROVIDER_INFO[settings.provider]||{}).price||'1.22';
+  }
+  syncMobPrice();
 }
 function openModelSelector(){
   $('modal-title').textContent='Pilih Model';
