@@ -18,6 +18,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { gzipSync } from 'zlib';
+
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const src = fs.readFileSync(path.join(root, 'functions', 'api.js'), 'utf8');
 const srcHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/^\uFEFF/, ''); // buang BOM
@@ -72,9 +74,21 @@ const body = src
 const router = `
 
 /* ---------- Advanced Mode: /api/* -> backend, path lain -> index.html ---------- */
-// index.html di-embed sebagai base64 (ASCII murni, aman untuk bundler/minifier).
-const HTML_B64 = '${Buffer.from(html, 'utf8').toString('base64')}';
-const INDEX_HTML = new TextDecoder().decode(Uint8Array.from(atob(HTML_B64), (c) => c.charCodeAt(0)));
+// index.html di-compress (gzip) lalu base64 untuk hemat ukuran worker.
+const HTML_GZ_B64 = '${gzipSync(Buffer.from(html, 'utf8')).toString('base64')}';
+async function decompressHtml() {
+  const raw = Uint8Array.from(atob(HTML_GZ_B64), c => c.charCodeAt(0));
+  const ds = new DecompressionStream('gzip');
+  const w = ds.writable.getWriter();
+  w.write(raw); w.close();
+  const parts = [];
+  for await (const p of ds.readable) parts.push(p);
+  const total = parts.reduce((n, p) => n + p.length, 0);
+  const out = new Uint8Array(total);
+  let i = 0;
+  for (const p of parts) { out.set(p, i); i += p.length; }
+  return new TextDecoder().decode(out);
+}
 // Header keamanan untuk halaman HTML & favicon (nama beda dari SEC_H di api.js
 // karena keduanya di-embed ke file yang sama)
 const ROUTER_SEC_H = {
@@ -110,7 +124,8 @@ export default {
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/img/')) {
       return onRequest({ request, env, data: {}, waitUntil: ctx.waitUntil.bind(ctx) });
     }
-    return new Response(INDEX_HTML, { status: 200, headers: HTML_CT });
+    const html = await decompressHtml();
+    return new Response(html, { status: 200, headers: HTML_CT });
   },
 };
 `;
