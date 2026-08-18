@@ -870,6 +870,7 @@ input[type=range]{cursor:pointer}
           </div>
           <span id="mobgen-pct" class="text-sm font-semibold text-white">0%</span>
         </div>
+        <div id="mobgen-warn" class="hidden items-center gap-1.5 text-[11px] text-amber-300/90 mt-1.5"><i data-icon="hourglass-medium" class="w-3 h-3 shrink-0"></i><span>Pollinations sedang sibuk — menunggu gambar...</span></div>
         </div>
         <div id="mobtasks-list" class="px-3 py-3 space-y-4"></div>
         <div class="py-4 text-center"><span class="vaia-pill" title="VAIA"><span class="brand-spark">✦</span><span class="brand-txt" style="font-size:8px">VAIA</span></span></div>
@@ -3008,6 +3009,17 @@ function demoResults(par){
   startProgAnim(); // progress berjalan sambil menunggu gambar sungguhan dibuat
   var w=par.params.width||768, h=par.params.height||1152;
   if(par.params.upscale){ w=Math.min(4096,w*2); h=Math.min(4096,h*2); } // Upscale 2x: hasil 2x ukuran
+  // Peringatan halus kalau Pollinations lambat (muncul setelah 8 dtk menunggu) —
+  // supaya user tidak mengira aplikasi macet.
+  var _warn=setTimeout(function(){
+    if(gen!==_demoGen) return;
+    try{
+      var msg='Pollinations sedang sibuk — menunggu gambar, ini bisa ±30-60 detik...';
+      var st=$('sc-status'); if(st) st.textContent=msg;
+      var st2=$('prog-status'); if(st2) st2.textContent=msg;
+      var mw=$('mobgen-warn'); if(mw){ mw.classList.remove('hidden'); mw.classList.add('flex'); }
+    }catch(e){}
+  },8000);
   // Pollinations tolak seed > int32 (HTTP 500) — clamp ke rentang aman
   var seedRaw=parseInt(par.params.seed,10)||Math.floor(Math.random()*1e9);
   var seedBase=Math.max(1,seedRaw%2000000000);
@@ -3046,6 +3058,8 @@ function demoResults(par){
         clip:par.params.clipSkip!=null?par.params.clipSkip:''});
     }
     window._lastDemoDone=Date.now(); // tandai selesai utk cooldown anti 429 antar generate
+    if(_warn){ clearTimeout(_warn); _warn=null; }
+    var mw=$('mobgen-warn'); if(mw){ mw.classList.add('hidden'); mw.classList.remove('flex'); }
     _demoPending=false;
     hideProgress();
     notifyDone(srcs);
