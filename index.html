@@ -3045,6 +3045,7 @@ function demoResults(par){
         vae:par.params.sdVae||'',
         clip:par.params.clipSkip!=null?par.params.clipSkip:''});
     }
+    window._lastDemoDone=Date.now(); // tandai selesai utk cooldown anti 429 antar generate
     _demoPending=false;
     hideProgress();
     notifyDone(srcs);
@@ -3137,6 +3138,14 @@ async function doGenerate(){
   }
   try{
     if(settings.mode==='demo'||(!buildApiKey()&&settings.provider!=='pollinations'&&settings.provider!=='selfhost')){
+      // Jeda anti rate-limit: Pollinations hanya mengizinkan 1 request dalam
+      // antrian per IP anonim — generate beruntun langsung kena 429.
+      var _w=6000-(Date.now()-(window._lastDemoDone||0));
+      if(_w>0){
+        showProgress('Mode demo','Pollinations mengatur kecepatan — coba lagi otomatis dalam '+Math.ceil(_w/1000)+'s...',4);
+        await new Promise(function(r){ setTimeout(r,_w); });
+        hideProgress();
+      }
       await new Promise(function(r){ setTimeout(r,300); });
       demoResults(par);
       if(!buildApiKey()) toast('Belum ada API key — mode demo (gambar dari Pollinations gratis). Isi API Key TAMS di panel kiri untuk generate asli.');
