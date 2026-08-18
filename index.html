@@ -6145,7 +6145,7 @@ if(typeof updateBalPill==='function') updateBalPill();
       if(!sk){ window._vaiaTurnToken=''; cb(''); return; }
       invisibleToken().then(function(tok){
         if(tok){ window._vaiaTurnToken=tok; cb(tok); }
-        else runTurnstile(function(){ cb(window._vaiaTurnToken||''); });
+        else { window._vaiaTurnToken=''; if(cb) cb(''); }
       });
     });
   }
