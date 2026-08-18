@@ -132,4 +132,10 @@ export default {
 
 const out = body + router;
 fs.writeFileSync(path.join(root, '_worker.js'), out, 'utf8');
+// Also copy to dist/ for `wrangler pages deploy dist`
+const distDir = path.join(root, 'dist');
+if (fs.existsSync(distDir)) {
+  fs.copyFileSync(path.join(root, '_worker.js'), path.join(distDir, '_worker.js'));
+  console.log('OK: _worker.js copied to dist/_worker.js');
+}
 console.log('OK: _worker.js ditulis (' + (out.length / 1024).toFixed(1) + ' KB)');
