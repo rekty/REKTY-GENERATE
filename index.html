@@ -1934,8 +1934,13 @@ function addResult(r){
   renderRight();
   // efek sama untuk kartu riwayat terbaru di panel kanan
   var rl=$('rlist'); if(rl&&rl.firstChild) rl.firstChild.classList.add('gcard-in');
-  // mobile: hasil baru tampil di tab Tasks (ala Tensor.Art)
-  if(window.innerWidth<1024&&typeof switchMobTab==='function') switchMobTab('tasks');
+  // mobile: hasil baru tampil di tab Tasks (ala Tensor.Art). Kartu Generating
+  // disembunyikan DULU sebelum render daftar supaya tinggi DOM tidak berubah
+  // setelah render -> tidak ada lompatan scroll saat transisi ke hasil.
+  if(window.innerWidth<1024&&typeof switchMobTab==='function'){
+    if(typeof mobGenHide==='function') mobGenHide();
+    switchMobTab('tasks');
+  }
 }
 
 /* ===== panel kanan: Detail hasil aktif (seperti Tensor.Art) ===== */
