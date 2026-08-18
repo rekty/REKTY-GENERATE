@@ -20,7 +20,47 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const src = fs.readFileSync(path.join(root, 'functions', 'api.js'), 'utf8');
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/^\uFEFF/, ''); // buang BOM
+const srcHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8').replace(/^\uFEFF/, ''); // buang BOM
+
+// --- Obfuscate JS dalam HTML ---
+const JavaScriptObfuscator = (await import('javascript-obfuscator')).default;
+
+const antiDevTools = `\n(function(){\n  function _ck(){\n    var w=window,d=document;\n    if(w.outerWidth-w.innerWidth>160||w.outerHeight-w.innerHeight>160){\n      d.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:sans-serif;text-align:center;padding:20px"><div><p>Developer Tools detected.</p><p style="color:#666;font-size:14px;margin-top:8px">This app does not allow inspection.</p></div></div>';\n      d.title='Access Denied';\n      throw new Error('DevTools');\n    }\n  }\n  setInterval(_ck,800);\n  window.console={log:function(){},warn:function(){},error:function(){},info:function(){},debug:function(){},clear:function(){},table:function(){},group:function(){},groupEnd:function(){},time:function(){},timeEnd:function(){},count:function(){},assert:function(){},dir:function(){},trace:function(){},profile:function(){},profileEnd:function(){}};\n})();\n`;
+
+const scriptTagStart = /<script(?:\s[^>]*)?>/gi;
+let html = '';
+let pos = 0;
+let sc = 0;
+while (pos < srcHtml.length) {
+  scriptTagStart.lastIndex = pos;
+  const m = scriptTagStart.exec(srcHtml);
+  if (!m) { html += srcHtml.slice(pos); break; }
+  html += srcHtml.slice(pos, m.index);
+  if (/src\s*=/i.test(m[0])) { html += m[0]; pos = m.index + m[0].length; continue; }
+  const ci = srcHtml.indexOf('</script>', m.index + m[0].length);
+  if (ci === -1) { html += srcHtml.slice(pos); break; }
+  html += m[0];
+  const inner = srcHtml.slice(m.index + m[0].length, ci).trim();
+  if (inner.length > 1000) {
+    const content = (sc === 0 ? antiDevTools : '') + inner;
+    const obs = JavaScriptObfuscator.obfuscate(content, {
+      compact: true, controlFlowFlattening: true, controlFlowFlatteningThreshold: 0.3,
+      deadCodeInjection: false, identifierNamesGenerator: 'hexadecimal',
+      renameGlobals: false, selfDefending: false, simplify: true,
+      stringArray: true, stringArrayCallsTransform: false, stringArrayEncoding: [],
+      stringArrayIndexShift: true, stringArrayRotate: true, stringArrayShuffle: true,
+      stringArrayWrappersCount: 1, stringArrayWrappersChainedCalls: false,
+      stringArrayWrappersParametersMaxCount: 2, stringArrayWrappersType: 'function',
+      stringArrayThreshold: 0.75, transformObjectKeys: false, unicodeEscapeSequence: false,
+      reservedNames: ['^\\$'], target: 'browser'
+    });
+    html += obs.getObfuscatedCode();
+    sc++;
+  } else { html += inner; }
+  html += '</script>';
+  pos = ci + 9;
+}
+console.log('Obfuscated ' + sc + ' script blocks (' + (Buffer.byteLength(html)/1024).toFixed(1) + ' KB)');
 const favicon = fs.existsSync(path.join(root, 'favicon.svg')) ? fs.readFileSync(path.join(root, 'favicon.svg'), 'utf8') : '';
 const faviconPng = fs.existsSync(path.join(root, 'favicon.png')) ? fs.readFileSync(path.join(root, 'favicon.png')) : null;
 
