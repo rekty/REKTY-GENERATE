@@ -1799,12 +1799,13 @@ function setBusy(b){
       :'<i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">- '+(window._rektyPrice||'1.22')+'</span>';
   });
 }
-/* sync harga ke tombol mobile */
+/* sync harga ke tombol mobile + desktop */
 function syncMobPrice(){
   var p=window._rektyPrice||'1.22', e=$('mobprice');
   if(e) e.textContent=p;
+  var dp=$('price'); if(dp) dp.textContent='- '+(window._rektyPrice||'1.22').replace('$','');
 }
-if($('mobprice')) syncMobPrice();
+if($('mobprice')||$('price')) syncMobPrice();
 function extractImages(data){
   if(!data) return [];
   if(Array.isArray(data)) data={images:data};
