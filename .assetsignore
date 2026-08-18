@@ -3,6 +3,7 @@
 .gitignore
 .assetsignore
 .wrangler
+.freebuff
 node_modules
 firebase-backend
 scripts
@@ -11,3 +12,5 @@ firebase-free.json
 wrangler.toml
 *.md
 agent.md.txt
+*.safetensors
+*.zip

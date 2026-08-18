@@ -197,7 +197,8 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 @media (max-width:1023px){#chat-panel{height:calc(100vh - 56px - 40px - 3.75rem - 2rem)}}
 .chat-msg{max-width:min(85%,34rem)}
 .chat-bubble-user{background:linear-gradient(135deg,rgba(31,199,206,.22),rgba(46,124,240,.28));border:1px solid rgba(46,124,240,.4);border-radius:16px;border-bottom-right-radius:4px}
-.chat-msg,.chat-msg *{-webkit-touch-callout:none;-webkit-user-select:text;user-select:text;position:relative}
+.chat-msg,.chat-msg *{-webkit-user-select:text;user-select:text;position:relative}
+.chat-msg img,.chat-msg video,.chat-msg canvas{-webkit-touch-callout:none}
 #chat-msgs{-webkit-user-select:text;user-select:text}
 .chat-bubble-ai{background:#161b22;border:1px solid #30363d;border-radius:16px;border-bottom-left-radius:4px}
 .chat-bubble-ai pre{background:rgba(0,0,0,.45);border:1px solid #30363d;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;overflow-x:auto;margin:6px 0;white-space:pre-wrap;word-break:break-word}
@@ -4992,42 +4993,48 @@ function chatCtxOpen(x,y,msg,inner){
 }
 /* Pasang long-press (HP) + tahan mouse (desktop) pada bubble — tanpa klik kanan. */
 function chatBindHold(el, msg, inner){
-  var t=null, sx=0, sy=0, lx=0, ly=0, fired=false;
+  var t=null, sx=0, sy=0, lx=0, ly=0, fired=false, held=false;
   function cancel(){ if(t){ clearTimeout(t); t=null; } }
   function selActive(){ try{ var s=window.getSelection(); return !!(s && s.toString && s.toString().trim().length>0); }catch(e){ return false; } }
-  function tryOpen(){
-    t=null;
-    if(selActive()) return; // user sedang memilih teks -> jangan ganggu
-    // Jika pointer sudah bergerak dari titik awal (drag untuk memilih), jangan buka menu
-    if(Math.abs(lx-sx)>4 || Math.abs(ly-sy)>4) return;
-    fired=true; chatCtxOpen(lx,ly,msg,inner);
+  function maybeOpen(){
+    held=false;
+    // User sedang memilih teks -> jangan ganggu, biarkan toolbar asli (Copy/Select) muncul
+    if(selActive()) return;
+    // Jika pointer bergerak dari titik awal (drag untuk memilih), jangan buka menu
+    if(Math.abs(lx-sx)>10 || Math.abs(ly-sy)>10) return;
+    chatCtxOpen(lx,ly,msg,inner);
   }
   el.addEventListener('touchstart',function(e){
     if(e.touches.length!==1) return;
-    var c=e.touches[0]; sx=c.clientX; sy=c.clientY; lx=sx; ly=sy; fired=false;
-    t=setTimeout(tryOpen,450);
+    var c=e.touches[0]; sx=c.clientX; sy=c.clientY; lx=sx; ly=sy; fired=false; held=false;
+    // Hanya tandai "tertahan" — menu dibuka saat lepas, supaya seleksi teks native menang duluan
+    t=setTimeout(function(){ held=true; t=null; },450);
   },{passive:true});
   el.addEventListener('touchmove',function(e){
     if(!e.touches[0]) return;
     var c=e.touches[0]; lx=c.clientX; ly=c.clientY;
-    if(t && (Math.abs(lx-sx)>10||Math.abs(ly-sy)>10)) cancel();
-    else if(fired && (Math.abs(lx-sx)>12||Math.abs(ly-sy)>12)){ fired=false; chatCtxHide(); } // mulai geser = memilih teks
+    if(t && (Math.abs(lx-sx)>10||Math.abs(ly-sy)>10)){ cancel(); held=false; }
+    else if(held && (Math.abs(lx-sx)>12||Math.abs(ly-sy)>12)){ held=false; chatCtxHide(); } // mulai geser = memilih teks
   },{passive:true});
-  el.addEventListener('touchend',function(){ if(fired) fired=false; else cancel(); });
-  el.addEventListener('touchcancel',function(){ cancel(); fired=false; chatCtxHide(); });
+  el.addEventListener('touchend',function(){ cancel(); if(held) maybeOpen(); });
+  el.addEventListener('touchcancel',function(){ cancel(); held=false; fired=false; chatCtxHide(); });
   el.addEventListener('mousedown',function(e){
     if(e.button!==0) return;
-    sx=e.clientX; sy=e.clientY; lx=sx; ly=sy; fired=false;
-    t=setTimeout(tryOpen,500);
+    sx=e.clientX; sy=e.clientY; lx=sx; ly=sy; fired=false; held=false;
+    t=setTimeout(function(){ held=true; t=null; },500);
   });
   el.addEventListener('mousemove',function(e){
     lx=e.clientX; ly=e.clientY;
-    if(t && (Math.abs(lx-sx)>10||Math.abs(ly-sy)>10)) cancel();
-    else if(fired && (Math.abs(lx-sx)>12||Math.abs(ly-sy)>12)){ fired=false; chatCtxHide(); }
+    if(t && (Math.abs(lx-sx)>10||Math.abs(ly-sy)>10)){ cancel(); held=false; }
+    else if(held && (Math.abs(lx-sx)>12||Math.abs(ly-sy)>12)){ held=false; chatCtxHide(); }
   });
-  el.addEventListener('mouseup',function(){ if(fired) fired=false; else cancel(); });
-  el.addEventListener('mouseleave',function(){ cancel(); fired=false; chatCtxHide(); });
-  el.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+  el.addEventListener('mouseup',function(){ cancel(); if(held) maybeOpen(); });
+  el.addEventListener('mouseleave',function(){ cancel(); held=false; fired=false; chatCtxHide(); });
+  el.addEventListener('contextmenu',function(e){
+    // Jika ada teks yang sedang dipilih -> biarkan menu asli browser (Copy/Select All) muncul
+    try{ var s=window.getSelection(); if(s && s.toString && s.toString().trim().length>0) return; }catch(err){}
+    e.preventDefault();
+  });
 }
 /* Ekstrak prompt gambar (murni) + negative prompt dari jawaban AI (untuk tombol Salin + Buka Generator).
    Mendukung format bernomor baru "Prompt 1: / Prompt 2: / ..." dan format lama (Prompt Utama / Prompt:).
