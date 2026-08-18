@@ -1820,6 +1820,82 @@ export async function onRequest(context) {
       return new Response(buf, { status: 200, headers: hdrs });
     }
 
+    // ---- WD14 Tagger: proxy ke HF Space + cache di KV ----
+    // POST /api/wd14 — terima payload Gradio, cache hasil berdasarkan hash gambar+model.
+    const WD14_SPACE = 'https://deepghs-wd14-tagging-online.hf.space/api/join';
+    const WD14_CACHE_TTL = 7 * 24 * 3600; // 7 hari
+    if (method === 'POST' && url.pathname === '/api/wd14') {
+      if ((request.headers.get('content-length') || 0) > MAX_BODY) {
+        return json({ error: 'Payload terlalu besar' }, 413);
+      }
+      const body = safeJson(await request.text());
+      if (!body || !body.data || !Array.isArray(body.data)) {
+        return json({ error: 'Payload tidak valid' }, 400);
+      }
+      // data[0] = image (data URL), data[1] = model name, data[2] = threshold
+      const imageData = String(body.data[0] || '');
+      const model = String(body.data[1] || 'wd14-vit');
+      const threshold = parseFloat(body.data[2]) || 0.5;
+
+      // Buat cache key dari hash sederhana gambar + model + threshold
+      let cacheKey = 'wd14:' + model + ':' + threshold + ':';
+      let h = 2166136261;
+      for (let i = 0; i < imageData.length; i++) {
+        h ^= imageData.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+      }
+      cacheKey += (h >>> 0).toString(16);
+
+      // Cek cache di KV
+      if (env && env.IMAGES) {
+        const cached = await env.IMAGES.get(cacheKey, { type: 'text' }).catch(() => null);
+        if (cached) {
+          const d = safeJson(cached);
+          if (d) { d._cache = 'hit'; return json(d); }
+        }
+      }
+
+      // Cache miss — proxy ke HF Space
+      const payload = {
+        fn_index: 0,
+        data: body.data.slice(0, 7),
+        session_hash: 'wd14' + Math.random().toString(36).slice(2, 12),
+      };
+
+      // Retry + exponential backoff (cold start sering gagal pertama kali)
+      const WD14_MAX_RETRY = 3;
+      const WD14_RETRY_DELAYS = [5000, 15000, 30000];
+      let lastErr = null;
+      for (let att = 0; att < WD14_MAX_RETRY; att++) {
+        if (att > 0) {
+          await new Promise(r => setTimeout(r, WD14_RETRY_DELAYS[att - 1] || 30000));
+          payload.session_hash = 'wd14' + Math.random().toString(36).slice(2, 12);
+        }
+        try {
+          const timeout = att === 0 ? 60000 : att === 1 ? 90000 : 120000;
+          const res = await fetchWithTimeout(WD14_SPACE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          }, timeout);
+          const txt = await res.text();
+          if (!res.ok && res.status >= 400 && res.status < 500 && res.status !== 429) {
+            return json({ error: 'HF Space error: ' + res.status + ' ' + txt.slice(0, 300) }, 502);
+          }
+          if (!res.ok) { lastErr = new Error('HF Space ' + res.status); continue; }
+          const result = safeJson(txt);
+          if (!result || !result.data) { lastErr = new Error('Response tidak valid'); continue; }
+          result._cache = 'miss';
+          result._attempts = att + 1;
+          if (env && env.IMAGES) {
+            await env.IMAGES.put(cacheKey, JSON.stringify(result), { expirationTtl: WD14_CACHE_TTL }).catch(() => {});
+          }
+          return json(result);
+        } catch (e) { lastErr = e; continue; }
+      }
+      return json({ error: 'HF Space gagal setelah ' + WD14_MAX_RETRY + ' percobaan: ' + (lastErr && lastErr.message || lastErr).slice(0, 200) }, 502);
+    }
+
     return json({ error: 'Endpoint tidak dikenal' }, 404);
   } catch (e) {
     const msg = e && e.message ? e.message : String(e);

@@ -75,6 +75,7 @@ results[], page ('text'|'img'|'edit'|'video'|'prime'), aspect ('portrait'|'lands
 - Img2Img: upload gambar + denoising strength (taskType IMG2IMG)
 - Edit / Video / Prime: placeholder "segera hadir"
 - Riwayat tampil di mobile via tombol "Riwayat"
+- WD14 Tagger: deteksi prompt dari gambar via HF Space (`deepghs/wd14_tagging_online`), hasil di-cache di KV selama 7 hari (`POST /api/wd14`)
 - Panduan lengkap: DEPLOY.md
 
 ## Next Steps

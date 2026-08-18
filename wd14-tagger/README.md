@@ -1,8 +1,8 @@
 # WD14 Tagger 🔮 — Deteksi Prompt dari Gambar
 
 Alat **image → booru tags** berbasis model [WD 1.4 (SmilingWolf)](https://huggingface.co/SmilingWolf)
-yang berjalan **100% di browser** (ONNX Runtime Web / WASM) — tanpa server, tanpa
-API key, gambar tidak pernah dikirim keluar perangkat.
+yang berjalan **online** via HF Space [`deepghs/wd14_tagging_online`](https://huggingface.co/spaces/deepghs/wd14_tagging_online) —
+tanpa perlu mengunduh model (~190MB) ke browser.
 
 Tersedia di aplikasi REKTY (Visual AI Artwork) di dua tempat:
 
@@ -50,54 +50,108 @@ Model, threshold, dan semua opsi format disimpan di `localStorage`
 
 ---
 
-## Model yang dipakai
+## Arsitektur
 
-| Model | Sumber asli (fp32) | Versi fp16 di repo ini | Ukuran |
-|---|---|---|---|
-| **ConvNeXtV2** | [`SmilingWolf/wd-v1-4-convnextv2-tagger-v2`](https://huggingface.co/SmilingWolf/wd-v1-4-convnextv2-tagger-v2) | [`wd14_fp16.onnx`](https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/wd14_fp16.onnx) | 194 MB |
-| **ViT** | [`SmilingWolf/wd-v1-4-vit-tagger-v2`](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger-v2) | [`wd14_vit_fp16.onnx`](https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/wd14_vit_fp16.onnx) | 187 MB |
+### Flow Request
 
-**Repo HuggingFace:** [`rekty1988/WD14_TAGGER`](https://huggingface.co/rekty1988/WD14_TAGGER)
-berisi `wd14_fp16.onnx`, `wd14_vit_fp16.onnx`, dan `selected_tags.csv`.
-
-### Kenapa fp16?
-
-Versi fp16 **setengah ukuran** (~190 MB vs ~380 MB) dengan kualitas nyaris
-identik (korelasi output ±0.98, top tag sama) — sekali unduh lalu **di-cache**
-di browser (Cache API), ganti-ganti model berikutnya instan.
-
-### Spesifikasi model (penting untuk integrasi)
-
-- **Input**: `input_1:0`, float32, `[1, 448, 448, 3]` (NHWC, RGB) — **piksel mentah 0–255**
-  ⚠️ Jangan normalisasi dulu di sisi pemanggil: graph ONNX sudah menormalkan
-  sendiri via `Sub(x, 127.5)` lalu `Mul(x, 1/127.5)` → rentang `[-1, 1]`.
-  (Bug preprocessing lama = gambar apa pun selalu keluar `monochrome/greyscale`.)
-- **Output**: `predictions_sigmoid`, `[1, 9083]` (sudah sigmoid):
-  rating 4 (`general/sensitive/questionable/explicit`) + general 6947 + character 2132.
-- **Runtime**: `onnxruntime-web@1.19.2` (WASM), cache key `vaia-wd14-convnext` / `vaia-wd14-vit`.
-
-### Reproduksi model fp16 (untuk pembaruan/verifikasi)
-
-```python
-import onnx
-from onnxconverter_common import float16
-
-m = onnx.load("model.onnx")  # dari SmilingWolf (fp32)
-m16 = float16.convert_float_to_float16(m, keep_io_types=True)
-onnx.save(m16, "wd14_fp16.onnx")  # atau wd14_vit_fp16.onnx
+```
+Browser → POST /api/wd14 (same-origin, tanpa CORS)
+        → Worker cek KV cache
+        → [Hit] → Return cached (< 100ms) ⚡
+        → [Miss] → Retry + exponential backoff ke HF Space
+                 → Cache di KV (7 hari)
+                 → Return response
 ```
 
-Verifikasi cepat: jalankan fp32 vs fp16 dengan input piksel mentah pada foto
-yang sama → top tag harus identik.
+### KV Caching
+
+- **Cache key**: `wd14:<model>:<threshold>:<hash_gambar>` (FNV-1a 32-bit)
+- **Cache TTL**: 7 hari
+- **Cache hit**: response `< 100ms` dengan `_cache: 'hit'`
+- **Cache miss**: response dari HF Space dengan `_cache: 'miss'`
+
+### Retry + Exponential Backoff
+
+HF Space cold start sering gagal/timeout pada percobaan pertama. Backend
+otomatis retry dengan exponential backoff:
+
+| Percobaan | Timeout | Delay sebelumnya |
+|-----------|---------|------------------|
+| 1 | 60 detik | - |
+| 2 | 90 detik | 5 detik |
+| 3 | 120 detik | 15 detik |
+
+- **4xx error** (kecuali 429) = error permanen, tidak di-retry
+- **5xx error / timeout** = di-retry sampai max 3 kali
+- Response include `_attempts: N` untuk menunjukkan berapa kali percobaan
+
+### Cold Start Timer
+
+Dialog menampilkan timer real-time saat menunggu:
+
+| Waktu | Pesan |
+|-------|-------|
+| 0-8 detik | `5d` (normal) |
+| 8-20 detik | `12d ⏳ Memproses...` |
+| 20-45 detik | `25d ⏳ HF Space sedang spin-up...` |
+| 45+ detik | `50d ⚠️ Space mungkin sedang cold start` |
+
+### Contoh Response
+
+```json
+{
+  "data": [
+    {"label": "general", "confidences": [...]},
+    "1girl, solo, ...",
+    {"label": "1girl", "confidences": [...]}
+  ],
+  "_cache": "hit",
+  "_attempts": 1
+}
+```
+
+### Status Indicator
+
+Dialog menampilkan status caching dan retry:
+
+- `Selesai — 23 tag · rating: general (95%) · layanan online ⚡cache · 0d`
+- `Selesai — 23 tag · rating: general (95%) · layanan online · 3x percobaan · 45d`
+
+---
+
+## Endpoint API
+
+- **URL**: `POST /api/wd14`
+- **Backend**: `_worker.js` (Cloudflare) atau `functions/api.js` (Firebase)
+- **HF Space**: `https://deepghs-wd14-tagging-online.hf.space/api/join`
+- **Dev server**: `http://127.0.0.1:8000/api/wd14` (mock data)
+
+### Request Body
+
+```json
+{
+  "fn_index": 0,
+  "data": [
+    "data:image/jpeg;base64,...",  // gambar (downscaled ke max 1024px)
+    "wd14-convnext",               // atau "wd14-vit"
+    0.05,                          // threshold rendah → semua tag di-return
+    false,                         // Use Space Instead Of _
+    false,                         // Use Text Escape
+    false,                         // Keep Confidences
+    false                          // Descend By Confidence
+  ],
+  "session_hash": "wd14..."
+}
+```
 
 ---
 
 ## Catatan & batasan
 
-- **Unduh sekali saja**: model pertama diunduh ±190 MB (tampil progress di
-  dialog); setelah itu instan dari cache browser. Ganti-ganti model di-cache
-  terpisah.
-- **100% lokal**: setelah model ter-cache, deteksi jalan offline (tanpa internet).
+- **Tanpa unduh model**: tidak ada file ONNX 190MB yang diunduh ke browser.
+- **Butuh internet**: deteksi membutuhkan koneksi ke HF Space.
+- **Cold start**: HF Space butuh waktu spin-up jika baru dibuka (retry otomatis).
+- **Cache 7 hari**: gambar yang sama tidak perlu di-proses ulang.
 - **Lisensi**: model dasar WD 1.4 oleh SmilingWolf, lisensi `apache-2.0`.
 
 ## Struktur terkait
@@ -105,4 +159,7 @@ yang sama → top tag harus identik.
 ```
 wd14-tagger/README.md   # dokumen ini
 index.html              # implementasi (chatWd14*, wd14Hist*, dialog + logika)
+_worker.js              # backend proxy + KV caching + retry
+functions/api.js        # backend Firebase (sama)
+scripts/dev_server.py   # mock /api/wd14 untuk localhost
 ```

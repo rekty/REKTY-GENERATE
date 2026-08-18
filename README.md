@@ -49,17 +49,16 @@ Base model disediakan provider (mis. Krea 2 Turbo untuk LoRA base Krea 2).
 
 ## WD14 Tagger 🔮 (deteksi prompt dari gambar)
 
-Fitur **image → booru tags** berjalan 100% di browser (ONNX Runtime Web/WASM,
-tanpa server & tanpa API key): menu `+` di VAIA Chat → **Deteksi Prompt (WD14)**,
+Fitur **image → booru tags** berjalan **online** via HF Space [`deepghs/wd14_tagging_online`](https://huggingface.co/spaces/deepghs/wd14_tagging_online):
+menu `+` di VAIA Chat → **Deteksi Prompt (WD14)**,
 dan tombol yang sama di tab **Img2Img** (tag foto referensi jadi prompt).
 
-- 2 model pilihan (**wd14-convnext** / **wd14-vit**, versi fp16 ~190 MB),
+- 2 model pilihan (**wd14-convnext** / **wd14-vit**),
   slider threshold, opsi format (spasi/escape/confidence/urutan), format salin
   (A1111 kompak / + Confidence / Teks Bebas), pengaturan tersimpan di
   localStorage, dan riwayat hasil per gambar dengan **perbandingan antar model**.
-- Model fp16 (kualitas ≈ fp32, setengah ukuran) + `selected_tags.csv`:
-  **[`rekty1988/WD14_TAGGER`](https://huggingface.co/rekty1988/WD14_TAGGER)**
-  (turunan `SmilingWolf/wd-v1-4-convnextv2-tagger-v2` & `wd-v1-4-vit-tagger-v2`).
+- Tidak perlu mengunduh model (~190MB) — semua diproses di HF Space.
+- Hasil di-cache di KV backend selama 7 hari → request kedua lebih cepat.
 
 Panduan lengkap: **[`wd14-tagger/README.md`](wd14-tagger/README.md)**.
 

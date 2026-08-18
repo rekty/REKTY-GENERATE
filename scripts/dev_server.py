@@ -504,6 +504,40 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
             return
+        if path == "/api/wd14":
+            # Mock layanan WD14 online (deepghs/wd14_tagging_online) — format Gradio 3.x: {data:[rating, teks, tags]}
+            length = int(self.headers.get("Content-Length") or 0)
+            raw = self.rfile.read(length) if length else b"{}"
+            try:
+                body = json.loads(raw)
+            except Exception:
+                body = {}
+            model = "wd14-convnext"
+            try:
+                model = str((body.get("data") or [])[1] or "wd14-convnext")
+            except Exception:
+                pass
+            tags = [
+                ("1girl", 0.96), ("solo", 0.93), ("long_hair", 0.88), ("smile", 0.79),
+                ("looking_at_viewer", 0.74), ("simple_background", 0.71), ("white_background", 0.66),
+                ("dress", 0.61), ("blue_eyes", 0.57), ("hair_ornament", 0.52), ("upper_body", 0.48),
+                ("bangs", 0.44), ("collarbone", 0.41), ("blush", 0.38), ("choker", 0.35),
+                ("brown_hair", 0.32), ("hair_flower", 0.29), ("sky", 0.26), ("cloud", 0.23),
+                ("sun", 0.20),
+            ]
+            confs = [{"label": k, "confidence": v} for k, v in tags]
+            ratings = [
+                {"label": "general", "confidence": 0.921},
+                {"label": "sensitive", "confidence": 0.063},
+                {"label": "questionable", "confidence": 0.011},
+                {"label": "explicit", "confidence": 0.005},
+            ]
+            text = ", ".join(k for k, _ in tags)
+            return self._send(200, {"data": [
+                {"label": "general", "confidences": ratings},
+                text,
+                {"label": tags[0][0], "confidences": confs},
+            ]})
         self._send(404, {"error": "not found"})
 
 
