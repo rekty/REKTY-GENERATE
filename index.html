@@ -2293,9 +2293,10 @@ function applyLastPrompt(){
     if($('prompt')) $('prompt').value=s.prompt;
     if($('negprompt')) $('negprompt').value=s.neg||'';
     if($('negcheck')) $('negcheck').checked=!!s.negCheck;
-    if($('width')&&s.w) $('width').value=s.w;
-    if($('height')&&s.h) $('height').value=s.h;
-    if(typeof updWH==='function') updWH();
+    // Jangan timpa width/height dari last-prompt — sudah di-handle applySettingsUI dari settings.
+    // if($('width')&&s.w) $('width').value=s.w;
+    // if($('height')&&s.h) $('height').value=s.h;
+    // if(typeof updWH==='function') updWH();
     if(s.aspect){ state.aspect=s.aspect; if(typeof setArActive==='function') setArActive(s.aspect); }
     if($('steps')&&s.steps){ $('steps').value=s.steps; if($('sv')) $('sv').textContent=s.steps; }
     if($('seed')&&s.seed){ $('seed').value=s.seed; if(typeof persistSeed==='function') persistSeed(s.seed); }
