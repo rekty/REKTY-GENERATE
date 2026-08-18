@@ -5780,10 +5780,13 @@ if(typeof updateBalPill==='function') updateBalPill();
 (function(){
   var wrap=document.getElementById('vaia-verify'), chk=document.getElementById('vaia-v-chk');
   if(!wrap||!chk) return;
+  var _memCount={}; // fallback kalau localStorage diblokir (mode privat/iframe)
   function vCount(key){
-    var n=parseInt(localStorage.getItem(key)||'0',10)||0;
-    localStorage.setItem(key,String(n+1));
-    return n+1;
+    var n=0;
+    try{ n=parseInt(localStorage.getItem(key)||'0',10)||0; }catch(e){ n=_memCount[key]||0; }
+    n+=1;
+    try{ localStorage.setItem(key,String(n)); }catch(e){ _memCount[key]=n; }
+    return n;
   }
   function resetChk(){
     chk.style.pointerEvents='auto';
@@ -5923,14 +5926,27 @@ if(typeof updateBalPill==='function') updateBalPill();
       });
     });
   }
-  // Kadens: ke-1 + setiap kelipatan 10. generate pakai widget terlihat (disetujui),
-  // chat/WD14 pakai invisible (senyap) supaya percakapan tidak terganggu.
+  // Kadens: ke-1 + setiap kelipatan 10 pakai widget TERLIHAT (disetujui user).
+  // Generate ke-2..9 tetap harus mengirim token ke backend (backend wajib token
+  // kalau TURNSTILE_SECRET diset) -> ambil token SENYAP (invisible) tanpa popup.
+  // Kalau invisible gagal -> fallback ke widget terlihat. Tanpa sitekey -> langsung.
   function verifyFor(key, cb, silent){
     var n=vCount(key);
-    if(n!==1 && n%10!==0){ if(cb) cb(); return; }
+    var needWidget=(n===1||n%10===0);
     ensureSiteKey().then(function(sk){
-      if(sk){ if(silent) vaiaToken(cb); else runTurnstile(cb); }
-      else runFake(cb);
+      if(!sk){
+        if(needWidget && !silent) runFake(cb);   // tanpa sitekey: widget visual palsu di ke-1/ke-10
+        else if(cb) cb();                         // tanpa sitekey: token tidak wajib -> langsung
+        return;
+      }
+      if(needWidget && !silent){
+        runTurnstile(cb);                         // ke-1 & ke-10: widget asli terlihat
+      }else{
+        vaiaToken(function(tok){                  // ke-2..9 & mode senyap: token invisible
+          window._vaiaTurnToken=tok||'';
+          if(cb) cb();
+        });
+      }
     });
   }
   window.vaiaVerify=function(cb){ verifyFor('vaia-gen-count', cb, false); };
