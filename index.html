@@ -881,9 +881,10 @@ input[type=range]{cursor:pointer}
   <aside id="rightPan" class="w-[21rem] shrink-0 border-l bd bg-[#161b22] hidden lg:flex flex-col">
     <div class="flex items-center justify-between px-3 py-2 border-b bd">
       <span class="text-sm font-semibold" id="rptitle">Text to Image</span>
-      <div class="flex gap-1">
+      <div class="flex items-center gap-1">
         <button class="rtab sel" data-p="detail">Detail</button>
         <button class="rtab" data-p="history">Riwayat</button>
+        <button id="rightPan-close" class="lg:hidden w-6 h-6 flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] rounded-md ml-1" title="Tutup"><i data-icon="x" class="w-4 h-4"></i></button>
       </div>
     </div>
     <!-- Detail hasil aktif (seperti Tensor.Art: Input + Details + params) -->
@@ -1350,6 +1351,12 @@ function renderMCat(onPick){
     });
   });
 }
+var POLL_PRICE={zimage:0.004,flux:0.002,dreamshaper:0.0001,krea:0.03,gptimage:0.01,gptimage2:0.37,
+  'gpt-image-2':0.37,gptimageLarge:0.01,gptimageLarge0:0.01,klein:0.005,pImage:0.005,
+  wanImage:0.03,wanImagePro:0.03,seedream:0.03,seedream5:0.035,seedreamPro:0.04,
+  kontext:0.04,qwenImage:0.025,novaCanvas:0.04,
+  'tomdacatto/flux-2-max':0.25,'vendouple/flux-2-pro':0.09,
+  'chigwell/gpt-image-2':0.05,'chigwell/flux-klein-2':0.027};
 function setModel(m){
   state.model=m;
   $('model-name').textContent=m.name;
@@ -1358,6 +1365,15 @@ function setModel(m){
     var lg=_PROV_LOGO[settings.provider]||'';
     b.innerHTML=(lg?'<img src="'+lg+'" alt="" onerror="this.style.display=&apos;none&apos;" class="w-3 h-3 inline rounded-full align-[-2px] mr-1"/>':'')+(m.base||'Model')+' - '+(m.arch||'');
   }
+  // Update harga di tombol Generate berdasarkan model aktif + provider.
+  if(settings.provider==='pollinations'){
+    var mid=String(m.model||m.name||'').toLowerCase().replace(/[^a-z0-9/\-]/g,'');
+    var price=POLL_PRICE[mid]||POLL_PRICE[m.model]||POLL_PRICE[m.name];
+    window._rektyPrice=price!=null?('$'+price.toFixed(3)):('$0.00');
+  }else{
+    window._rektyPrice=(PROVIDER_INFO[settings.provider]||{}).price||'1.22';
+  }
+  syncMobPrice();
 }
 function openModelSelector(){
   $('modal-title').textContent='Pilih Model';
@@ -1783,12 +1799,13 @@ function setBusy(b){
       :'<i data-icon="lightning" class="w-4 h-4"></i>Generate <span class="text-xs opacity-90 font-normal">- '+(window._rektyPrice||'1.22')+'</span>';
   });
 }
-/* sync harga ke tombol mobile */
+/* sync harga ke tombol mobile + desktop */
 function syncMobPrice(){
   var p=window._rektyPrice||'1.22', e=$('mobprice');
   if(e) e.textContent=p;
+  var dp=$('price'); if(dp) dp.textContent='- '+(window._rektyPrice||'1.22').replace('$','');
 }
-if($('mobprice')) syncMobPrice();
+if($('mobprice')||$('price')) syncMobPrice();
 function extractImages(data){
   if(!data) return [];
   if(Array.isArray(data)) data={images:data};
@@ -2221,11 +2238,11 @@ var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', selfhost
   upscale:2, ncol:1, ncols:2, page:'text', modeA1111:false, modeElla:false, modelName:'',
   loras:[], denoise:0.5, animDur:0.5 };
 var PROVIDER_INFO={
-  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Daftar model dari tams.tensor.art — pakai di UI.' },
-  replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
-  fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
-  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Model otomatis. Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' },
-  selfhost:{ label:'Endpoint Krea2 By Rekty (URL trycloudflare)', hint:'Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.' }
+  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Daftar model dari tams.tensor.art — pakai di UI.', price:'1.22' },
+  replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.', price:'0.03' },
+  fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.', price:'0.03' },
+  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Model otomatis. Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.', price:'0.00' },
+  selfhost:{ label:'Endpoint Krea2 By Rekty (URL trycloudflare)', hint:'Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.', price:'0.00' }
 };
 
 function loadSettings(){
@@ -2286,21 +2303,29 @@ function applyLastPrompt(){
   }catch(e){}
 }
 function collectUI(){
-  settings.prompt=$('prompt').value;
-  settings.negPrompt=$('negprompt').value; settings.negCheck=$('negcheck').checked;
-  settings.steps=parseInt($('steps').value)||10; settings.cfg=parseFloat($('cfg').value)||1;
-  settings.sampler=$('sampler').value; settings.sched=$('sched').value; settings.vae=$('vae').value;
-  settings.width=parseInt($('width').value)||768; settings.height=parseInt($('height').value)||1152;
-  settings.aspect=state.aspect||'custom'; settings.clipSkip=parseInt($('clipskip').value)||2;
-  settings.ensd=parseInt($('etansd').value); settings.upscale=parseFloat($('upscale').value)||2;
+  if(!settings) return;
+  var p=$('prompt'); if(p) settings.prompt=p.value;
+  var np=$('negprompt'); if(np) settings.negPrompt=np.value;
+  var nc=$('negcheck'); if(nc) settings.negCheck=nc.checked;
+  var st=$('steps'); if(st) settings.steps=parseInt(st.value)||10;
+  var cf=$('cfg'); if(cf) settings.cfg=parseFloat(cf.value)||1;
+  var sm=$('sampler'); if(sm) settings.sampler=sm.value;
+  var sc=$('sched'); if(sc) settings.sched=sc.value;
+  var va=$('vae'); if(va) settings.vae=va.value;
+  var wi=$('width'); if(wi) settings.width=parseInt(wi.value)||768;
+  var hi=$('height'); if(hi) settings.height=parseInt(hi.value)||1152;
+  settings.aspect=state.aspect||'custom';
+  var cs=$('clipskip'); if(cs) settings.clipSkip=parseInt(cs.value)||2;
+  var en=$('etansd'); if(en) settings.ensd=parseInt(en.value);
+  var up=$('upscale'); if(up) settings.upscale=parseFloat(up.value)||2;
   settings.ncol=state.ncol||1; settings.ncols=state.ncols||2; settings.page=state.page||'text';
   settings.modeA1111=!!state.modeA1111; settings.modeElla=!!state.modeElla;
   settings.modelName=state.model?state.model.name:'';
   settings.loras=LORA.map(function(l){ return { name:l.name, w:l.w, loraUrl:l.loraUrl||'' }; });
-  settings.selfhostUrl=$('selfhost-url').value.trim();
-  settings.denoise=parseFloat($('i2i-ds').value); if(settings.denoise==null) settings.denoise=0.5;
-  settings.animDur=parseFloat($('animdur').value)||0.5;
-  if(!settings.seed||!$('seed').value) settings.seed=$('seed').value;
+  var sh=$('selfhost-url'); if(sh) settings.selfhostUrl=sh.value.trim();
+  var ds=$('i2i-ds'); if(ds) { settings.denoise=parseFloat(ds.value); if(settings.denoise==null) settings.denoise=0.5; }
+  var ad=$('animdur'); if(ad) settings.animDur=parseFloat(ad.value)||0.5;
+  var sd=$('seed'); if(sd && sd.value) { if(!settings.seed) settings.seed=sd.value; }
   saveSettings();
 }
 /** Terapkan durasi animasi kartu (CSS var) + label + simpan. */
@@ -2381,6 +2406,9 @@ function updateProviderUI(){
   LORA_LIB=LORA_LIBS[settings.provider]||LORA_LIBS.tams;
   LORA.length=0;
   renderLora();
+  // Update harga di tombol Generate berdasarkan provider.
+  var provPrice=(PROVIDER_INFO[settings.provider]||{}).price;
+  if(provPrice!=null){ window._rektyPrice=provPrice; syncMobPrice(); }
   // Pollinations: ambil daftar model asli dari API (fallback ke daftar statis).
   if(settings.provider==='pollinations') refreshPollinationsModels();
 }
@@ -2417,9 +2445,11 @@ function updateApiStatus(){
   el.style.color=connected?'#27D4CD':'#9a9aa2';
 }
 $('apiprovider').addEventListener('change',function(){
+  if(!settings) return;
   settings.provider=$('apiprovider').value; saveSettings(); updateProviderUI();
 });
 $('api-save').addEventListener('click',function(){
+  if(!settings) return;
   settings.mode=$('apimode').value; settings.apiKey=$('apikey').value.trim();
   if(settings.provider==='selfhost') settings.selfhostUrl=$('selfhost-url').value.trim();
   saveSettings(); updateProviderUI(); toast('Pengaturan API disimpan');
@@ -2493,7 +2523,7 @@ function startPollOAuth(){
 function updateChatBalance(){
   var pill=$('chat-balance'), txt=$('chat-balance-txt');
   if(!pill||!txt) return;
-  if(!settings.pollSession){ txt.textContent='Gratis'; pill.title='Login Pollinations (BYOP) untuk saldo pollen — klik untuk login'; pill.style.borderColor=''; return; }
+  if(!settings||!settings.pollSession){ txt.textContent='Gratis'; pill.title='Login Pollinations (BYOP) untuk saldo pollen — klik untuk login'; pill.style.borderColor=''; return; }
   fetch('/api/oauth/status?session='+encodeURIComponent(settings.pollSession)).then(function(r){return r.json();}).then(function(d){
     if(d&&d.connected&&d.balance){
       var b=d.balance;
@@ -3493,7 +3523,13 @@ function renderCanvas(){
 }
 
 /* --- riwayat di mobile --- */
-$('btn-history').addEventListener('click',function(){ $('rightPan').classList.toggle('mobile-open'); });
+$('btn-history').addEventListener('click',function(){
+  var isOpen=$('rightPan').classList.toggle('mobile-open');
+  if(isOpen) $('overlay').classList.remove('hidden'); else $('overlay').classList.add('hidden');
+});
+// Tombol close (X) di header rightPan untuk mobile
+var rpclose=document.getElementById('rightPan-close');
+if(rpclose) rpclose.addEventListener('click',function(){ $('rightPan').classList.remove('mobile-open'); $('overlay').classList.add('hidden'); });
 /* Floating TOP: tampil setelah scroll jauh, klik -> lompat ke atas */
 (function(){
   var topBtn=$('btn-top');
@@ -3585,7 +3621,7 @@ document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click
 document.querySelectorAll('.chip').forEach(function(c){ c.addEventListener('click',collectUI); });
 $('dice').addEventListener('click',collectUI);
 $('api-save').addEventListener('click',collectUI);
-$('apimode').addEventListener('change',function(){ settings.mode=$('apimode').value; saveSettings(); });
+$('apimode').addEventListener('change',function(){ if(!settings) return; settings.mode=$('apimode').value; saveSettings(); });
 $('i2i-ds').addEventListener('input',collectUI);
 
 renderLora();
@@ -4372,13 +4408,89 @@ function chatImgData(file, cb){
   };
   rd.readAsDataURL(file);
 }
-/* ===== WD14 Tagger — deteksi prompt dari gambar (ONNX Runtime Web, fp16 ~195MB, di-cache) ===== */
-var _wd14Models={}, _wd14Dlg=null, _wd14Cur=null, _wd14Last=null;
-var WD14_CSV_URL='https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/selected_tags.csv';
-var WD14_MODELS={
-  convnext:{ url:'https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/wd14_fp16.onnx', label:'wd14-convnext (v2)', size:'194MB' },
-  vit:{ url:'https://huggingface.co/rekty1988/WD14_TAGGER/resolve/main/wd14_vit_fp16.onnx', label:'wd14-vit (v2)', size:'187MB' }
-};
+/* ===== WD14 Tagger — deteksi prompt dari gambar (online via HF Space deepghs/wd14_tagging_online) ===== */
+var _wd14Dlg=null, _wd14Cur=null, _wd14Last=null, _wd14OnlineCache={};
+var _wd14Timer=null, _wd14StartTime=0, _wd14Abort=null;
+// Sumber ONLINE: HF Space deepghs/wd14_tagging_online (Gradio 3.16, endpoint /api/join) — tanpa unduh model.
+// Di dev server (127.0.0.1) memakai mock lokal /api/wd14 supaya bisa dites tanpa internet keluar.
+var WD14_API_URL='/api/wd14'; // backend proxy dengan cache KV (localhost = mock, production = HF Space + cache)
+var WD14_DIRECT_URL='https://deepghs-wd14-tagging-online.hf.space/api/join'; // fallback langsung ke HF Space
+var WD14_API_MODELS={ convnext:'wd14-convnext', vit:'wd14-vit' };
+/* Panggil layanan WD14 online (deepghs/wd14_tagging_online).
+   Minta threshold 0.05 dari server supaya SEMUA tag (di atas 5%) dikembalikan,
+   lalu threshold & opsi difilter ulang di sisi klien secara instan tanpa spam API.
+   Respons Gradio: data[0]=rating {label,confidences[]}, data[2]=tags {label,confidences[]}. */
+function chatWd14TagOnline(dataUrl, model, onProg, abortCtrl){
+  var key=(model||'convnext')+':'+wd14Hash(dataUrl);
+  if(_wd14OnlineCache[key]){ if(onProg) onProg(1); return Promise.resolve(_wd14OnlineCache[key]); }
+  return chatWd14Downscale(dataUrl, 1024).then(function(small){
+    var body={ fn_index:0, data:[small, WD14_API_MODELS[model]||'wd14-vit', 0.05, false, false, false, false],
+      session_hash:('wd14'+Math.random().toString(36).slice(2,12)) };
+    return new Promise(function(res, rej){
+      var ctrl=abortCtrl || (('AbortController' in window)? new AbortController() : null);
+      var tmr=ctrl? setTimeout(function(){ ctrl.abort(); }, 120000) : null;
+      // Primary: langsung ke HF Space (tidak terbatas Cloudflare 30s timeout)
+      // Fallback: backend proxy /api/wd14 (cached, tapi timeout CF = 30s)
+      fetch(WD14_DIRECT_URL, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(body), signal: ctrl? ctrl.signal : undefined
+      }).then(function(r){
+        if(!r.ok) throw new Error('HF Space balas HTTP '+r.status);
+        return r.json();
+      }).catch(function(directErr){
+        // HF Space gagal — coba backend proxy sebagai fallback
+        return fetch(WD14_API_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(body), signal: ctrl? ctrl.signal : undefined
+        }).then(function(r){
+          if(!r.ok) throw new Error('Backend balas HTTP '+r.status);
+          return r.json();
+        }).catch(function(){
+          throw directErr; // lempar error asli HF Space
+        });
+      }).then(function(j){
+        if(tmr) clearTimeout(tmr);
+        var out=j&&j.data; if(!out) throw new Error('Respons layanan tidak dikenali');
+        var confs=(out[2]&&out[2].confidences)||[];
+        var rn=['general','sensitive','questionable','explicit'];
+        var labels=rn.slice(), probs=[0,0,0,0];
+        (out[0]&&out[0].confidences||[]).forEach(function(c){
+          var i=rn.indexOf(c&&c.label); if(i>=0) probs[i]=parseFloat(c.confidence)||0;
+        });
+        confs.forEach(function(c){
+          if(c && c.label!==undefined && rn.indexOf(c.label)<0){ labels.push(c.label); probs.push(parseFloat(c.confidence)||0); }
+        });
+        var result={ labels:labels, probs:probs, _cache:j._cache||null };
+        _wd14OnlineCache[key]=result;
+        if(onProg) onProg(1);
+        res(result);
+      }).catch(function(err){
+        if(tmr) clearTimeout(tmr);
+        rej(err && err.name==='AbortError'
+          ? new Error('Layanan online terlalu lama (space mungkin sedang cold start ±30-60 detik) — coba lagi sebentar')
+          : err);
+      });
+    });
+  });
+}
+/* Kecilkan gambar sebelum dikirim (model cuma butuh 448px; payload kecil = deteksi lebih cepat). */
+function chatWd14Downscale(dataUrl, maxDim){
+  return new Promise(function(res, rej){
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        var sc=Math.min(1, maxDim/Math.max(w,h));
+        var cw=Math.max(1,Math.round(w*sc)), ch=Math.max(1,Math.round(h*sc));
+        var c=document.createElement('canvas'); c.width=cw; c.height=ch;
+        c.getContext('2d').drawImage(img,0,0,cw,ch);
+        res(c.toDataURL('image/jpeg',0.85));
+      }catch(e){ res(dataUrl); }
+    };
+    img.onerror=function(){ rej(new Error('Gagal membaca gambar')); };
+    img.src=dataUrl;
+  });
+}
 var WD14_SETTINGS_KEY='vaia-wd14-settings';
 function chatWd14Save(){
   var d=_wd14Dlg; if(!d) return;
@@ -4410,91 +4522,7 @@ function chatWd14Load(){
   var f=s.format==='conf'||s.format==='free'?s.format:'a1111';
   d.querySelectorAll('.wd14-fmt').forEach(function(b){ b.classList.toggle('sel', b.dataset.wd14Fmt===f); });
 }
-function chatWd14LoadOrt(){
-  return new Promise(function(res, rej){
-    if(window.ort){ res(window.ort); return; }
-    var s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.min.js';
-    s.onload=function(){ ort.env.wasm.wasmPaths='https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/'; res(window.ort); };
-    s.onerror=function(){ rej(new Error('Gagal memuat mesin AI (onnxruntime-web). Cek koneksi internet.')); };
-    document.head.appendChild(s);
-  });
-}
-function chatWd14FetchCached(cacheName, url, onProg){
-  if(!('caches' in window)) onProg&&onProg(1);
-  return caches.open(cacheName).then(function(cache){
-    return cache.match(url).then(function(hit){
-      if(hit && hit.ok) return hit.arrayBuffer();
-      return fetch(url).then(function(r){
-        if(!r.ok) throw new Error('Unduh gagal HTTP '+r.status);
-        var total=+(r.headers.get('content-length')||0);
-        var chunks=[], received=0;
-        var reader=r.body.getReader();
-        function pump(){
-          return reader.read().then(function(res2){
-            if(res2.done){
-              var all=new Uint8Array(received), off=0;
-              chunks.forEach(function(ch){ all.set(ch, off); off+=ch.length; });
-              if(onProg) onProg(1);
-              try{ cache.put(url, new Response(all, {status:200})); }catch(e){}
-              return all.buffer;
-            }
-            chunks.push(res2.value); received+=res2.value.length;
-            if(onProg && total) onProg(received/total);
-            return pump();
-          });
-        }
-        return pump();
-      });
-    });
-  });
-}
-function chatWd14ParseCsv(text){
-  var lines=text.split(/\r?\n/).filter(function(l){ return l.trim().length>0; });
-  var labels=[];
-  for(var i=1;i<lines.length;i++){
-    var line=lines[i], name='';
-    var q=line.match(/^\d+,"((?:[^"]|"")*)"/);
-    if(q) name=q[1].replace(/""/g,'"');
-    else { var p=line.split(','); name=p[1]||''; }
-    labels.push(name.trim());
-  }
-  return labels;
-}
-function chatWd14EnsureModel(model, onProg){
-  var key=model||'convnext';
-  if(_wd14Models[key] && _wd14Models[key].session) return Promise.resolve(_wd14Models[key]);
-  var m=WD14_MODELS[key]||WD14_MODELS.convnext;
-  return chatWd14LoadOrt().then(function(){
-    return chatWd14FetchCached('vaia-wd14-'+key, m.url, onProg).then(function(buf){
-      return ort.InferenceSession.create(buf);
-    }).then(function(session){
-      return chatWd14FetchCached('vaia-wd14-'+key, WD14_CSV_URL, null).then(function(csvBuf){
-        _wd14Models[key]={session:session, labels:chatWd14ParseCsv(new TextDecoder().decode(csvBuf))};
-        return _wd14Models[key];
-      });
-    });
-  });
-}
-function chatWd14Prep(dataUrl){
-  return new Promise(function(res, rej){
-    var img=new Image();
-    img.onload=function(){
-      var c=document.createElement('canvas'); c.width=448; c.height=448;
-      c.getContext('2d').drawImage(img,0,0,448,448);
-      var d=c.getContext('2d').getImageData(0,0,448,448).data;
-      // Model ONNX sudah menormalisasi sendiri (Sub 127.5 -> Mul 1/127.5 = [-1,1]).
-      // Kirim piksel mentah 0-255; jangan normalisasi lagi (sebelumnya salah -> hasil monochrome/greyscale palsu).
-      var arr=new Float32Array(448*448*3);
-      for(var i=0,k=0;i<d.length;i+=4,k+=3){
-        arr[k]=d[i]; arr[k+1]=d[i+1]; arr[k+2]=d[i+2];
-      }
-      res(arr);
-    };
-    img.onerror=function(){ rej(new Error('Gagal membaca gambar')); };
-    img.src=dataUrl;
-  });
-}
+
 function chatWd14ParseTags(probs, labels, opts){
   opts=opts||{};
   var thr=isFinite(opts.threshold)?opts.threshold:0.5;
@@ -4527,10 +4555,10 @@ function chatWd14Dlg(){
     +'<div id="wd14-drop" class="flex flex-col items-center justify-center gap-1 p-6 text-center"><i data-icon="image" class="w-7 h-7 text-neutral-500"></i><span class="text-xs text-neutral-400">Drop Image Here</span><span class="text-[10px] text-neutral-600">- or - klik untuk pilih / ambil foto</span></div>'
     +'<input id="wd14-file" type="file" accept="image/*" class="hidden"/>'
     +'</div>'
-    +'<div class="mt-3"><div class="text-[11px] text-neutral-500 mb-1">Waifu Model</div>'
+    +'<div class="mt-3"><div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1"><span>Waifu Model</span><span class="inline-flex items-center gap-1 text-[10px] text-[#27D4CD]"><i data-icon="globe" class="w-3 h-3"></i>Online — tanpa unduh</span></div>'
     +'<div class="flex gap-4 text-xs text-neutral-300">'
-    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="wd14-model" value="convnext" checked class="accent-[#2E7CF0]"/>wd14-convnext (v2)</label>'
-    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="wd14-model" value="vit" class="accent-[#2E7CF0]"/>wd14-vit (v2)</label>'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="wd14-model" value="convnext" checked class="accent-[#2E7CF0]"/>wd14-convnext</label>'
+    +'<label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="wd14-model" value="vit" class="accent-[#2E7CF0]"/>wd14-vit</label>'
     +'</div></div>'
     +'<div class="mt-3"><div class="flex items-center justify-between text-[11px] text-neutral-500 mb-1"><span>Tagging Confidence Threshold</span><input id="wd14-thrnum" type="number" min="0.05" max="1" step="0.05" value="0.5" class="wvnum"/></div>'
     +'<input id="wd14-thr" type="range" min="0.05" max="1" step="0.05" value="0.5" class="slider"/></div>'
@@ -4557,7 +4585,7 @@ function chatWd14Dlg(){
     +'</div></div>';
   document.body.appendChild(d);
   _wd14Dlg=d;
-  var close=function(){ d.classList.add('hidden'); d.classList.remove('flex'); };
+  var close=function(){ if(_wd14Timer) clearInterval(_wd14Timer); _wd14Timer=null; if(_wd14Abort) try{ _wd14Abort.abort(); }catch(e){} _wd14Abort=null; d.classList.add('hidden'); d.classList.remove('flex'); };
   d.querySelector('#wd14-x').addEventListener('click', close);
   d.addEventListener('click', function(e){ if(e.target===d) close(); });
   var imgArea=d.querySelector('#wd14-img'), fileIn=d.querySelector('#wd14-file');
@@ -4698,31 +4726,69 @@ function chatWd14TagNow(){
     var cur=_wd14Cur||{};
     if(!cur.img){ toast('Pilih / drop gambar dulu'); return; }
     var model=dd.querySelector('input[name="wd14-model"]:checked').value;
-    var st=dd.querySelector('#wd14-status'), pr=dd.querySelector('#wd14-prog'), ta=dd.querySelector('#wd14-tags');
-    var needDl=!(_wd14Models[model] && _wd14Models[model].session);
-    st.innerHTML= needDl ? 'Menyiapkan model '+WD14_MODELS[model].label+' ('+WD14_MODELS[model].size+' — unduh sekali saja, berikutnya dari cache)...' : 'Mendeteksi tag ('+WD14_MODELS[model].label+')...';
-    pr.style.width='0%';
-    chatWd14EnsureModel(model, function(p){ pr.style.width=Math.round(p*100)+'%'; })
-    .then(function(state){
-      st.innerHTML='Memproses...'; pr.style.width='100%';
-      return chatWd14Prep(cur.img).then(function(input){
-        var feeds={}; feeds[state.session.inputNames[0]]=new ort.Tensor('float32', input, [1,448,448,3]);
-        return state.session.run(feeds).then(function(out){
-          var name=state.session.outputNames[0];
-          _wd14Last={ probs:Array.prototype.slice.call(out[name].data), labels:state.labels };
-          var r=chatWd14RenderTags();
-          if(r) wd14HistAdd(model, r);
-          st.innerHTML='Selesai — '+(r?r.tags.length:0)+' tag · rating: '+(r?r.rating:'')+' ('+(r?Math.round(r.ratingProb*100):0)+'%)';
-          pr.style.width='100%';
-        });
-      });
+    var st=dd.querySelector('#wd14-status'), pr=dd.querySelector('#wd14-prog');
+    var key=model+':'+wd14Hash(cur.img);
+    // Fast-path: hasil untuk gambar+model ini sudah di-cache → render ulang instan (threshold/opsi berubah)
+    if(_wd14Last && _wd14Last._key===key){
+      var rf=chatWd14RenderTags();
+      if(rf) st.innerHTML='Selesai — '+(rf.tags.length)+' tag · rating: '+(rf.rating||'')+' ('+Math.round((rf.ratingProb||0)*100)+'%)';
+      pr.style.width='100%';
+      return;
+    }
+    // Mulai cold start timer + cancel button — update status setiap detik
+    if(_wd14Timer) clearInterval(_wd14Timer);
+    if(_wd14Abort) try{ _wd14Abort.abort(); }catch(e){}
+    _wd14Abort=('AbortController' in window)? new AbortController() : null;
+    _wd14StartTime=Date.now();
+    st.innerHTML='Menghubungi layanan WD14 online... <span id="wd14-elapsed">0d</span> <button id="wd14-cancel" class="gfil text-[10px] px-2 py-0.5 ml-1">Batalkan</button>';
+    pr.style.width='30%';
+    var cancelBtn=dd.querySelector('#wd14-cancel');
+    if(cancelBtn) cancelBtn.addEventListener('click', function(){
+      if(_wd14Abort) try{ _wd14Abort.abort(); }catch(e){}
+      if(_wd14Timer) clearInterval(_wd14Timer); _wd14Timer=null;
+      st.innerHTML='Dibatalkan oleh user.';
+      pr.style.width='0%';
+    });
+    _wd14Timer=setInterval(function(){
+      var el=st.querySelector('#wd14-elapsed');
+      if(!el) { clearInterval(_wd14Timer); _wd14Timer=null; return; }
+      var sec=Math.floor((Date.now()-_wd14StartTime)/1000);
+      var mm=Math.floor(sec/60), ss=sec%60;
+      var timeStr=mm>0?mm+'m '+ss+'d':ss+'d';
+      var hint='';
+      if(sec>=45) hint=' ⚠️ Space mungkin sedang cold start';
+      else if(sec>=20) hint=' ⏳ HF Space sedang spin-up...';
+      else if(sec>=8) hint=' ⏳ Memproses...';
+      el.textContent=timeStr+hint;
+    }, 1000);
+    chatWd14TagOnline(cur.img, model, function(p){ pr.style.width=Math.round(p*100)+'%'; }, _wd14Abort)
+    .then(function(res2){
+      if(_wd14Timer) clearInterval(_wd14Timer); _wd14Timer=null; _wd14Abort=null;
+      _wd14Last=res2; _wd14Last._key=key;
+      var r=chatWd14RenderTags();
+      if(r) wd14HistAdd(model, r);
+      var elapsed=Math.floor((Date.now()-_wd14StartTime)/1000);
+      var cacheLabel=(_wd14Last._cache==='hit')?' ⚡cache':'';
+      var attempts=_wd14Last._attempts||1;
+      var retryLabel=attempts>1?' · '+attempts+'x percobaan':'';
+      st.innerHTML='Selesai — '+(r?r.tags.length:0)+' tag · rating: '+(r?r.rating:'')+' ('+(r?Math.round(r.ratingProb*100):0)+'%) · layanan online'+cacheLabel+retryLabel+' · '+elapsed+'d';
+      pr.style.width='100%';
     })
     .catch(function(err){
-      st.innerHTML='Gagal: '+String(err&&err.message||err).slice(0,140);
+      if(_wd14Timer) clearInterval(_wd14Timer); _wd14Timer=null; _wd14Abort=null;
+      var isCancel=err&&err.name==='AbortError';
       pr.style.width='0%';
+      if(isCancel){
+        st.innerHTML='Dibatalkan oleh user. — <button id="wd14-retry" class="gfil text-[10px] px-2 py-0.5">Coba lagi</button>';
+      } else {
+        st.innerHTML='Gagal: '+String(err&&err.message||err).slice(0,100)
+          +' — <button id="wd14-retry" class="gfil text-[10px] px-2 py-0.5">Coba lagi</button>';
+      }
+      var b1=dd.querySelector('#wd14-retry'); if(b1) b1.addEventListener('click', function(){ chatWd14TagNow(); });
     });
   });
 }
+
 /* ===== Riwayat deteksi WD14: simpan hasil per gambar (satu per model) untuk dibandingkan ===== */
 var WD14_HIST_KEY='vaia-wd14-history';
 function wd14HistLoad(){
@@ -4786,7 +4852,7 @@ function wd14HistRender(){
       +'<button class="wd14-h-del gfil text-[10px] px-2 py-0.5" data-key="'+g.key+'">Hapus</button>'
       +'</div>';
     g.runs.forEach(function(r){
-      var m=WD14_MODELS[r.model]?WD14_MODELS[r.model].label.replace(' (v2)',''):r.model;
+      var m=r.model==='vit'?'wd14-vit':'wd14-convnext';
       html+='<div class="flex items-start gap-2 border-t bd pt-1.5 mt-1.5">'
         +'<span class="shrink-0 mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded '+(r.model==='vit'?'bg-[#2E7CF0]/20 text-[#7FA8F5]':'bg-[#1FC7CE]/20 text-[#27D4CD]')+'">'+m+'</span>'
         +'<div class="min-w-0 flex-1"><div class="text-[10px] text-neutral-400 truncate" title="'+esc(r.text)+'">'+esc(r.text.slice(0,110))+'</div>'
@@ -4808,7 +4874,7 @@ function wd14CmpOpen(g){
     for(var j=0;j<g.runs.length;j++) if(g.runs[j].model===m){ r=g.runs[j]; break; }
     if(!r) return;
     cols+='<div class="flex-1 min-w-0 border bd rounded-xl bg-[#1c2128] p-2.5">'
-      +'<div class="text-[10px] font-bold mb-1 '+(m==='vit'?'text-[#7FA8F5]':'text-[#27D4CD]')+'">'+WD14_MODELS[m].label+' · thr '+r.threshold+'</div>'
+      +'<div class="text-[10px] font-bold mb-1 '+(m==='wd14-vit'?'text-[#7FA8F5]':'text-[#27D4CD]')+'">'+m+' · thr '+r.threshold+'</div>'
       +'<div class="text-[11px] text-neutral-300 leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto hidebar">'+esc(r.text)+'</div>'
       +'<div class="text-[9px] text-neutral-500 mt-1">rating: '+(r.rating||'')+' '+Math.round((r.ratingProb||0)*100)+'%</div>'
       +'</div>';
