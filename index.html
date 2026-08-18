@@ -1361,8 +1361,10 @@ function setModel(m){
 }
 function openModelSelector(){
   $('modal-title').textContent='Pilih Model';
-  renderMCat(function(){ renderCards(MODELS, function(m){ setModel(m); closeModal(); }); });
-  renderCards(MODELS, function(m){ setModel(m); closeModal(); });
+  // Simpan pilihan model ke localStorage (autosave) supaya pulih setelah refresh.
+  var sel=function(m){ setModel(m); closeModal(); collectUI(); };
+  renderMCat(function(){ renderCards(MODELS, sel); });
+  renderCards(MODELS, sel);
   openModal();
 }
 $('model-card').addEventListener('click',openModelSelector);
@@ -3534,6 +3536,7 @@ document.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click
 document.querySelectorAll('.chip').forEach(function(c){ c.addEventListener('click',collectUI); });
 $('dice').addEventListener('click',collectUI);
 $('api-save').addEventListener('click',collectUI);
+$('apimode').addEventListener('change',function(){ settings.mode=$('apimode').value; saveSettings(); });
 $('i2i-ds').addEventListener('input',collectUI);
 
 renderLora();
@@ -3585,6 +3588,11 @@ function hideSplash(){
 try{
   var saved=JSON.parse(localStorage.getItem(RESULTS_KEY)||'[]');
   if(Array.isArray(saved)) state.results=saved;
+}catch(e){}
+/* Render ulang hasil tersimpan setelah refresh (gambar tidak hilang). */
+try{
+  if(typeof renderGrid==='function') renderGrid();
+  if(typeof renderMobTasks==='function') renderMobTasks();
 }catch(e){}
 /* ===== Mobile: tab Workspace | Tasks + detail task (ala Tensor.Art) ===== */
 function switchMobTab(t){
