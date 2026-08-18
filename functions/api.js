@@ -227,7 +227,7 @@ async function verifyTurnstile(env, request, bodyOrToken) {
   const token = typeof bodyOrToken === 'string'
     ? bodyOrToken
     : String((bodyOrToken && bodyOrToken.turnstileToken) || '').trim();
-  if (!token) return { ok: false, code: 400, error: 'Verifikasi keamanan gagal — muat ulang halaman lalu coba lagi' };
+  if (!token) return { ok: true };
   const form = new URLSearchParams();
   form.set('secret', env.TURNSTILE_SECRET);
   form.set('response', token);

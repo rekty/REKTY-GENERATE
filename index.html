@@ -6149,26 +6149,21 @@ if(typeof updateBalPill==='function') updateBalPill();
       });
     });
   }
-  // Kadens: ke-1 + setiap kelipatan 10 pakai widget TERLIHAT (disetujui user).
-  // Generate ke-2..9 tetap harus mengirim token ke backend (backend wajib token
-  // kalau TURNSTILE_SECRET diset) -> ambil token SENYAP (invisible) tanpa popup.
-  // Kalau invisible gagal -> fallback ke widget terlihat. Tanpa sitekey -> langsung.
+  // Turnstile HANYA muncul di generate ke-1 saja.
+  // Generate ke-2 dst: langsung lanjut tanpa Turnstile.
   function verifyFor(key, cb, silent){
     var n=vCount(key);
-    var needWidget=(n===1||n%10===0);
+    var isFirst=(n===1);
     ensureSiteKey().then(function(sk){
       if(!sk){
-        if(needWidget && !silent) runFake(cb);   // tanpa sitekey: widget visual palsu di ke-1/ke-10
-        else if(cb) cb();                         // tanpa sitekey: token tidak wajib -> langsung
+        if(isFirst && !silent) runFake(cb);   // tanpa sitekey: widget visual palsu di ke-1
+        else if(cb) cb();                     // tanpa sitekey: langsung
         return;
       }
-      if(needWidget && !silent){
-        runTurnstile(cb);                         // ke-1 & ke-10: widget asli terlihat
+      if(isFirst && !silent){
+        runTurnstile(cb);                     // ke-1: widget asli terlihat
       }else{
-        vaiaToken(function(tok){                  // ke-2..9 & mode senyap: token invisible
-          window._vaiaTurnToken=tok||'';
-          if(cb) cb();
-        });
+        if(cb) cb();                          // ke-2 dst: langsung lanjut
       }
     });
   }
