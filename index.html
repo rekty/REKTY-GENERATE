@@ -3068,11 +3068,27 @@ function demoResults(par){
     if(gen!==_demoGen) return;
     if(ai>=attempts.length){ fallbackArt(); return; }
     var im=new Image();
-    im.onload=function(){ if(!done2){ done2=true; addDemoResults(urls); } };
+    im.onload=function(){
+      if(done2) return;
+      // Muat SEMUA URL (jumlah gambar >1) satu per satu BERURUTAN dulu —
+      // Pollinations hanya mengizinkan 1 request dalam antrian per IP
+      // anonim, jadi load paralel => 429 => gambar broken.
+      var rest=urls.slice(1), ok=[urls[0]], j=0;
+      if(!rest.length){ done2=true; addDemoResults(urls); return; }
+      (function loadNext(){
+        if(gen!==_demoGen) return;
+        if(j>=rest.length){ if(ok.length){ done2=true; addDemoResults(ok); } else fallbackArt(); return; }
+        var im2=new Image();
+        im2.onload=function(){ ok.push(rest[j]); j++; setTimeout(loadNext, 400); };
+        im2.onerror=function(){ j++; setTimeout(loadNext, 400); }; // URL cadangan yang gagal dibuang
+        im2.src=rest[j];
+      })();
+    };
     im.onerror=function(){
-      // Pollinations kadang 522/lambat sesaat -> retry URL yang sama (maks 3x)
-      // dengan jeda bertahap, baru pindah ke URL berikutnya / fallback canvas.
-      if(retry<2){ retry++; setTimeout(tryNext, 700*retry); return; }
+      // Pollinations 429 (antrian penuh) / 522 (sibuk) sering sembuh dalam
+      // beberapa detik — retry URL yang sama dengan jeda bertahap
+      // (1.5s,3s,4.5s,6s,7.5s) sebelum pindah ke URL cadangan / fallback.
+      if(retry<5){ retry++; setTimeout(tryNext, 1500*retry); return; }
       retry=0; ai++; tryNext();
     };
     im.src=attempts[ai];
