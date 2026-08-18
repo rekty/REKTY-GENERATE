@@ -4429,7 +4429,6 @@ function chatWd14TagOnline(dataUrl, model, onProg, abortCtrl){
         }).catch(function(){
           throw directErr; // lempar error asli HF Space
         });
-      }).then(function(result){
       }).then(function(j){
         if(tmr) clearTimeout(tmr);
         var out=j&&j.data; if(!out) throw new Error('Respons layanan tidak dikenali');
