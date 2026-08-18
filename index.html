@@ -3063,13 +3063,18 @@ function demoResults(par){
     +'?width='+w+'&height='+h+'&seed='+seedBase+'&nologo=true';
   if(modelParam) attempts.push(baseNoModel);
   attempts.push(baseNoModel.replace('seed='+seedBase,'seed='+(seedBase+99999)));
-  var ai=0, done2=false;
+  var ai=0, done2=false, retry=0;
   function tryNext(){
     if(gen!==_demoGen) return;
     if(ai>=attempts.length){ fallbackArt(); return; }
     var im=new Image();
     im.onload=function(){ if(!done2){ done2=true; addDemoResults(urls); } };
-    im.onerror=function(){ ai++; tryNext(); };
+    im.onerror=function(){
+      // Pollinations kadang 522/lambat sesaat -> retry URL yang sama (maks 3x)
+      // dengan jeda bertahap, baru pindah ke URL berikutnya / fallback canvas.
+      if(retry<2){ retry++; setTimeout(tryNext, 700*retry); return; }
+      retry=0; ai++; tryNext();
+    };
     im.src=attempts[ai];
   }
   tryNext();
