@@ -6159,22 +6159,15 @@ if(typeof updateBalPill==='function') updateBalPill();
   // kalau TURNSTILE_SECRET diset) -> ambil token SENYAP (invisible) tanpa popup.
   // Kalau invisible gagal -> fallback ke widget terlihat. Tanpa sitekey -> langsung.
   function verifyFor(key, cb, silent){
-    var n=vCount(key);
-    var needWidget=(n===1||n%10===0);
+    var alreadyVerified=false;
+    try{ alreadyVerified=localStorage.getItem('vaia-ts-done')==='1'; }catch(e){}
+    if(alreadyVerified){ if(cb) cb(); return; }
     ensureSiteKey().then(function(sk){
-      if(!sk){
-        if(needWidget && !silent) runFake(cb);   // tanpa sitekey: widget visual palsu di ke-1/ke-10
-        else if(cb) cb();                         // tanpa sitekey: token tidak wajib -> langsung
-        return;
-      }
-      if(needWidget && !silent){
-        runTurnstile(cb);                         // ke-1 & ke-10: widget asli terlihat
-      }else{
-        vaiaToken(function(tok){                  // ke-2..9 & mode senyap: token invisible
-          window._vaiaTurnToken=tok||'';
-          if(cb) cb();
-        });
-      }
+      if(!sk){ if(cb) cb(); return; }
+      runTurnstile(function(){
+        try{ localStorage.setItem('vaia-ts-done','1'); }catch(e){}
+        if(cb) cb();
+      });
     });
   }
   window.vaiaVerify=function(cb){ verifyFor('vaia-gen-count', cb, false); };
