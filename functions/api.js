@@ -957,7 +957,6 @@ async function pollinationsCreateJob(body, env, apiKey) {
   // di-clamp ketat, biarkan sisi panjang sampai 4096 (rasio bebas).
   let width = clampInt(params.width, 64, 4096, 1024);
   let height = clampInt(params.height, 64, 4096, 1024);
-  // Tool Upscale 2x: minta gambar 2x ukuran (Pollinations tidak punya stage upscale terpisah).
   if (params.upscale === true) {
     width = clampInt(width * 2, 64, 4096, width);
     height = clampInt(height * 2, 64, 4096, height);
@@ -965,16 +964,28 @@ async function pollinationsCreateJob(body, env, apiKey) {
   const seed = toSeed(params.seed);
   const model = String(params.model || '').trim();
   const prompt = String(params.prompt || '').slice(0, 1500);
+  const neg = String(params.negativePrompt || '').slice(0, 500);
+  const gs = clampFloat(params.cfgScale, 0, 10, 0);
+
+  // ---- CACHE: prompt+seed+model+size = GRATIS jika sudah pernah di-generate ----
+  const cacheKey = 'poll:' + [prompt, seed, model, width, height, neg, gs].join('|');
+  if (env && env.IMAGES) {
+    const cached = await env.IMAGES.get(cacheKey, { type: 'text' }).catch(() => null);
+    if (cached) {
+      const c = safeJson(cached);
+      if (c && c.taskId && c.images && c.images.length) {
+        return { taskId: c.taskId, images: c.images, _cache: 'hit' };
+      }
+    }
+  }
+
   const url = new URL((apiKey ? GEN_POLLINATIONS : POLLINATIONS_IMG) + encodeURIComponent(prompt));
   url.searchParams.set('width', String(width));
   url.searchParams.set('height', String(height));
   if (model) url.searchParams.set('model', model);
   if (seed > 0) url.searchParams.set('seed', String(seed));
   if (apiKey) url.searchParams.set('nologo', 'true');
-  // Pollinations mendukung negative_prompt & guidance_scale (sampler tidak didukung).
-  const neg = String(params.negativePrompt || '').slice(0, 500);
   if (neg) url.searchParams.set('negative_prompt', neg);
-  const gs = clampFloat(params.cfgScale, 0, 10, 0);
   if (gs > 0) url.searchParams.set('guidance_scale', String(gs));
 
   // Retry otomatis: Pollinations sering sibuk/lambat — Cloudflare di depannya
@@ -1009,8 +1020,9 @@ async function pollinationsCreateJob(body, env, apiKey) {
       const taskId = 'pollinations:' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2));
       if (env && env.IMAGES) {
         await env.IMAGES.put('task:' + taskId, JSON.stringify({ status: 'SUCCESS', progress: 100, images: [img] }), { expirationTtl: TASK_EXPIRY }).catch(() => {});
+        await env.IMAGES.put(cacheKey, JSON.stringify({ taskId, images: [img] }), { expirationTtl: 30 * 24 * 3600 }).catch(() => {});
       }
-      return { taskId, images: [img] };
+      return { taskId, images: [img], _cache: 'miss' };
     }
     const status = res.status;
     if (status === 402) {
