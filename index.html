@@ -2222,11 +2222,11 @@ var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', selfhost
   upscale:2, ncol:1, ncols:2, page:'text', modeA1111:false, modeElla:false, modelName:'',
   loras:[], denoise:0.5, animDur:0.5 };
 var PROVIDER_INFO={
-  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Daftar model dari tams.tensor.art — pakai di UI.' },
-  replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
-  fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.' },
-  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Model otomatis. Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.' },
-  selfhost:{ label:'Endpoint Krea2 By Rekty (URL trycloudflare)', hint:'Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.' }
+  tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Daftar model dari tams.tensor.art — pakai di UI.', price:'1.22' },
+  replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.', price:'0.03' },
+  fal:{ label:'API Key fal.ai (fal.ai)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.', price:'0.03' },
+  pollinations:{ label:'API Key Pollinations (opsional — sk_*)', hint:'Model otomatis. Isi key sk_* dari enter.pollinations.ai/keys untuk daftar model lengkap. Hasil otomatis diarsip permanen.', price:'0.00' },
+  selfhost:{ label:'Endpoint Krea2 By Rekty (URL trycloudflare)', hint:'Paste URL dari output notebook Kaggle (https://xxx.trycloudflare.com). Model Krea 2 + LoRA REKTY ANJANY-mu. Hasil otomatis diarsip permanen.', price:'0.00' }
 };
 
 function loadSettings(){
@@ -2390,6 +2390,9 @@ function updateProviderUI(){
   LORA_LIB=LORA_LIBS[settings.provider]||LORA_LIBS.tams;
   LORA.length=0;
   renderLora();
+  // Update harga di tombol Generate berdasarkan provider.
+  var provPrice=(PROVIDER_INFO[settings.provider]||{}).price;
+  if(provPrice!=null){ window._rektyPrice=provPrice; syncMobPrice(); }
   // Pollinations: ambil daftar model asli dari API (fallback ke daftar statis).
   if(settings.provider==='pollinations') refreshPollinationsModels();
 }
