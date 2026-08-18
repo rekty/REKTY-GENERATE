@@ -1796,8 +1796,57 @@ function extractImages(data){
   return imgs.map(function(i){ return typeof i==='string'?i:(i.url||i.src||i.image||i.path); }).filter(Boolean);
 }
 /* ===== hasil + riwayat (persist localStorage) ===== */
+/* Kompres data:image BESAR jadi thumbnail kecil (384px JPEG) utk penyimpanan.
+   Objek asli TIDAK diubah — render live tetap gambar penuh; hanya SALINAN yang
+   disimpan memakai thumbnail supaya localStorage tetap ringan & cepat. */
+function makeThumb(dataUrl,cb){
+  var im=new Image();
+  im.onload=function(){
+    try{
+      var max=384, w=im.naturalWidth||im.width, h=im.naturalHeight||im.height;
+      if(!w||!h){ cb(null); return; }
+      if(w>max||h>max){ var k=Math.min(max/w,max/h); w=Math.round(w*k); h=Math.round(h*k); }
+      var c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(im,0,0,w,h);
+      cb(c.toDataURL('image/jpeg',0.72));
+    }catch(e){ cb(null); }
+  };
+  im.onerror=function(){ cb(null); };
+  im.src=dataUrl;
+}
 function persistResults(){
-  try{ localStorage.setItem(RESULTS_KEY,JSON.stringify(state.results.slice(0,60))); }catch(e){}
+  try{
+    var list=state.results.slice(0,60);
+    var MAX=4*1024*1024, tot=0, out=[], pend=[]; // batas total ~4 MB (kuota localStorage aman)
+    for(var i=0;i<list.length;i++){
+      var r=list[i], len=(r.src||'').length;
+      var isBig=(r.src&&r.src.indexOf('data:')===0&&len>40000);
+      if(isBig){ pend.push(r); continue; } // data besar -> nunggu thumbnail
+      if(tot+len>MAX) break;                 // hentikan kalau kuota hampir penuh
+      tot+=len; out.push(r);
+    }
+    // Tulis dulu versi ringan (tanpa gambar besar) — anti quota error / freeze.
+    localStorage.setItem(RESULTS_KEY, JSON.stringify(out));
+    // Kompres data:image besar secara async lalu simpan ulang dengan thumbnail.
+    if(pend.length){
+      var done=0;
+      pend.forEach(function(r){
+        makeThumb(r.src, function(t){
+          done++;
+          if(t){
+            if(tot+t.length<=MAX){
+              tot+=t.length;
+              var cp={}; for(var k in r) cp[k]=r[k];
+              cp.src=t; out.push(cp); // salinan dengan thumbnail — asli tetap utuh
+            }
+          }
+          if(done===pend.length){
+            try{ localStorage.setItem(RESULTS_KEY, JSON.stringify(out)); }catch(e){}
+          }
+        });
+      });
+    }
+  }catch(e){}
 }
 /* Tampilan tengah: galeri semua hasil menumpuk ke bawah (seperti Tensor.Art),
    tiap kartu = HANYA gambar (aspect ratio asli, di tengah). Semua detail
