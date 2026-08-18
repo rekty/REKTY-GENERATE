@@ -4410,22 +4410,26 @@ function chatWd14TagOnline(dataUrl, model, onProg, abortCtrl){
     return new Promise(function(res, rej){
       var ctrl=abortCtrl || (('AbortController' in window)? new AbortController() : null);
       var tmr=ctrl? setTimeout(function(){ ctrl.abort(); }, 120000) : null;
-      fetch(WD14_API_URL, {
+      // Primary: langsung ke HF Space (tidak terbatas Cloudflare 30s timeout)
+      // Fallback: backend proxy /api/wd14 (cached, tapi timeout CF = 30s)
+      fetch(WD14_DIRECT_URL, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify(body), signal: ctrl? ctrl.signal : undefined
       }).then(function(r){
-        // Backend proxy tidak tersedia (404/405) — fallback langsung ke HF Space
-        if(!r.ok && (r.status===404 || r.status===405)){
-          return fetch(WD14_DIRECT_URL, {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(body), signal: ctrl? ctrl.signal : undefined
-          }).then(function(r2){
-            if(!r2.ok) throw new Error('HF Space balas HTTP '+r2.status);
-            return r2.json();
-          });
-        }
-        if(!r.ok) throw new Error('Layanan online balas HTTP '+r.status);
+        if(!r.ok) throw new Error('HF Space balas HTTP '+r.status);
         return r.json();
+      }).catch(function(directErr){
+        // HF Space gagal — coba backend proxy sebagai fallback
+        return fetch(WD14_API_URL, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(body), signal: ctrl? ctrl.signal : undefined
+        }).then(function(r){
+          if(!r.ok) throw new Error('Backend balas HTTP '+r.status);
+          return r.json();
+        }).catch(function(){
+          throw directErr; // lempar error asli HF Space
+        });
+      }).then(function(result){
       }).then(function(j){
         if(tmr) clearTimeout(tmr);
         var out=j&&j.data; if(!out) throw new Error('Respons layanan tidak dikenali');
