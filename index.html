@@ -494,13 +494,13 @@ input[type=range]{cursor:pointer}
         </div>
         <div>
           <label class="text-xs flex justify-between items-center"><span>Width</span>
-            <input id="wv" type="number" min="64" max="4096" value="768" class="wvnum"/></label>
-          <input id="width" type="range" min="64" max="4096" step="1" value="768" class="slider mt-1"/>
+            <input id="wv" type="number" min="64" max="4096" value="832" class="wvnum"/></label>
+          <input id="width" type="range" min="64" max="4096" step="1" value="832" class="slider mt-1"/>
         </div>
         <div>
           <label class="text-xs flex justify-between items-center"><span>Height</span>
-            <input id="hv" type="number" min="64" max="4096" value="1152" class="wvnum"/></label>
-          <input id="height" type="range" min="64" max="4096" step="1" value="1152" class="slider mt-1"/>
+            <input id="hv" type="number" min="64" max="4096" value="1536" class="wvnum"/></label>
+          <input id="height" type="range" min="64" max="4096" step="1" value="1536" class="slider mt-1"/>
         </div>
         <div>
           <div class="flex items-center justify-between">
@@ -510,14 +510,14 @@ input[type=range]{cursor:pointer}
           <div class="grid grid-cols-2 gap-2 mt-1">
             <div class="field"><label class="text-[11px] text-neutral-500">Sampler</label>
               <select id="sampler" class="inp text-xs">
-                <option>euler</option><option>euler_ancestral</option><option>heun</option><option>heunpp2</option><option>dpm_2</option><option>dpm_2_ancestral</option><option>lms</option><option>dpm_fast</option><option>dpm_adaptive</option><option>dpmpp_2s_ancestral</option><option>dpmpp_sde_gpu</option><option>dpmpp_2m</option><option>dpmpp_2m_sde_gpu</option><option>dpmpp_3m_sde_gpu</option><option>ddpm</option><option>lcm</option><option>restart</option><option>ddim</option><option>uni_pc</option><option>uni_pc_bh2</option><option>res_multistep</option><option>er_sde</option>
+                <option>euler</option><option>euler_ancestral</option><option>heun</option><option>heunpp2</option><option>dpm_2</option><option>dpm_2_ancestral</option><option>lms</option><option>dpm_fast</option><option>dpm_adaptive</option><option>dpmpp_2s_ancestral</option><option>dpmpp_sde_gpu</option><option selected>dpmpp_2m</option><option>dpmpp_2m_sde_gpu</option><option>dpmpp_3m_sde_gpu</option><option>ddpm</option><option>lcm</option><option>restart</option><option>ddim</option><option>uni_pc</option><option>uni_pc_bh2</option><option>res_multistep</option><option>er_sde</option>
               </select></div>
             <div class="field"><label class="text-[11px] text-neutral-500">Scheduler</label>
-              <select id="sched" class="inp text-xs"><option>normal</option><option>karras</option><option>sgm_uniform</option><option>exponential</option><option>simple</option><option>ddim_uniform</option><option>beta</option><option>linear_quadratic</option></select></div>
+              <select id="sched" class="inp text-xs"><option>normal</option><option selected>karras</option><option>sgm_uniform</option><option>exponential</option><option>simple</option><option>ddim_uniform</option><option>beta</option><option>linear_quadratic</option></select></div>
           </div>
 <div class="space-y-3 mt-3">
             <div>
-              <label class="text-xs flex justify-between"><span>Sampling Steps</span><span id="sv" class="text-neutral-500">10</span></label>
+              <label class="text-xs flex justify-between"><span>Sampling Steps</span><span id="sv" class="text-neutral-500">30</span></label>
               <input id="steps" type="range" min="1" max="50" value="10" class="slider mt-1"/>
             </div>
             <div>
@@ -2252,9 +2252,9 @@ function loadSettings(){
       settings.mode=s.mode||'auto'; settings.provider=s.provider||'tams'; settings.apiKey=s.apiKey||'';
       settings.pollSession=s.pollSession||''; settings.selfhostUrl=String(s.selfhostUrl||'').trim(); settings.seed=String(s.seed||'').trim();
       settings.prompt=String(s.prompt||''); settings.negPrompt=String(s.negPrompt||'');
-      settings.negCheck=!!s.negCheck; settings.steps=parseInt(s.steps)||10; settings.cfg=parseFloat(s.cfg)||1;
-      settings.sampler=s.sampler||'euler'; settings.sched=s.sched||'normal'; settings.vae=s.vae||'automatic';
-      settings.width=parseInt(s.width)||768; settings.height=parseInt(s.height)||1152;
+      settings.negCheck=!!s.negCheck;      settings.steps=parseInt(s.steps)||30; settings.cfg=parseFloat(s.cfg)||1;
+      settings.sampler=s.sampler||'dpmpp_2m'; settings.sched=s.sched||'karras'; settings.vae=s.vae||'automatic';
+      settings.width=parseInt(s.width)||832; settings.height=parseInt(s.height)||1536;
       settings.aspect=s.aspect||'portrait'; settings.clipSkip=parseInt(s.clipSkip)||2;
       settings.ensd=parseInt(s.ensd)!=null?parseInt(s.ensd):31337; settings.upscale=parseFloat(s.upscale)||2;
       settings.ncol=parseInt(s.ncol)||1; settings.ncols=parseInt(s.ncols)||2; settings.page=s.page||'text';
