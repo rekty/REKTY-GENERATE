@@ -3223,7 +3223,7 @@ async function doGenerate(){
   }
   var par=buildPayload();
   // Sertakan token Turnstile (kalau verifikasi asli sudah lewat) lalu kosongkan
-  if(window._vaiaTurnToken){ try{localStorage.setItem('chatTurnstileToken',window._vaiaTurnToken);}catch(e){} par.turnstileToken=window._vaiaTurnToken; window._vaiaTurnToken=null; }
+  if(window._vaiaTurnToken){ par.turnstileToken=window._vaiaTurnToken; window._vaiaTurnToken=null; }
   saveLastPrompt(); // prompt terakhir yang benar-benar dikirim ke generate
   // Inpaint tanpa mask = tidak ada area yang digambar ulang -> minta user menyapukan brush dulu
   if(_i2iTool==='inpaint'&&!(par.params.masks&&par.params.masks.length)){
@@ -6155,8 +6155,8 @@ if(typeof updateBalPill==='function') updateBalPill();
       if(!sk){ window._vaiaTurnToken=''; cb(''); return; }
       invisibleToken().then(function(tok){
         if(tok){ window._vaiaTurnToken=tok; cb(tok); }
-        else if(!window._chatWidgetShown){ window._chatWidgetShown=true; try{localStorage.setItem('chatTurnstileShown','1');}catch(e){} runTurnstile(function(){ var _t=window._vaiaTurnToken||''; try{localStorage.setItem('chatTurnstileToken',_t);}catch(e){} cb(_t); }); }
-        else { var _saved=''; try{_saved=localStorage.getItem('chatTurnstileToken')||'';}catch(e){} if(cb) cb(_saved); }
+        else if(!window._chatWidgetShown){ window._chatWidgetShown=true; try{localStorage.setItem('chatTurnstileShown','1');}catch(e){} runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
+        else { if(cb) cb(''); }
       });
     });
   }
