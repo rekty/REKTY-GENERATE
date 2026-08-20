@@ -84,11 +84,20 @@ Functions, atau Cloudflare Pages + Pages Function. Intinya:
 
 ```
 index.html              # UI + logika (single file, no build)
+_worker.js              # Cloudflare Pages Worker (backend + embed HTML)
 functions/api.js        # backend Cloudflare Pages Function (proxy 4 provider)
 firebase-backend/        # backend Firebase Cloud Functions (versi sama)
 firebase.json           # config Firebase hosting + rewrite /api/**
 scripts/dev_server.py   # server lokal + mock provider
+scripts/build_worker.mjs# build _worker.js dari index.html + obfuscate
 scripts/test_backend.mjs# tes integrasi backend
 DEPLOY.md               # panduan deploy & API key
 wd14-tagger/README.md   # dokumen WD14 Tagger (deteksi prompt dari gambar)
 ```
+
+## Turnstile Anti-Bot
+
+- **Generate**: Turnstile muncul di generate ke-1 saja. Generate ke-2 dst: skip.
+- **Chat**: Turnstile muncul di chat pertama saja. Chat ke-2 dst: skip (backend terima token kosong).
+- **Desktop + Mobile**: Keduanya menggunakan fungsi `vaiaToken()` yang sama.
+- Backend logic: `if (!token) return { ok: true }` — token kosong = skip verifikasi.

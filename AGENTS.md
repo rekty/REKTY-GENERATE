@@ -78,6 +78,13 @@ results[], page ('text'|'img'|'edit'|'video'|'prime'), aspect ('portrait'|'lands
 - WD14 Tagger: deteksi prompt dari gambar via HF Space (`deepghs/wd14_tagging_online`), hasil di-cache di KV selama 7 hari (`POST /api/wd14`)
 - Panduan lengkap: DEPLOY.md
 
+## Turnstile Anti-Bot (Chat + Generate)
+
+- **Generate**: Turnstile muncul di generate ke-1 saja (via `verifyFor()`). Generate ke-2 dst: skip.
+- **Chat**: Turnstile muncul di chat pertama saja (via `vaiaToken()`). Chat ke-2 dst: skip (backend terima token kosong).
+- **Desktop + Mobile**: Fix `window._chatWidgetShown` di-set setelah invisible pertama, berlaku untuk keduanya.
+- Backend logic: `if (!token) return { ok: true }` — token kosong = skip verifikasi.
+
 ## Next Steps
 
 - Edit tab: inpainting/outpainting (TAMS IMAGE_TO_INPAINT stage)
