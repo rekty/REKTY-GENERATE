@@ -35,3 +35,7 @@ wrangler.toml
 
 # Personal references
 references/
+
+# Backup files
+backup_*.zip
+backup_*/
