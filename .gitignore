@@ -28,3 +28,7 @@ agent.md.txt
 
 # Self-host (pribadi)
 selfhost/
+
+# Cloudflare config (personal)
+_worker.js
+wrangler.toml
