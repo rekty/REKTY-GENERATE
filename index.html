@@ -6156,8 +6156,9 @@ if(typeof updateBalPill==='function') updateBalPill();
       // Sudah pernah verifikasi → skip Turnstile, kirim kosong (backend skip)
       if(window._chatWidgetShown){ if(cb) cb(''); return; }
       invisibleToken().then(function(tok){
+        window._chatWidgetShown=true; try{localStorage.setItem('chatTurnstileShown','1');}catch(e){}
         if(tok){ window._vaiaTurnToken=tok; cb(tok); }
-        else { window._chatWidgetShown=true; try{localStorage.setItem('chatTurnstileShown','1');}catch(e){} runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
+        else { runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
       });
     });
   }
