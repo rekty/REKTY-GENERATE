@@ -777,7 +777,7 @@ input[type=range]{cursor:pointer}
             </div>
           </div>
           <div class="flex items-center gap-1.5 shrink-0">
-            <select id="chat-model" class="hidden sm:inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-1 text-[10px] text-neutral-300 outline-none cursor-pointer hover:border-[#8b5cf6] transition-colors" title="Model chat: openai-fast (stabil, default) atau gpt-5.6-luna (lebih pintar, butuh saldo pollen)"><option value="openai-fast">⚡ openai-fast · stabil</option><option value="gpt-5.6-luna">🧠 gpt-5.6-luna</option></select>
+            <select id="chat-model" class="hidden sm:inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-2 py-1 text-[10px] text-neutral-300 outline-none cursor-pointer hover:border-[#8b5cf6] transition-colors" title="Model chat: pilih model untuk kecepatan/kualitas"><option value="openai-fast">⚡ openai-fast · stabil</option><option value="nova-fast">🚀 nova-fast · cepat</option><option value="gemini-fast">💎 gemini-fast · cepat</option><option value="gemini-3-flash">⚡ gemini-3-flash · cepat</option><option value="gpt-5.6-luna">🧠 gpt-5.6-luna · pintar</option></select>
             <button id="chat-mode" class="h-7 rounded-full border px-2 inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#6F5DFF] transition-colors" title="Mode variasi prompt gambar: Kreatif (variasi liar) / Setia (variasi dekat)"><i data-icon="sparkle" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-mode-txt">Kreatif</span></button>
             <button id="chat-stream" class="hidden sm:inline-flex h-7 rounded-full border px-2 inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#27D4CD] transition-colors" title="Mode respons: Instan (streaming) / Lengkap (non-stream)"><i data-icon="lightning" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-stream-txt">Instan</span></button>
             <button id="chat-temp" class="w-7 h-7 rounded-lg border bd flex items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Chat sementara - tidak disimpan di riwayat"><i data-icon="incognito" class="w-4 h-4"></i></button>
@@ -4153,7 +4153,7 @@ var SESSIONS_KEY='vaia_chat_sessions_v1';
 var SID_KEY='vaia_chat_sid_v1';
 var chatState={ msgs:[], busy:false, rendered:false, sid:null, mode:'kreatif', model:'openai-fast', stream:true };
 function chatModelLoad(){
-  try{ var m=localStorage.getItem('vaia-chat-model'); if(m==='openai-fast'||m==='gpt-5.6-luna') chatState.model=m; }catch(e){}
+  try{ var m=localStorage.getItem('vaia-chat-model'); if(['openai-fast','nova-fast','gemini-fast','gemini-3-flash','gpt-5.6-luna'].indexOf(m)>-1) chatState.model=m; }catch(e){}
 }
 function chatModelApply(){
   var el=$('chat-model'); if(!el) return;

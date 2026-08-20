@@ -1271,7 +1271,8 @@ export async function onRequest(context) {
       // Model chat: default openai-fast (stabil). gpt-5.6-luna hanya bila
       // user pilih (butuh saldo pollen / key berizin). Model lain -> openai-fast.
       let model = String((body && body.model) || 'openai-fast').trim() || 'openai-fast';
-      if (model !== 'openai-fast' && model !== 'gpt-5.6-luna') model = 'openai-fast';
+      const ALLOWED_CHAT = ['openai-fast','nova-fast','gemini-fast','gemini-3-flash','gpt-5.6-luna'];
+      if (ALLOWED_CHAT.indexOf(model) === -1) model = 'openai-fast';
       const wantStream = !!(body && body.stream);
       const chatMode = (body && body.mode === 'setia') ? 'setia' : 'kreatif';
       const MODE_PROMPT = chatMode === 'setia'
