@@ -361,12 +361,12 @@ input[type=range]{cursor:pointer}
     </svg>
   </div>
   <div class="flex items-center gap-0.5 hidebar overflow-x-auto flex-1 max-lg:hidden">
-    <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span>Text2Img</div>
-    <div class="tab" data-tab="chat"><span class="dot" style="background:#8b5cf6"></span>Chat</div>
-    <div class="tab" data-tab="img"><span class="dot" style="background:#22c55e"></span>Img2Img</div>
-    <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span>Edit</div>
-    <div class="tab" data-tab="video"><span class="dot" style="background:#ef4444"></span>Video</div>
-    <div class="tab" data-tab="prime"><span class="dot" style="background:#3b82f6"></span>Prime</div>
+    <div class="tab sel" data-tab="text"><span class="dot" style="background:#6F5DFF"></span><span data-t="text2img">Text2Img</span></div>
+    <div class="tab" data-tab="chat"><span class="dot" style="background:#8b5cf6"></span><span data-t="chat">Chat</span></div>
+    <div class="tab" data-tab="img"><span class="dot" style="background:#22c55e"></span><span data-t="img2img">Img2Img</span></div>
+    <div class="tab" data-tab="edit"><span class="dot" style="background:#eab308"></span><span data-t="edit">Edit</span></div>
+    <div class="tab" data-tab="video"><span class="dot" style="background:#ef4444"></span><span data-t="video">Video</span></div>
+    <div class="tab" data-tab="prime"><span class="dot" style="background:#3b82f6"></span><span data-t="prime">Prime</span></div>
     <div class="glass-brand hidden md:flex shrink-0 ml-1"><span class="brand-spark">✦</span><span class="brand-txt">VISUAL AI ARTWORK GENERATOR</span></div>
   </div>
   <div class="flex items-center gap-1.5 sm:gap-2 ml-auto shrink-0">
@@ -466,7 +466,7 @@ input[type=range]{cursor:pointer}
 
       <!-- Settings -->
       <div class="space-y-4">
-        <span class="text-sm font-semibold">Settings</span>
+        <span class="text-sm font-semibold" data-t="settings">Settings</span>
         <div>
           <div class="grid grid-cols-4 gap-2">
             <button class="ar" data-ar="portrait">
@@ -493,19 +493,19 @@ input[type=range]{cursor:pointer}
           <div class="text-xs text-neutral-500 mt-1.5" id="ar-label">custom</div>
         </div>
         <div>
-          <label class="text-xs flex justify-between items-center"><span>Width</span>
+          <label class="text-xs flex justify-between items-center"><span data-t="width">Width</span>
             <input id="wv" type="number" min="64" max="4096" value="832" class="wvnum"/></label>
           <input id="width" type="range" min="64" max="4096" step="1" value="832" class="slider mt-1"/>
         </div>
         <div>
-          <label class="text-xs flex justify-between items-center"><span>Height</span>
+          <label class="text-xs flex justify-between items-center"><span data-t="height">Height</span>
             <input id="hv" type="number" min="64" max="4096" value="1536" class="wvnum"/></label>
           <input id="height" type="range" min="64" max="4096" step="1" value="1536" class="slider mt-1"/>
         </div>
         <div>
           <div class="flex items-center justify-between">
-            <span class="text-xs">Sampling Method</span>
-            <button id="adv-toggle" class="text-xs text-neutral-500 hover:text-white flex items-center gap-1"><i data-icon="caret-down" class="w-3.5 h-3.5"></i>Advanced</button>
+            <span class="text-xs" data-t="sampler">Sampling Method</span>
+            <button id="adv-toggle" class="text-xs text-neutral-500 hover:text-white flex items-center gap-1"><i data-icon="caret-down" class="w-3.5 h-3.5"></i><span data-t="advanced">Advanced</span></button>
           </div>
           <div class="grid grid-cols-2 gap-2 mt-1">
             <div class="field"><label class="text-[11px] text-neutral-500">Sampler</label>
@@ -517,11 +517,11 @@ input[type=range]{cursor:pointer}
           </div>
 <div class="space-y-3 mt-3">
             <div>
-              <label class="text-xs flex justify-between"><span>Sampling Steps</span><span id="sv" class="text-neutral-500">30</span></label>
+              <label class="text-xs flex justify-between"><span data-t="steps">Sampling Steps</span><span id="sv" class="text-neutral-500">30</span></label>
               <input id="steps" type="range" min="1" max="50" value="10" class="slider mt-1"/>
             </div>
             <div>
-              <label class="text-xs flex justify-between"><span>CFG Scale</span><span id="cfv" class="text-neutral-500">1</span></label>
+              <label class="text-xs flex justify-between"><span data-t="cfg">CFG Scale</span><span id="cfv" class="text-neutral-500">1</span></label>
               <input id="cfg" type="range" min="1" max="10" step="0.5" value="1" class="slider mt-1"/>
             </div>
             <div>
@@ -546,7 +546,7 @@ input[type=range]{cursor:pointer}
 
         <!-- Upscale (separate, di bawah) -->
         <div class="mt-4">
-          <label class="text-xs flex justify-between items-center"><span>Upscale</span><span class="text-neutral-500">2x</span></label>
+          <label class="text-xs flex justify-between items-center"><span data-t="upscale">Upscale</span><span class="text-neutral-500">2x</span></label>
           <input id="upscale" type="range" min="1" max="4" step="0.5" value="2" class="slider mt-1"/>
         </div>
 
@@ -661,7 +661,7 @@ input[type=range]{cursor:pointer}
               <option value="4">4 images</option>
             </select>
             <button id="btn-go" class="btn btn-turq h-9 px-4 whitespace-nowrap">
-              <i data-icon="lightning" class="w-4 h-4"></i>Generate
+              <i data-icon="lightning" class="w-4 h-4"></i><span data-t="generate">Generate</span>
               <span class="text-xs opacity-90 font-normal" id="price">- 1.22</span>
             </button>
           </div>
