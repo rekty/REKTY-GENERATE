@@ -25,3 +25,6 @@ __pycache__/
 PIN ADMIN*.txt
 *RAHASIA*.txt
 agent.md.txt
+
+# Self-host (pribadi)
+selfhost/
