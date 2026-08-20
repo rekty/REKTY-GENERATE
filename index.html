@@ -2351,7 +2351,11 @@ function applySettingsUI(){
   if(settings.sched) $('sched').value=settings.sched;
   if(settings.vae) $('vae').value=settings.vae;
   $('width').value=settings.width||768; $('height').value=settings.height||1152;
-  state.aspect=settings.aspect||'portrait'; setArActive(state.aspect);
+  state.aspect=settings.aspect||'portrait';
+  /* FIX: Jika width/height tidak cocok preset, pakai custom */
+  var _w=parseInt($('width').value)||0, _h=parseInt($('height').value)||0;
+  if(_w&&_h){var _m=false;for(var _k in AR_MAP){if(_k!=='custom'&&AR_MAP[_k][1]===_w&&AR_MAP[_k][2]===_h){_m=true;break;}}if(!_m)state.aspect='custom';}
+  setArActive(state.aspect);
   updWH();
   if(settings.clipSkip){ $('clipskip').value=settings.clipSkip; $('csv').textContent=settings.clipSkip; }
   $('etansd').value=settings.ensd!=null?settings.ensd:31337; $('ensd').textContent=$('etansd').value;
