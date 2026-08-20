@@ -2297,7 +2297,12 @@ function applyLastPrompt(){
     // if($('width')&&s.w) $('width').value=s.w;
     // if($('height')&&s.h) $('height').value=s.h;
     // if(typeof updWH==='function') updWH();
-    if(s.aspect){ state.aspect=s.aspect; if(typeof setArActive==='function') setArActive(s.aspect); }
+    if(s.aspect){ state.aspect=s.aspect;
+      /* FIX: Jika width/height tidak cocok preset, pakai custom */
+      var _w2=parseInt($('width').value)||0, _h2=parseInt($('height').value)||0;
+      if(_w2&&_h2){var _m2=false;for(var _k2 in AR_MAP){if(_k2!=='custom'&&AR_MAP[_k2][1]===_w2&&AR_MAP[_k2][2]===_h2){_m2=true;break;}}if(!_m2)state.aspect='custom';}
+      if(typeof setArActive==='function') setArActive(state.aspect);
+    }
     if($('steps')&&s.steps){ $('steps').value=s.steps; if($('sv')) $('sv').textContent=s.steps; }
     if($('seed')&&s.seed){ $('seed').value=s.seed; if(typeof persistSeed==='function') persistSeed(s.seed); }
     renderTriggers();
