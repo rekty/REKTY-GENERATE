@@ -1898,6 +1898,13 @@ function makeGalleryRow(r,i){
   mdl.className='absolute bottom-2 left-2 text-[10px] bg-black/60 px-2 py-0.5 rounded text-neutral-300 z-10 pointer-events-none';
   mdl.textContent=r.model||'';
   row.appendChild(mdl);
+  // Powered by Pollinations (logo + teks)
+  if(r.src && r.src.indexOf('pollinations')>-1){
+    var pf=document.createElement('div');
+    pf.className='absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded z-10 pointer-events-none';
+    pf.innerHTML='<img src="https://pollinations.ai/favicon-32x32.png" class="w-3 h-3 rounded" onerror="this.style.display=\'none\'"/><span class="text-[9px]" style="color:#E8F372;font-weight:600">Powered by Pollinations</span>';
+    row.appendChild(pf);
+  }
   // pill aksi (Bagikan/Download/Dislike) + menu — SAMA seperti versi mobile.
   // hidden lg:flex = hanya tampil di desktop (mobile punya pill sendiri di tab Tasks).
   var pill=document.createElement('div');
