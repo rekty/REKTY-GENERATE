@@ -5749,6 +5749,11 @@ if(typeof updateBalPill==='function') updateBalPill();
       <div class="flex items-center gap-3 mb-3 text-xs text-neutral-400">
         <span id="kvadmin-count">0 gambar</span>
         <span class="flex-1"></span>
+        <label class="inline-flex items-center gap-1.5 cursor-pointer select-none" title="Pilih/ batalkan semua gambar">
+          <input id="kvadmin-selectall" type="checkbox" class="w-4 h-4 rounded border-[#30363d] bg-[#0d1117] text-[#27D4CD] focus:ring-[#27D4CD] cursor-pointer"/>
+          <span class="text-[11px] text-neutral-400">Pilih Semua</span>
+        </label>
+        <button id="kvadmin-delselected" class="hidden btn h-8 px-3 text-[11px] border border-red-500/40 text-red-400 hover:bg-red-500/10" title="Hapus gambar yang dipilih">🗑️ Hapus Terpilih (<span id="kvadmin-selcount">0</span>)</button>
         <button id="kvadmin-audit" class="btn h-8 px-3 text-[11px] border bd text-neutral-300 hover:bg-[#21262d]" title="Lihat log aktivitas panel admin (buka, hapus, hapus semua)">📜 Log Audit</button>
         <button id="kvadmin-resetpin" class="btn h-8 px-3 text-[11px] border bd text-neutral-300 hover:bg-[#21262d]" title="Kunci panel ini — PIN diminta lagi saat dibuka berikutnya">🔒 Kunci Panel</button>
         <button id="kvadmin-delall" class="btn h-8 px-3 text-[11px] border border-red-500/40 text-red-400 hover:bg-red-500/10" title="Hapus SEMUA gambar arsip dari KV (tidak bisa dikembalikan)">🗑️ Hapus Semua</button>
@@ -5846,7 +5851,15 @@ if(typeof updateBalPill==='function') updateBalPill();
       $('kvadmin-empty').classList.toggle('hidden', !!(d.images&&d.images.length));
       (d.images||[]).forEach(function(im){
         var c=document.createElement('div');
-        c.className='border bd rounded-xl overflow-hidden bg-[#161b22]';
+        c.className='border bd rounded-xl overflow-hidden bg-[#161b22] relative';
+        // Checkbox untuk multi-select
+        var chkWrap=document.createElement('div');
+        chkWrap.className='absolute top-2 left-2 z-10';
+        var chk=document.createElement('input');
+        chk.type='checkbox'; chk.className='kvadmin-chk w-4 h-4 rounded border-[#30363d] bg-[#0d1117] text-[#27D4CD] focus:ring-[#27D4CD] cursor-pointer';
+        chk.dataset.name=im.name;
+        chk.addEventListener('change',function(){ updateSelCount(); });
+        chkWrap.appendChild(chk); c.appendChild(chkWrap);
         var img=document.createElement('img');
         img.src=im.url; img.className='w-full aspect-[3/4] object-cover'; img.loading='lazy';
         img.onerror=function(){ img.style.background='#1c2128'; img.style.display='flex'; };
@@ -5905,6 +5918,36 @@ if(typeof updateBalPill==='function') updateBalPill();
       });
     }).catch(function(){ setErr('Gagal ambil data arsip'); });
   }
+  // ---- Multi-select: checkbox, select all, delete selected ----
+  function updateSelCount(){
+    var checked=document.querySelectorAll('.kvadmin-chk:checked');
+    var n=checked.length;
+    $('kvadmin-selcount').textContent=n;
+    $('kvadmin-delselected').classList.toggle('hidden', n===0);
+  }
+  $('kvadmin-selectall').addEventListener('change',function(){
+    var all=document.querySelectorAll('.kvadmin-chk');
+    var checked=this.checked;
+    all.forEach(function(ch){ ch.checked=checked; });
+    updateSelCount();
+  });
+  $('kvadmin-delselected').addEventListener('click',function(){
+    var checked=document.querySelectorAll('.kvadmin-chk:checked');
+    var names=[];
+    checked.forEach(function(ch){ names.push(ch.dataset.name); });
+    if(!names.length) return;
+    if(!confirm('Hapus '+names.length+' gambar terpilih dari KV?\nTindakan ini tidak bisa dikembalikan.')) return;
+    var btn=this; btn.disabled=true; btn.textContent='...Menghapus...';
+    var done=0, total=names.length;
+    names.forEach(function(name){
+      fetch('/api/admin/delete',{method:'POST',headers:{'Content-Type':'application/json','x-admin-pin':pin()},body:JSON.stringify({name:name})}).then(function(r){ return r.json(); }).then(function(d2){
+        done++;
+        if(d2&&d2.ok){ toast('Gambar dihapus ✓ ('+done+'/'+total+')'); }
+        else { toast('Gagal hapus: '+((d2&&d2.error)||'?')); }
+        if(done>=total){ btn.disabled=false; btn.textContent='🗑️ Hapus Terpilih'; $('kvadmin-selectall').checked=false; loadAdmin(); }
+      }).catch(function(){ done++; toast('Gagal hapus'); if(done>=total){ btn.disabled=false; btn.textContent='🗑️ Hapus Terpilih'; loadAdmin(); } });
+    });
+  });
   $('kvadmin-refresh').addEventListener('click',loadAdmin);
   /* Log Audit: tampilkan riwayat aktivitas panel (buka, hapus, hapus semua) dari KV */
   var auditOpen = false;
