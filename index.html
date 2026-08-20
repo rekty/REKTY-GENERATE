@@ -399,7 +399,7 @@ input[type=range]{cursor:pointer}
         <div id="model-card" class="relative border bd rounded-xl bg-[#1c2128] hover:border-[#3d444d] cursor-pointer p-3">
           <span id="model-badge" class="absolute top-0 left-0 text-[9px] text-neutral-400 bg-[#21262d] border bd px-2 py-0.5 rounded-tl-xl rounded-br-md z-10">Basic Model - Z Image</span>
           <div class="flex items-center gap-3 mt-2">
-            <img id="model-thumb" src="https://picsum.photos/seed/zimage/64" class="w-16 h-16 rounded-lg object-cover shrink-0 border bd" alt="model"/>
+            <img id="model-thumb" src="https://image.pollinations.ai/seed/zimage/64" class="w-16 h-16 rounded-lg object-cover shrink-0 border bd" alt="model"/>
             <div class="flex-1 min-w-0">
               <div id="model-name" class="font-semibold text-sm truncate">Z Image - base-bf16</div>
             </div>
@@ -625,8 +625,8 @@ input[type=range]{cursor:pointer}
       <!-- Footer (seperti Tensor.Art) -->
       <div class="vmarquee pt-3 pb-1 text-[10px] text-neutral-600">
   <div class="vmarquee-inner">
-    <span class="vmarquee-txt">Project Service Provided by <span class="vt">VAIA TEAM</span> <span class="vs">✦</span></span>
-    <span class="vmarquee-txt">Project Service Provided by <span class="vt">VAIA TEAM</span> <span class="vs">✦</span></span>
+    <span class="vmarquee-txt">Project Service Provided by <span class="vt">VAIA TEAM</span> <span class="vs">✦</span> Powered by <span class="vt">Pollinations AI</span> <span class="vs">✦</span></span>
+    <span class="vmarquee-txt">Project Service Provided by <span class="vt">VAIA TEAM</span> <span class="vs">✦</span> Powered by <span class="vt">Pollinations AI</span> <span class="vs">✦</span></span>
   </div>
 </div>
     </div>
@@ -1127,7 +1127,7 @@ input[type=range]{cursor:pointer}
 
 <script>
 const $ = id => document.getElementById(id);
-const S = 'https://picsum.photos/seed/';
+const S = 'https://image.pollinations.ai/seed/';
 const state = { results:[], page:'text', aspect:'portrait', ncol:1, ncols:2, model:null, modeA1111:false, modeElla:false };
 
 /* ===== Ikon SVG — render <i data-icon="..."> (sebelumnya kosong/tidak terlihat) ===== */
@@ -1366,7 +1366,7 @@ var POLL_PRICE={zimage:0.004,flux:0.002,dreamshaper:0.0001,krea:0.03,gptimage:0.
 function setModel(m){
   state.model=m;
   $('model-name').textContent=m.name;
-  $('model-thumb').src='https://picsum.photos/seed/'+m.thumb+'/64';
+  $('model-thumb').src='https://image.pollinations.ai/seed/'+m.thumb+'/64';
   var b=$('model-badge'); if(b){
     var lg=_PROV_LOGO[settings.provider]||'';
     b.innerHTML=(lg?'<img src="'+lg+'" alt="" onerror="this.style.display=&apos;none&apos;" class="w-3 h-3 inline rounded-full align-[-2px] mr-1"/>':'')+(m.base||'Model')+' - '+(m.arch||'');
