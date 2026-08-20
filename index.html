@@ -6150,13 +6150,12 @@ if(typeof updateBalPill==='function') updateBalPill();
     });
   }
   // Token per-aksi: real -> invisible (senyap), gagal -> widget terlihat (hanya ke-1 untuk chat)
-  var _chatWidgetUsed=false;
   function vaiaToken(cb){
     ensureSiteKey().then(function(sk){
       if(!sk){ window._vaiaTurnToken=''; cb(''); return; }
       invisibleToken().then(function(tok){
         if(tok){ window._vaiaTurnToken=tok; cb(tok); }
-        else if(!_chatWidgetUsed){ _chatWidgetUsed=true; runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
+        else if(!window._chatWidgetShown){ window._chatWidgetShown=true; try{localStorage.setItem('chatTurnstileShown','1');}catch(e){} runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
         else { if(cb) cb(window._vaiaTurnToken||''); }
       });
     });
