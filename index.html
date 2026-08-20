@@ -6153,10 +6153,11 @@ if(typeof updateBalPill==='function') updateBalPill();
   function vaiaToken(cb){
     ensureSiteKey().then(function(sk){
       if(!sk){ window._vaiaTurnToken=''; cb(''); return; }
+      // Sudah pernah verifikasi → skip Turnstile, kirim kosong (backend skip)
+      if(window._chatWidgetShown){ if(cb) cb(''); return; }
       invisibleToken().then(function(tok){
         if(tok){ window._vaiaTurnToken=tok; cb(tok); }
-        else if(!window._chatWidgetShown){ window._chatWidgetShown=true; try{localStorage.setItem('chatTurnstileShown','1');}catch(e){} runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
-        else { if(cb) cb(''); }
+        else { window._chatWidgetShown=true; try{localStorage.setItem('chatTurnstileShown','1');}catch(e){} runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
       });
     });
   }
