@@ -6149,15 +6149,13 @@ if(typeof updateBalPill==='function') updateBalPill();
       });
     });
   }
-  // Token per-aksi: real -> invisible (senyap), gagal -> widget terlihat (hanya ke-1); tanpa key -> ''
-  var _vaiaWidgetShown=false;
+  // Token per-aksi: real -> invisible (senyap), gagal -> widget terlihat; tanpa key -> ''
   function vaiaToken(cb){
     ensureSiteKey().then(function(sk){
       if(!sk){ window._vaiaTurnToken=''; cb(''); return; }
       invisibleToken().then(function(tok){
         if(tok){ window._vaiaTurnToken=tok; cb(tok); }
-        else if(!_vaiaWidgetShown){ _vaiaWidgetShown=true; runTurnstile(function(){ cb(window._vaiaTurnToken||''); }); }
-        else { if(cb) cb(window._vaiaTurnToken||''); }
+        else runTurnstile(function(){ cb(window._vaiaTurnToken||''); });
       });
     });
   }
