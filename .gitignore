@@ -42,3 +42,11 @@ backup_*/
 
 # Skills reference (PC only)
 REKTY_AI_SKILLS.txt
+
+# Audio test files
+quest_audio.mp3
+quest_final.mp3
+test_audio*.mp3
+
+# Languages config (local only)
+languages.yml
