@@ -244,13 +244,21 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 /* ===== VAIA Chat (ala ChatGPT) ===== */
 #chat-panel{height:calc(100vh - 56px - 2rem);min-height:22rem}
 @media (max-width:1023px){#chat-panel{height:calc(100vh - 56px - 40px - 3.75rem - 2rem)}}
+/* Chat model dropdown */
+#chat-model-dropdown{scrollbar-width:thin;scrollbar-color:#30363d transparent}
+#chat-model-dropdown::-webkit-scrollbar{width:4px}
+#chat-model-dropdown::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px}
+.chat-md-opt.active,.chat-md-opt:hover{background:#21262d!important}
 /* Mobile chat header: compact */
 @media (max-width:640px){
   #chat-main .flex.items-center.justify-between{gap:4px;padding-left:4px;padding-right:4px}
-  #chat-model{font-size:9px;padding:2px 8px;max-width:80px}
+  #chat-model{font-size:9px;padding:2px 6px}
+  #chat-model-label{max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #chat-model-icon{width:12px;height:12px}
   #chat-main .w-9.h-9{width:28px;height:28px}
   #chat-main .text-sm.font-semibold{font-size:11px}
   #chat-main .text-\[10px\].text-neutral-500{display:none}
+  #chat-model-dropdown{width:min(200px,80vw);right:0;left:auto}
 }
 .chat-msg{max-width:min(85%,34rem)}
 .chat-bubble-user{background:linear-gradient(135deg,rgba(31,199,206,.22),rgba(46,124,240,.28));border:1px solid rgba(46,124,240,.4);border-radius:16px;border-bottom-right-radius:4px}
@@ -842,7 +850,22 @@ input[type=range]{cursor:pointer}
             </div>
           </div>
           <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap">
-            <select id="chat-model" class="shrink-0 inline-flex items-center gap-1 rounded-lg border border-[#2E7CF0]/40 bg-gradient-to-r from-[#1a2a4a] to-[#162040] px-2 sm:px-2.5 py-1 text-[9px] sm:text-[10px] font-semibold text-[#5eead4] outline-none cursor-pointer hover:border-[#1FC7CE]/60 hover:shadow-[0_0_8px_rgba(31,199,206,.25)] transition-all w-auto min-w-0" title="Model chat: pilih model untuk kecepatan/kualitas"><option value="openai-fast">⚡ openai-fast</option><option value="nova-fast">🚀 nova-fast</option><option value="gemini-fast">💎 gemini-fast</option><option value="gemini-3-flash">⚡ gemini-3-flash</option><option value="glm-5.3">🧠 glm-5.3</option><option value="nemotron-3.5-lightning">⚡ nemotron-3.5</option><option value="qwen3.8-27b">🔮 qwen3.8-27b</option><option value="muse-glimmer">✨ muse-glimmer</option><option value="muse-spark-1.2">🚀 muse-spark</option><option value="gpt-5.6-luna">🧠 gpt-5.6-luna</option></select>
+            <div id="chat-model-wrap" class="relative shrink-0">
+              <button id="chat-model" class="inline-flex items-center gap-1.5 rounded-lg border border-[#30363d] bg-[#161b22] px-2 py-1 text-[10px] font-semibold text-[#f0f6fc] outline-none cursor-pointer hover:border-[#58a6ff] hover:bg-[#1c2128] transition-all min-w-0" title="Model chat: pilih model"><span id="chat-model-icon" class="w-3.5 h-3.5 rounded-full shrink-0" style="background:#10a37f"></span><span id="chat-model-label">OpenAI Fast</span><svg class="w-2.5 h-2.5 shrink-0 text-[#8b949e]" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <div id="chat-model-dropdown" class="hidden absolute top-full left-0 mt-1 w-52 rounded-xl border border-[#30363d] bg-[#161b22] shadow-2xl z-[99] py-1 max-h-72 overflow-y-auto">
+                <div class="px-2.5 py-1 text-[9px] uppercase tracking-wider text-[#8b949e] font-medium">Pilih Model</div>
+                <button data-m="openai-fast" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#10a37f">O</span><span class="text-[11px] font-semibold text-[#f0f6fc]">OpenAI Fast</span><span class="ml-auto text-[9px] text-[#8b949e]">Stabil</span></button>
+                <button data-m="nova-fast" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#ff9900">N</span><span class="text-[11px] font-semibold text-[#f0f6fc]">Amazon Nova</span><span class="ml-auto text-[9px] text-[#8b949e]">Cepat</span></button>
+                <button data-m="gemini-fast" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#4285f4">G</span><span class="text-[11px] font-semibold text-[#f0f6fc]">Gemini Fast</span><span class="ml-auto text-[9px] text-[#8b949e]">Cepat</span></button>
+                <button data-m="gemini-3-flash" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#4285f4">G</span><span class="text-[11px] font-semibold text-[#f0f6fc]">Gemini 3 Flash</span><span class="ml-auto text-[9px] text-[#8b949e]">Cepat</span></button>
+                <button data-m="glm-5.3" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#6366f1">Z</span><span class="text-[11px] font-semibold text-[#f0f6fc]">GLM 5.3</span><span class="ml-auto text-[9px] text-[#8b949e]">Reasoning</span></button>
+                <button data-m="nemotron-3.5-lightning" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#76b900">N</span><span class="text-[11px] font-semibold text-[#f0f6fc]">Nemotron 3.5</span><span class="ml-auto text-[9px] text-[#8b949e]">Cepat</span></button>
+                <button data-m="qwen3.8-27b" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#7c3aed">Q</span><span class="text-[11px] font-semibold text-[#f0f6fc]">Qwen 3.8</span><span class="ml-auto text-[9px] text-[#8b949e]">Reasoning</span></button>
+                <button data-m="muse-glimmer" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#1FC7CE">M</span><span class="text-[11px] font-semibold text-[#f0f6fc]">Muse Glimmer</span><span class="ml-auto text-[9px] text-[#8b949e]">Vision</span></button>
+                <button data-m="muse-spark-1.2" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#1FC7CE">M</span><span class="text-[11px] font-semibold text-[#f0f6fc]">Muse Spark</span><span class="ml-auto text-[9px] text-[#8b949e]">Reasoning</span></button>
+                <button data-m="gpt-5.6-luna" class="chat-md-opt flex items-center gap-2.5 w-full px-2.5 py-1.5 text-left hover:bg-[#21262d] transition-colors"><span class="w-5 h-5 rounded-full shrink-0 flex items-center justify-center text-[9px] font-bold text-white" style="background:#10a37f">L</span><span class="text-[11px] font-semibold text-[#f0f6fc]">GPT-5.6 Luna</span><span class="ml-auto text-[9px] text-[#8b949e]">Pintar</span></button>
+              </div>
+            </div>
             <button id="chat-mode" class="hidden sm:inline-flex h-7 rounded-full border px-2 items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#6F5DFF] transition-colors" title="Mode variasi prompt gambar: Kreatif (variasi liar) / Setia (variasi dekat)"><i data-icon="sparkle" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-mode-txt">Kreatif</span></button>
             <button id="chat-stream" class="hidden sm:inline-flex h-7 rounded-full border px-2 inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#27D4CD] transition-colors" title="Mode respons: Instan (streaming) / Lengkap (non-stream)"><i data-icon="lightning" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-stream-txt">Instan</span></button>
             <button id="chat-temp" class="hidden sm:flex w-7 h-7 rounded-lg border bd items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Chat sementara - tidak disimpan di riwayat"><i data-icon="incognito" class="w-4 h-4"></i></button>
@@ -4264,20 +4287,50 @@ function remixResult(r){
 var SESSIONS_KEY='vaia_chat_sessions_v1';
 var SID_KEY='vaia_chat_sid_v1';
 var chatState={ msgs:[], busy:false, rendered:false, sid:null, mode:'kreatif', model:'openai-fast', stream:true };
+var CHAT_MODELS={
+  'openai-fast':{name:'OpenAI Fast',color:'#10a37f',letter:'O',badge:'Stabil'},
+  'nova-fast':{name:'Amazon Nova',color:'#ff9900',letter:'N',badge:'Cepat'},
+  'gemini-fast':{name:'Gemini Fast',color:'#4285f4',letter:'G',badge:'Cepat'},
+  'gemini-3-flash':{name:'Gemini 3 Flash',color:'#4285f4',letter:'G',badge:'Cepat'},
+  'glm-5.3':{name:'GLM 5.3',color:'#6366f1',letter:'Z',badge:'Reasoning'},
+  'nemotron-3.5-lightning':{name:'Nemotron 3.5',color:'#76b900',letter:'N',badge:'Cepat'},
+  'qwen3.8-27b':{name:'Qwen 3.8',color:'#7c3aed',letter:'Q',badge:'Reasoning'},
+  'muse-glimmer':{name:'Muse Glimmer',color:'#1FC7CE',letter:'M',badge:'Vision'},
+  'muse-spark-1.2':{name:'Muse Spark',color:'#1FC7CE',letter:'M',badge:'Reasoning'},
+  'gpt-5.6-luna':{name:'GPT-5.6 Luna',color:'#10a37f',letter:'L',badge:'Pintar'}
+};
 function chatModelLoad(){
-  try{ var m=localStorage.getItem('vaia-chat-model'); if(['openai-fast','nova-fast','gemini-fast','gemini-3-flash','glm-5.3','nemotron-3.5-lightning','qwen3.8-27b','muse-glimmer','muse-spark-1.2','gpt-5.6-luna'].indexOf(m)>-1) chatState.model=m; }catch(e){}
+  try{ var m=localStorage.getItem('vaia-chat-model'); if(CHAT_MODELS[m]) chatState.model=m; }catch(e){}
 }
 function chatModelApply(){
-  var el=$('chat-model'); if(!el) return;
-  el.value=chatState.model||'openai-fast';
+  var m=chatState.model||'openai-fast'; var cfg=CHAT_MODELS[m]||CHAT_MODELS['openai-fast'];
+  var icon=$('chat-model-icon'), label=$('chat-model-label');
+  if(icon){ icon.style.background=cfg.color; icon.textContent=cfg.letter; }
+  if(label) label.textContent=cfg.name;
+  document.querySelectorAll('.chat-md-opt').forEach(function(b){
+    b.style.background=b.getAttribute('data-m')===m?'#21262d':'';
+    b.style.borderLeft=b.getAttribute('data-m')===m?'2px solid #58a6ff':'';
+  });
 }
-function chatModelToggle(){
-  var el=$('chat-model'); if(!el) return;
-  chatState.model=el.value||'openai-fast';
-  try{ localStorage.setItem('vaia-chat-model', chatState.model); }catch(e){}
-  toast('Model chat: '+chatState.model);
+function chatModelSet(m){
+  if(!CHAT_MODELS[m]) return;
+  chatState.model=m;
+  try{ localStorage.setItem('vaia-chat-model', m); }catch(e){}
+  chatModelApply();
+  var dd=$('chat-model-dropdown'); if(dd) dd.classList.add('hidden');
+  toast('Model: '+CHAT_MODELS[m].name);
 }
-(function(){ var el=$('chat-model'); if(el) el.addEventListener('change', chatModelToggle); chatModelLoad(); chatModelApply(); })();
+(function(){
+  var btn=$('chat-model'), dd=$('chat-model-dropdown');
+  if(btn&&dd){
+    btn.addEventListener('click',function(e){e.stopPropagation();dd.classList.toggle('hidden');});
+    dd.querySelectorAll('.chat-md-opt').forEach(function(b){
+      b.addEventListener('click',function(){chatModelSet(b.getAttribute('data-m'));});
+    });
+    document.addEventListener('click',function(){dd.classList.add('hidden');});
+  }
+  chatModelLoad(); chatModelApply();
+})();
 function chatStreamLoad(){
   try{ var s=localStorage.getItem('vaia-chat-stream'); if(s!==null) chatState.stream = s==='1'; }catch(e){}
 }
