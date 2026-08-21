@@ -3945,6 +3945,18 @@ function mobTaskCard(r,i){
       +'<span class="w-px h-4 bg-white/30 mx-0.5"></span>'
       +'<button class="tact'+(r.dislike?' on':'')+'" title="'+(r.dislike?'Batal dislike (kembalikan)':'Dislike')+'"><i data-icon="thumbs-down" class="w-4 h-4"></i></button>';
     wrap.appendChild(pill);
+    // Model name overlay (bottom-left, seperti desktop)
+    var mdl=document.createElement('span');
+    mdl.className='absolute bottom-2 left-2 text-[10px] bg-black/60 px-2 py-0.5 rounded text-neutral-300 z-10 pointer-events-none';
+    mdl.textContent=r.model||'';
+    wrap.appendChild(mdl);
+    // Powered by Pollinations (bottom-right, seperti desktop)
+    if(r.src && r.src.indexOf('pollinations')>-1){
+      var pf=document.createElement('div');
+      pf.className='absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded z-10 pointer-events-none';
+      pf.innerHTML='<img src="https://pollinations.ai/favicon-32x32.png" class="w-3 h-3 rounded" onerror="this.style.display=\'none\'"/><span class="text-[9px]" style="color:#E8F372;font-weight:600">Powered by Pollinations</span>';
+      wrap.appendChild(pf);
+    }
     if(r.dislike){
       img.classList.add('blur-md','opacity-70');
       var ov=document.createElement('div');
