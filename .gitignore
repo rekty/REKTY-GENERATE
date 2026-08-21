@@ -39,3 +39,6 @@ references/
 # Backup files
 backup_*.zip
 backup_*/
+
+# Skills reference (PC only)
+REKTY_AI_SKILLS.txt
