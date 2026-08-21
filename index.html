@@ -3,19 +3,6 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<script>
-(function(){
-  /* If Chrome 'Desktop site' is enabled on mobile, override viewport to force desktop width */
-  var ua=navigator.userAgent||'';
-  var isMobile=/(Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini)/i.test(ua);
-  var isDesktopUA=/(Chrome|Safari|Firefox|Edge|OPR|Brave)/i.test(ua) && !/(Mobile|Android|iPhone)/i.test(ua.replace(/.*Chrome\//,''));
-  if(isMobile && isDesktopUA){
-    var vp=document.querySelector('meta[name=viewport]');
-    if(vp) vp.content='width=1440';
-    document.documentElement.classList.add('force-desktop');
-  }
-})();
-</script>
 <title>Visual AI Artwork - AI Image Generator | Free AI Art Online</title>
 <meta name="description" content="Generate stunning AI images for free with Visual AI Artwork. Text to image, image to image, and AI chat powered by Pollinations AI. No login required." />
 <meta name="keywords" content="AI image generator, free AI art, text to image, AI artwork, visual AI, image generation, AI art online, Pollinations AI" />
@@ -350,17 +337,7 @@ body.chat-mode .chat-marquee{margin-top:.75rem;padding-top:.5rem;border-top:1px 
 .tact:active{transform:scale(.92)}
 .tact.on{color:#ef4444}
 #progoverlay{top:56px}
-/* Force desktop mode when Chrome 'Desktop site' is active on mobile */
-body.force-desktop #appshell{display:block!important;overflow-x:auto!important;overflow-y:auto!important;height:100vh!important;min-height:100vh!important;padding-bottom:0!important;padding-top:0!important}
-body.force-desktop #mainwrap,body.force-desktop #canvas,body.force-desktop #canvas>div{display:block!important}
-body.force-desktop #leftpan{position:static!important;width:18rem!important;max-width:18rem!important;height:100vh!important;overflow-y:auto!important;border-right:1px solid rgba(255,255,255,.12)!important;transform:none!important;order:unset!important}
-body.force-desktop #mobnav,body.force-desktop #mobbar,body.force-desktop #mobtasks,body.force-desktop #btn-history,body.force-desktop #tab-placeholder{display:none!important}
-body.force-desktop #rightPan{width:22rem!important;position:static!important;order:unset!important}
-body.force-desktop #grid,body.force-desktop #empty,body.force-desktop #gfilter,body.force-desktop #submitcard{order:unset!important}
-body.force-desktop #overlay,body.force-desktop #mobgen{display:none!important}
-body.force-desktop #promptbar{order:unset!important}
-body.force-desktop #img2img-card{order:unset!important;margin:0!important}
-body.force-desktop #chat-panel{position:static!important;top:auto!important;bottom:auto!important;z-index:auto!important;display:flex!important;flex-direction:column!important;height:100vh!important;background:transparent!important}
+
 @media (max-width:1023px){
   #rightPan.mobile-open{position:fixed;top:56px;right:0;bottom:0;left:auto;z-index:40;display:flex;width:min(21rem,92vw);box-shadow:-8px 0 30px rgba(0,0,0,.5)}
   /* Mobile ala Tensor.Art: satu kolom scroll, urutan prompt -> Models/VAE/Settings -> hasil */
