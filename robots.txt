@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://visualaiartwork.pages.dev/sitemap.xml
-
-# AI Image Generator - Visual AI Artwork
-# Free AI art generation powered by Pollinations AI

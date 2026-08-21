@@ -50,3 +50,15 @@ test_audio*.mp3
 
 # Languages config (local only)
 languages.yml
+
+# Google SEO (local only — PC saja)
+google4aefc3b8c5d92b28.html
+sitemap.xml
+robots.txt
+
+# Agent MD (local only — PC saja)
+agent.md.txt
+AGENTS.md
+
+# Firebase backend (local only — PC saja)
+firebase-backend/
