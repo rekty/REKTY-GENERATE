@@ -65,6 +65,16 @@ while (pos < srcHtml.length) {
 console.log('Obfuscated ' + sc + ' script blocks (' + (Buffer.byteLength(html)/1024).toFixed(1) + ' KB)');
 const favicon = fs.existsSync(path.join(root, 'favicon.svg')) ? fs.readFileSync(path.join(root, 'favicon.svg'), 'utf8') : '';
 const faviconPng = fs.existsSync(path.join(root, 'favicon.png')) ? fs.readFileSync(path.join(root, 'favicon.png')) : null;
+// Embed static files for SEO (robots.txt, sitemap.xml, Google verification)
+const staticFiles = {};
+const staticFileNames = ['robots.txt', 'sitemap.xml', 'google4aefc3b8c5d92b28.html'];
+for (const f of staticFileNames) {
+  const fp = path.join(root, f);
+  if (fs.existsSync(fp)) {
+    staticFiles[f] = fs.readFileSync(fp, 'utf8');
+    console.log('Embedded static file: ' + f);
+  }
+}
 
 const body = src
   .replace('export async function onRequest(context) {', 'async function onRequest(context) {')
@@ -104,6 +114,13 @@ const FAVICON_B64 = '${Buffer.from(favicon, 'utf8').toString('base64')}';
 const FAVICON_SVG = new TextDecoder().decode(Uint8Array.from(atob(FAVICON_B64), (c) => c.charCodeAt(0)));
 const FAVICON_PNG_B64 = '${faviconPng ? Buffer.from(faviconPng).toString('base64') : ''}';
 const FAVICON_PNG = Uint8Array.from(atob(FAVICON_PNG_B64), (c) => c.charCodeAt(0));
+// Embedded static files for SEO
+const STATIC_FILES = ${JSON.stringify(staticFiles)};
+const STATIC_CT = {
+  'robots.txt': 'text/plain; charset=utf-8',
+  'sitemap.xml': 'application/xml; charset=utf-8',
+  'google4aefc3b8c5d92b28.html': 'text/html; charset=utf-8',
+};
 
 export default {
   async fetch(request, env, ctx) {
@@ -123,6 +140,11 @@ export default {
     }
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/img/')) {
       return onRequest({ request, env, data: {}, waitUntil: ctx.waitUntil.bind(ctx) });
+    }
+    // Serve embedded static files (SEO: robots.txt, sitemap.xml, Google verification)
+    const staticPath = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
+    if (STATIC_FILES[staticPath]) {
+      return new Response(STATIC_FILES[staticPath], { status: 200, headers: { 'Content-Type': STATIC_CT[staticPath] || 'text/plain', ...ROUTER_SEC_H } });
     }
     const html = await decompressHtml();
     return new Response(html, { status: 200, headers: HTML_CT });
