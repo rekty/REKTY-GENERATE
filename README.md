@@ -101,3 +101,9 @@ wd14-tagger/README.md   # dokumen WD14 Tagger (deteksi prompt dari gambar)
 - **Chat**: Turnstile muncul di chat pertama saja. Chat ke-2 dst: skip (backend terima token kosong).
 - **Desktop + Mobile**: Keduanya menggunakan fungsi `vaiaToken()` yang sama.
 - Backend logic: `if (!token) return { ok: true }` — token kosong = skip verifikasi.
+
+## License
+
+MIT License - Copyright (c) 2026 Rekty Anjany
+
+See [LICENSE](LICENSE) for details.
