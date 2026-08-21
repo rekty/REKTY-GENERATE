@@ -2625,6 +2625,7 @@ function refreshOAuthStatus(){
       el.textContent='Terhubung ✓'+(d.expiresIn?(' · sisa '+Math.ceil(d.expiresIn/86400)+' hari'):'')+balTxt;
       el.style.color='#27D4CD'; el.classList.remove('hidden');
       btn.textContent='Login ulang (ganti akun)'; out.classList.remove('hidden');
+      if(settings.mode!=='real'){ settings.mode='real'; $('apimode').value='real'; saveSettings(); updateApiStatus(); }
     }else{
       el.textContent='Sesi berakhir — login ulang'; el.style.color='#e5a50a';
       el.classList.remove('hidden'); out.classList.add('hidden');
@@ -2657,8 +2658,8 @@ async function handleOAuthCallback(){
       body:JSON.stringify({code:code,code_verifier:verifier,redirect_uri:(cfg&&cfg.redirectUri)||''})});
     var d=await r.json().catch(function(){return null;});
     if(!r.ok||!d.session) throw new Error((d&&d.error)||('HTTP '+r.status));
-    settings.pollSession=d.session; saveSettings(); updateProviderUI(); updateChatBalance();
-    toast('Login Pollinations berhasil!');
+    settings.pollSession=d.session; settings.mode='real'; $('apimode').value='real'; saveSettings(); updateProviderUI(); updateChatBalance();
+    toast('Login Pollinations berhasil! Mode otomatis ke Real API.');
   }catch(e){ toast('Gagal tukar kode: '+(e&&e.message||e)); }
   history.replaceState(null,'','/');
 }
