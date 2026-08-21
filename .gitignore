@@ -66,3 +66,5 @@ firebase-backend/
 # Scripts with local paths (local only — PC saja)
 scripts/backup_project.py
 scripts/cek_endpoint.bat
+scripts/poll_monitor.py
+scripts/backup.py
