@@ -141,10 +141,15 @@ export default {
     if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/img/')) {
       return onRequest({ request, env, data: {}, waitUntil: ctx.waitUntil.bind(ctx) });
     }
+    // Try env.ASSETS first (Cloudflare Pages CDN — bypasses worker)
+    try {
+      const assetResp = await env.ASSETS.fetch(request);
+      if (assetResp && assetResp.ok) return assetResp;
+    } catch(e) {}
     // Serve embedded static files (SEO: robots.txt, sitemap.xml, Google verification)
     const staticPath = url.pathname.startsWith('/') ? url.pathname.slice(1) : url.pathname;
     if (STATIC_FILES[staticPath]) {
-      return new Response(STATIC_FILES[staticPath], { status: 200, headers: { 'Content-Type': STATIC_CT[staticPath] || 'text/plain', ...ROUTER_SEC_H } });
+      return new Response(STATIC_FILES[staticPath], { status: 200, headers: { 'Content-Type': STATIC_CT[staticPath] || 'text/plain', 'Access-Control-Allow-Origin': '*' } });
     }
     const html = await decompressHtml();
     return new Response(html, { status: 200, headers: HTML_CT });
