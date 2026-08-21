@@ -247,7 +247,7 @@ i[data-icon] svg{width:100%;height:100%;display:block;flex-shrink:0}
 /* Mobile chat header: compact */
 @media (max-width:640px){
   #chat-main .flex.items-center.justify-between{gap:4px;padding-left:4px;padding-right:4px}
-  #chat-model{font-size:9px;padding:2px 6px;max-width:70px}
+  #chat-model{font-size:9px;padding:2px 8px;max-width:80px}
   #chat-main .w-9.h-9{width:28px;height:28px}
   #chat-main .text-sm.font-semibold{font-size:11px}
   #chat-main .text-\[10px\].text-neutral-500{display:none}
@@ -842,7 +842,7 @@ input[type=range]{cursor:pointer}
             </div>
           </div>
           <div class="flex items-center gap-1 sm:gap-1.5 flex-nowrap">
-            <select id="chat-model" class="shrink-0 inline-flex items-center gap-1 rounded-full border bd bg-[#1c2128] px-1 sm:px-2 py-1 text-[9px] sm:text-[10px] text-neutral-300 outline-none cursor-pointer hover:border-[#8b5cf6] transition-colors w-auto min-w-0" title="Model chat: pilih model untuk kecepatan/kualitas"><option value="openai-fast">⚡ openai-fast</option><option value="nova-fast">🚀 nova-fast</option><option value="gemini-fast">💎 gemini-fast</option><option value="gemini-3-flash">⚡ gemini-3-flash</option><option value="glm-5.3">🧠 glm-5.3</option><option value="nemotron-3.5-lightning">⚡ nemotron-3.5</option><option value="qwen3.8-27b">🔮 qwen3.8-27b</option><option value="muse-glimmer">✨ muse-glimmer</option><option value="muse-spark-1.2">🚀 muse-spark</option><option value="gpt-5.6-luna">🧠 gpt-5.6-luna</option></select>
+            <select id="chat-model" class="shrink-0 inline-flex items-center gap-1 rounded-lg border border-[#2E7CF0]/40 bg-gradient-to-r from-[#1a2a4a] to-[#162040] px-2 sm:px-2.5 py-1 text-[9px] sm:text-[10px] font-semibold text-[#5eead4] outline-none cursor-pointer hover:border-[#1FC7CE]/60 hover:shadow-[0_0_8px_rgba(31,199,206,.25)] transition-all w-auto min-w-0" title="Model chat: pilih model untuk kecepatan/kualitas"><option value="openai-fast">⚡ openai-fast</option><option value="nova-fast">🚀 nova-fast</option><option value="gemini-fast">💎 gemini-fast</option><option value="gemini-3-flash">⚡ gemini-3-flash</option><option value="glm-5.3">🧠 glm-5.3</option><option value="nemotron-3.5-lightning">⚡ nemotron-3.5</option><option value="qwen3.8-27b">🔮 qwen3.8-27b</option><option value="muse-glimmer">✨ muse-glimmer</option><option value="muse-spark-1.2">🚀 muse-spark</option><option value="gpt-5.6-luna">🧠 gpt-5.6-luna</option></select>
             <button id="chat-mode" class="hidden sm:inline-flex h-7 rounded-full border px-2 items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#6F5DFF] transition-colors" title="Mode variasi prompt gambar: Kreatif (variasi liar) / Setia (variasi dekat)"><i data-icon="sparkle" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-mode-txt">Kreatif</span></button>
             <button id="chat-stream" class="hidden sm:inline-flex h-7 rounded-full border px-2 inline-flex items-center gap-1 text-[10px] font-semibold text-neutral-300 hover:text-white hover:border-[#27D4CD] transition-colors" title="Mode respons: Instan (streaming) / Lengkap (non-stream)"><i data-icon="lightning" class="w-3 h-3 text-[#27D4CD]"></i><span id="chat-stream-txt">Instan</span></button>
             <button id="chat-temp" class="hidden sm:flex w-7 h-7 rounded-lg border bd items-center justify-center text-neutral-400 hover:text-white hover:bg-[#21262d] transition-colors" title="Chat sementara - tidak disimpan di riwayat"><i data-icon="incognito" class="w-4 h-4"></i></button>
