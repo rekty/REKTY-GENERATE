@@ -1614,7 +1614,7 @@ function guessLang(s){
   if(/[\u0400-\u04FF]/.test(s)) return 'ru';
   if(/[\u0900-\u097F]/.test(s)) return 'hi';
   if(/[\u0E00-\u0E7F]/.test(s)) return 'th';
-  return 'id'; // ASCII non-Inggris — dominan Indonesia di app ini
+  return 'en'; // Default language: English
 }
 function translateViaMemory(p, lang){
   return fetch('https://api.mymemory.translated.net/get?q='+encodeURIComponent(p)+'&langpair='+encodeURIComponent(lang)+'|en')
@@ -2266,7 +2266,7 @@ var T={
   nl:{generate:'Genereer',cancel:'Annuleren',prompt:'Voer prompt in...',negative:'Negatieve Prompt',settings:'Instellingen',width:'Breedte',height:'Hoogte',sampler:'Sampling Methode',scheduler:'Scheduler',steps:'Stappen',cfg:'CFG Schaal',seed:'Seed',random:'Willekeurig',advanced:'Geavanceerd',upscale:'Opschalen',fast:'Snel',normal:'Normaal',slow:'Langzaam',model:'Model',provider:'Provider',api:'API',login:'Inloggen',logout:'Uitloggen',history:'Geschiedenis',clear:'Alles wissen',copy:'Kopiëren',download:'Downloaden',delete:'Verwijderen',close:'Sluiten',save:'Opslaan',loading:'Laden...',error:'Fout',success:'Succes',chat:'Chat',send:'Versturen',typing:'Typen...',selectLang:'Taal',allImages:'Alle afbeeldingen',image:'Afbeelding',video:'Video',audio:'Audio',noResults:'Geen resultaten',admin:'Admin Paneel',pin:'Admin PIN',unlock:'Ontgrendelen',lock:'Vergrendelen',refresh:'Vernieuwen',audit:'Audit Log',deleteAll:'Alles verwijderen',confirmDelete:'Verwijderen?',yes:'Ja',no:'Nee',newChat:'Nieuwe chat',creative:'Creatief',faithful:'Getrouw',instant:'Direct',full:'Volledig',aspect:'Beeldverhouding',portrait:'Staand',landscape:'Liggend',square:'Vierkant',custom:'Aangepast',durasi:'Duur',tokens:'Tegoed',translate:'Vertalen?',enhance:'Verbeteren',addLora:'LoRA toevoegen',remove:'Verwijderen',weight:'Gewicht',triggerWords:'Trigger Woorden',noTrigger:'Geen trigger',vae:'VAE',auto:'Automatisch',defaultValue:'Standaard',pcOnly:'Alleen PC',mobileOnly:'Alleen mobiel',desktopMobile:'Desktop & mobiel',collapse:'Inklappen',expand:'Uitklappen',pasteData:'Data plakken',presets:'Voorinstellingen',reset:'Resetten',models:'Modellen',addEmbedding:'Embedding toevoegen',addControlNet:'ControlNet toevoegen',negativeShort:'Negatief',oneImage:'1 afbeelding',samplerLabel:'Sampler',schedulerLabel:'Scheduler',noLora:'Geen LoRA',noTriggerWords:'Geen trigger woorden',loginPollinations:'Pollinations Inloggen',loginByop:'Inloggen met Pollinations (BYOP)',modeLabel:'Modus',realApi:'Echte API (backend vereist)',demoMode:'Demo (alleen simulatie)',byopDesc:'Automatisch model. Voer sk_* sleutel in van enter.pollinations.ai/keys.',save:'Opslaan',test:'Testen'},
   it:{generate:'Genera',cancel:'Annulla',prompt:'Inserisci prompt...',negative:'Prompt Negativo',settings:'Impostazioni',width:'Larghezza',height:'Altezza',sampler:'Metodo di Campionamento',scheduler:'Scheduler',steps:'Passi',cfg:'Scala CFG',seed:'Seme',random:'Casuale',advanced:'Avanzato',upscale:'Ingrandisci',fast:'Veloce',normal:'Normale',slow:'Lento',model:'Modello',provider:'Provider',api:'API',login:'Accedi',logout:'Esci',history:'Cronologia',clear:'Cancella tutto',copy:'Copia',download:'Scarica',delete:'Elimina',close:'Chiudi',save:'Salva',loading:'Caricamento...',error:'Errore',success:'Successo',chat:'Chat',send:'Invia',typing:'Scrivendo...',selectLang:'Lingua',allImages:'Tutte le immagini',image:'Immagine',video:'Video',audio:'Audio',noResults:'Nessun risultato',admin:'Pannello Admin',pin:'PIN Admin',unlock:'Sblocca',lock:'Blocca',refresh:'Aggiorna',audit:'Registro',deleteAll:'Elimina tutto',confirmDelete:'Eliminare?',yes:'Sì',no:'No',newChat:'Nuova chat',creative:'Creativo',faithful:'Fedele',instant:'Istantaneo',full:'Completo',aspect:'Rapporto d\'aspetto',portrait:'Ritratto',landscape:'Paesaggio',square:'Quadrato',custom:'Personalizzato',durasi:'Durata',tokens:'Crediti',translate:'Tradurre?',enhance:'Migliora',addLora:'Aggiungi LoRA',remove:'Rimuovi',weight:'Peso',triggerWords:'Parole Trigger',noTrigger:'Nessun trigger',vae:'VAE',auto:'Automatico',defaultValue:'Predefinito',pcOnly:'Solo PC',mobileOnly:'Solo Mobile',desktopMobile:'Desktop e Mobile',collapse:'Comprimi',expand:'Espandi',pasteData:'Incolla dati',presets:'Preimpostazioni',reset:'Reimposta',models:'Modelli',addEmbedding:'Aggiungi Embedding',addControlNet:'Aggiungi ControlNet',negativeShort:'Negativo',oneImage:'1 immagine',samplerLabel:'Sampler',schedulerLabel:'Scheduler',noLora:'Nessuna LoRA',noTriggerWords:'Nessuna parola trigger'}
 };
-function t(key){ var lang=(settings&&settings.lang)||'id'; return (T[lang]&&T[lang][key])||(T.id[key])||key; }
+function t(key){ var lang=(settings&&settings.lang)||'en'; return (T[lang]&&T[lang][key])||(T.id[key])||key; }
 function applyLang(){
   document.querySelectorAll('[data-t]').forEach(function(el){ var k=el.getAttribute('data-t'); if(k) el.textContent=t(k); });
   document.querySelectorAll('[data-t-placeholder]').forEach(function(el){ var k=el.getAttribute('data-t-placeholder'); if(k) el.placeholder=t(k); });
@@ -2278,7 +2278,7 @@ var settings={ mode:'auto', provider:'tams', apiKey:'', pollSession:'', selfhost
   prompt:'', negPrompt:'', negCheck:false, steps:10, cfg:1, sampler:'euler', sched:'normal',
   vae:'automatic', width:768, height:1152, aspect:'portrait', clipSkip:2, ensd:31337,
   upscale:2, ncol:1, ncols:2, page:'text', modeA1111:false, modeElla:false, modelName:'',
-  loras:[], denoise:0.5, animDur:0.5, lang:'id' };
+  loras:[], denoise:0.5, animDur:0.5, lang:'en' };
 var PROVIDER_INFO={
   tams:{ label:'API Key TAMS (tams.tensor.art)', hint:'Daftar model dari tams.tensor.art — pakai di UI.', price:'1.22' ,loginPollinations:'Accesso Pollinations',loginByop:'Accedi con Pollinations (BYOP)',modeLabel:'Modalità',realApi:'API Reale (backend necessario)',demoMode:'Demo (solo simulazione)',byopDesc:'Modello automatico. Inserisci chiave sk_* da enter.pollinations.ai/keys.',save:'Salva',test:'Testa'},
   replicate:{ label:'API Token Replicate (replicate.com)', hint:'Pilih model di kartu Model (FLUX, SDXL, dst). Img2Img belum didukung.', price:'0.03' },
@@ -2304,7 +2304,7 @@ function loadSettings(){
 
       settings.denoise=parseFloat(s.denoise)!=null?parseFloat(s.denoise):0.5;
       settings.animDur=parseFloat(s.animDur)!=null?parseFloat(s.animDur):0.5;
-      settings.lang=s.lang||'id';
+      settings.lang=s.lang||'en';
       settings.loras=Array.isArray(s.loras)?s.loras.map(function(l){ return { name:String(l.name||''), w:parseFloat(l.w)!=null?parseFloat(l.w):0.8, loraUrl:String(l.loraUrl||'') }; }).filter(function(l){ return l.name; }):[];
     }
   }catch(e){}
@@ -3671,7 +3671,7 @@ $('animdur').addEventListener('change',syncAnimDur);
 (function(){
   var sel=$('langsel'); if(!sel) return;
   Object.keys(LANGS).forEach(function(k){ var o=document.createElement('option'); o.value=k; o.textContent=LANGS[k]; sel.appendChild(o); });
-  sel.value=settings.lang||'id';
+  sel.value=settings.lang||'en';
   var flag=$('langflag'); if(flag) flag.textContent=LANGS[sel.value]||'🇮🇩';
   sel.addEventListener('change',function(){ settings.lang=this.value; saveSettings(); if(flag) flag.textContent=LANGS[this.value]||'🇮🇩'; applyLang(); toast('Bahasa: '+LANGS[this.value]); });
 })();
