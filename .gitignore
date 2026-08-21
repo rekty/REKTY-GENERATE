@@ -80,6 +80,9 @@ freebuff_context_backup_*.zip
 # PDF presentation (local only)
 *.pdf
 
+# Facebook post captions (local only)
+post_facebook_*.txt
+
 # Scripts backup/restore (local only)
 scripts/backup_freebuff_context.ps1
 scripts/restore_freebuff_context.ps1
