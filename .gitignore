@@ -71,3 +71,18 @@ scripts/backup.py
 
 # Cloudflare deploy config (local only — PC saja)
 .assetsignore
+
+# Backup files (local only)
+*.backup_*
+*.zip
+freebuff_context_backup_*.zip
+
+# PDF presentation (local only)
+*.pdf
+
+# Scripts backup/restore (local only)
+scripts/backup_freebuff_context.ps1
+scripts/restore_freebuff_context.ps1
+scripts/cleanup_proton_*.ps1
+scripts/cleanup_wintun_driver.ps1
+scripts/build_presentation.py
