@@ -508,11 +508,11 @@ input[type=range]{cursor:pointer}
             <button id="adv-toggle" class="text-xs text-neutral-500 hover:text-white flex items-center gap-1"><i data-icon="caret-down" class="w-3.5 h-3.5"></i><span data-t="advanced">Advanced</span></button>
           </div>
           <div class="grid grid-cols-2 gap-2 mt-1">
-            <div class="field"><label class="text-[11px] text-neutral-500">Sampler</label>
+            <div class="field"><label class="text-[11px] text-neutral-500" data-t="samplerLabel">Sampler</label>
               <select id="sampler" class="inp text-xs">
                 <option>euler</option><option>euler_ancestral</option><option>heun</option><option>heunpp2</option><option>dpm_2</option><option>dpm_2_ancestral</option><option>lms</option><option>dpm_fast</option><option>dpm_adaptive</option><option>dpmpp_2s_ancestral</option><option>dpmpp_sde_gpu</option><option selected>dpmpp_2m</option><option>dpmpp_2m_sde_gpu</option><option>dpmpp_3m_sde_gpu</option><option>ddpm</option><option>lcm</option><option>restart</option><option>ddim</option><option>uni_pc</option><option>uni_pc_bh2</option><option>res_multistep</option><option>er_sde</option>
               </select></div>
-            <div class="field"><label class="text-[11px] text-neutral-500">Scheduler</label>
+            <div class="field"><label class="text-[11px] text-neutral-500" data-t="schedulerLabel">Scheduler</label>
               <select id="sched" class="inp text-xs"><option>normal</option><option selected>karras</option><option>sgm_uniform</option><option>exponential</option><option>simple</option><option>ddim_uniform</option><option>beta</option><option>linear_quadratic</option></select></div>
           </div>
 <div class="space-y-3 mt-3">
